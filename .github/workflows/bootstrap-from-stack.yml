@@ -1,0 +1,395 @@
+name: bootstrap EPAC from stack
+
+on:
+  push:
+    branches:
+      - populate/stack-extraction
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      STACK_SHA: ef51f2e8f32ccfd5394525dad72475a61a505bc1
+      SKILL_LIB_SHA: 8dfb974ea0cee72e4412f9d2c8b597a8930a4d57
+      UCNS_SHA: 828c0b8bbcfc267efb5701da714191c1f73a81ff
+      METAPAT_SHA: d6699e21b11c8f8394998efc34a468e2d6efc8b0
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Fetch pinned authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/The-Interdependency/stack.git /tmp/stack
+          git -C /tmp/stack checkout --quiet "$STACK_SHA"
+          git clone --quiet https://github.com/The-Interdependency/skill-lib.git /tmp/skill-lib
+          git -C /tmp/skill-lib checkout --quiet "$SKILL_LIB_SHA"
+          test "$(git -C /tmp/stack rev-parse HEAD)" = "$STACK_SHA"
+          test "$(git -C /tmp/skill-lib rev-parse HEAD)" = "$SKILL_LIB_SHA"
+
+      - name: Extract EPAC and canonical skills
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp README.md /tmp/EPAC_README.md
+          rsync -a /tmp/stack/research/epac/ ./
+          cp /tmp/EPAC_README.md README.md
+
+          rm -rf .agents/skills
+          mkdir -p .agents/skills
+          for skill_file in /tmp/skill-lib/*/SKILL.md; do
+            cp -a "$(dirname "$skill_file")" .agents/skills/
+          done
+          cat > .agents/skills/README.md <<EOF
+          # Canonical skill-lib snapshot
+
+          Source: The-Interdependency/skill-lib
+          Commit: $SKILL_LIB_SHA
+
+          These directories are repo-local consumers. The canonical source remains skill-lib.
+          EOF
+
+      - name: Remove forge-only runtime assumptions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          for root in (Path('tests'), Path('subatomic')):
+              for path in root.glob('test_*.py'):
+                  text = path.read_text(encoding='utf-8')
+                  text = re.sub(r'^STACK_ROOT\s*=.*\n', '', text, flags=re.MULTILINE)
+                  text = re.sub(r'^sys\.path\.insert\(0, str\(STACK_ROOT[^\n]*\)\)\n', '', text, flags=re.MULTILINE)
+                  text = text.replace('STACK_ROOT / "research" / "ucns" / "src"', 'Path("_deps/ucns/src")')
+                  text = text.replace('STACK_ROOT / "libs" / "ucns" / "src"', 'Path("_deps/ucns/src")')
+                  path.write_text(text, encoding='utf-8')
+
+          banners = {
+              Path('docs/preregistration-molecular-geometry-from-element-gonols.md'):
+                  '> Migration note: this preregistration was frozen in the stack incubator before EPAC extraction. Its original authority/context statements are retained as historical evidence.\n\n',
+              Path('subatomic/subatomic-affixiation-baseline.md'):
+                  '> Migration note: this document records the stack-incubation phase. Statements that no EPAC repository existed were true of that phase and are not current repository status.\n\n',
+          }
+          for path, banner in banners.items():
+              text = path.read_text(encoding='utf-8')
+              if not text.startswith('> Migration note:'):
+                  path.write_text(banner + text, encoding='utf-8')
+          PY
+
+      - name: Write repository authority records
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs .github/workflows
+
+          cat > AGENTS.md <<'EOF'
+          # EPAC agent instructions
+
+          EPAC is an extracted research project originating at `The-Interdependency/stack:research/epac`.
+
+          Before work:
+
+          1. read `.agents/skills/README.md` and every applicable `.agents/skills/*/SKILL.md`;
+          2. read `docs/PROVENANCE.md`, `docs/work-graph.json`, and the relevant preregistration/result document;
+          3. preserve epistemic status: implementation success does not transfer physics, chemistry, theorem, proof, measurement, or empirical validity;
+          4. preserve falsified results as evidence rather than deleting or rebranding them;
+          5. use UCNS only through its own declared public surfaces; do not invent Public Gonol position operations;
+          6. treat METAPAT affixiation/harmonic language as semantic application vocabulary, not imported physics;
+          7. include runnable usage guidance in code and research artifacts;
+          8. unknown authority, mapping, or evidence remains `hmmm`.
+
+          Current graduation boundary: this repository is physically extracted and independently testable, but stable release/reconsumption and license/distribution gates remain separate evidence requirements.
+          EOF
+
+          cat > docs/PROVENANCE.md <<EOF
+          # EPAC extraction provenance
+
+          EPAC originated as stack-local research and was extracted into this repository on 2026-09-05.
+
+          ## Exact source
+
+          - forge: \`The-Interdependency/stack\`
+          - source commit: \`$STACK_SHA\`
+          - source path: \`research/epac/\`
+          - source EPAC tree: \`4d1fa3cfc1c115bfc94a9a7f90a567b6d2ebbbc1\`
+          - UCNS dependency pinned by that stack manifest: \`The-Interdependency/ucns@$UCNS_SHA\`
+          - current skill doctrine installed at extraction: \`The-Interdependency/skill-lib@$SKILL_LIB_SHA\`
+          - current METAPAT semantic consultation: \`The-Interdependency/metapat@$METAPAT_SHA\`
+
+          Extraction moves code and public-contract work into an independent repository. It does not transfer semantic, mathematical, proof, measurement, chemistry, physics, or empirical authority from upstream projects or external domains.
+
+          Historical receipts and preregistrations are retained. Stack-specific placeholder statements are migration history, not current EPAC status.
+
+          ## Usage guidance
+
+          Reproduce the extraction baseline by checking out the exact stack commit above and comparing \`research/epac/\` with the migrated source files, allowing only documented migration repairs, repository records, skill installation, and CI wiring.
+          EOF
+
+          cat > docs/domain-claims.md <<'EOF'
+          # EPAC domain claim
+
+          ## Project handle
+
+          - surface form: `EPAC`
+          - term id: `the-interdependency.epac`
+          - claiming domain: The Interdependency / EPAC project
+          - claimed sense: stable project identifier for this repository and its bounded research program
+          - scope: repository identity, implementation/public-contract work, research records
+          - claim type: native
+          - status: ratified as the repository handle
+          - handle identity: despecified
+          - canonical expansion: none
+
+          Historical or audience-specific expansions may be recorded as provenance but do not redefine the handle.
+
+          ## Research boundary
+
+          EPAC may construct and test relational representations involving atomic, subatomic, molecular, energy, arity, recurrence, and coupling surfaces. Those constructions do not acquire external physics or chemistry truth by repository placement.
+
+          “Standing wave,” “field,” “particle,” “harmonic,” and related terms remain domain-qualified. In particular, METAPAT harmonic language does not itself mean physical vibration or frequency.
+
+          ## hmmm
+
+          - whether standing-wave language will earn a narrower ratified EPAC ontology claim after explicit external-physics comparison
+          - whether any fixed lexical expansion of EPAC is useful enough to ratify; none is currently required
+          EOF
+
+          cat > docs/research-status.md <<'EOF'
+          # Research status
+
+          ## Preserved negative result
+
+          The preregistered molecular-shape prediction is **FALSIFIED** for all four tested readouts:
+
+          - charged oriented 3-structure;
+          - topology-only 3-structure;
+          - UCNS Möbius signature;
+          - atomic-shell signature.
+
+          This means the current construction is not evidence that EPAC predicts empirical molecular shape. The falsification remains part of the repository's evidence base.
+
+          ## Implemented candidate surfaces
+
+          The extracted tree includes atomic, periodic, molecular, dimensional-arity, Public Gonol, subatomic, comparison, receipt, and regression-test surfaces.
+
+          ## hmmm
+
+          - exact UCNS Public Gonol position operations beyond carrier identity
+          - a non-imported mapping from EPAC relational structure to empirical molecular angles
+          - standing-wave/field ontology beyond provisional modeling language
+          - release packaging and downstream artifact consumption
+          EOF
+
+          cat > docs/graduation.json <<EOF
+          {
+            "schema": "the-interdependency.project-graduation-record",
+            "version": "1.0.0",
+            "candidate": "EPAC",
+            "lifecycle_state": "stabilizing",
+            "physical_repository_state": "extracted",
+            "mode": "execution",
+            "authorization": {
+              "external_mutation": "authorized",
+              "authority_transfer": "not-yet-complete"
+            },
+            "forge": {
+              "repository": "The-Interdependency/stack",
+              "source_commit": "$STACK_SHA",
+              "source_path": "research/epac"
+            },
+            "future_authority": {
+              "repository": "The-Interdependency/epac"
+            },
+            "distribution": {
+              "kind": "hmmm",
+              "artifact": "hmmm",
+              "version": "hmmm",
+              "candidate_immutable_identity": "hmmm",
+              "published_immutable_identity": "hmmm",
+              "published_matches_verified_candidate": "hmmm"
+            },
+            "upstream": [
+              {
+                "repository": "The-Interdependency/ucns",
+                "commit": "$UCNS_SHA",
+                "relation": "mathematical representation and Public Gonol dependency",
+                "authority_transfer": false
+              },
+              {
+                "repository": "The-Interdependency/metapat",
+                "commit": "$METAPAT_SHA",
+                "relation": "semantic authority for affixiation/harmonic application language",
+                "authority_transfer": false
+              },
+              {
+                "repository": "The-Interdependency/skill-lib",
+                "commit": "$SKILL_LIB_SHA",
+                "relation": "organization build and evidence doctrine",
+                "authority_transfer": false
+              }
+            ],
+            "gates": {
+              "public_api": "hmmm",
+              "independent_tests": "pending-bootstrap-verification",
+              "clean_build_install": "fail",
+              "license_distribution_rights": "fail",
+              "release_ownership_authority": "pass",
+              "provenance_preserved": "pass",
+              "exact_candidate_forge_verification": "hmmm",
+              "stable_release": "hmmm",
+              "downstream_reconsumption": "hmmm"
+            },
+            "transition_receipt": "hmmm",
+            "hmmm": [
+              "distribution surface not selected",
+              "repository license not selected",
+              "clean package/install contract not yet established",
+              "stack has not reconsumed a released immutable EPAC artifact"
+            ]
+          }
+          EOF
+
+          cat > docs/work-graph.json <<EOF
+          {
+            "schema": "the-interdependency.stack-manifest",
+            "version": "1.0.0",
+            "repositories": [
+              {
+                "repository": "The-Interdependency/stack",
+                "commit": "$STACK_SHA",
+                "authority": "forge/provenance authority for the extracted candidate state",
+                "relation": "extraction source"
+              },
+              {
+                "repository": "The-Interdependency/skill-lib",
+                "commit": "$SKILL_LIB_SHA",
+                "authority": "organization-wide build and evidence doctrine",
+                "relation": "repo-local skill snapshot source"
+              },
+              {
+                "repository": "The-Interdependency/metapat",
+                "commit": "$METAPAT_SHA",
+                "authority": "semantic authority for METAPAT application terms",
+                "relation": "semantic source consumed by EPAC"
+              },
+              {
+                "repository": "The-Interdependency/ucns",
+                "commit": "$UCNS_SHA",
+                "authority": "geometry and mathematical representation",
+                "relation": "Public Gonol and Möbius dependency consumed by EPAC"
+              }
+            ],
+            "boundaries": {
+              "authority_transfer": false,
+              "proof_status_transfer": false,
+              "measurement_status_transfer": false,
+              "semantic_mapping": "external-provenance",
+              "agent_scope": "cross-repository-work-graph",
+              "hmmm": [
+                "EPAC stable release and stack reconsumption are not complete",
+                "license/distribution rights gate remains unresolved"
+              ]
+            }
+          }
+          EOF
+
+          cat > LICENSE_STATUS.md <<'EOF'
+          # License status
+
+          `hmmm` — no repository license has yet been selected for the independent EPAC repository.
+
+          This is a blocking graduation/release gate. Public visibility does not grant downstream reuse rights. Do not publish a stable package or claim redistribution permission until the owner selects and records the license.
+          EOF
+
+          cat > .gitignore <<'EOF'
+          __pycache__/
+          *.py[cod]
+          .pytest_cache/
+          .venv/
+          _deps/
+          dist/
+          build/
+          *.egg-info/
+          EOF
+
+          cat > .github/workflows/ci.yml <<EOF
+          name: EPAC CI
+
+          on:
+            push:
+              branches: [main]
+            pull_request:
+
+          permissions:
+            contents: read
+
+          jobs:
+            test:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v7
+                - uses: actions/setup-python@v7
+                  with:
+                    python-version: '3.12'
+                - name: Resolve pinned UCNS
+                  run: |
+                    git clone --quiet https://github.com/The-Interdependency/ucns.git _deps/ucns
+                    git -C _deps/ucns checkout --quiet $UCNS_SHA
+                  env:
+                    UCNS_SHA: $UCNS_SHA
+                - name: Repository tests
+                  run: |
+                    PYTHONPATH=".:_deps/ucns/src" python -m unittest discover -s tests -q
+                    PYTHONPATH=".:_deps/ucns/src" python -m unittest discover -s subatomic -p 'test_*.py' -q
+                - name: Preserve falsification standing
+                  run: |
+                    PYTHONPATH=".:_deps/ucns/src" python - <<'PY'
+                    from epac_comparison import compare_after_construction
+                    standings = compare_after_construction()["standings"]
+                    assert standings
+                    assert set(standings.values()) == {"FALSIFIED"}, standings
+                    print(standings)
+                    PY
+          EOF
+
+      - name: Verify extracted implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH="$PWD:/tmp/stack/libs/ucns/src" python -m unittest discover -s tests -q
+          PYTHONPATH="$PWD:/tmp/stack/libs/ucns/src" python -m unittest discover -s subatomic -p 'test_*.py' -q
+          PYTHONPATH="$PWD:/tmp/stack/libs/ucns/src" python - <<'PY'
+          from epac_comparison import compare_after_construction
+          standings = compare_after_construction()["standings"]
+          if set(standings.values()) != {"FALSIFIED"}:
+              raise SystemExit(f"falsification standing drifted: {standings}")
+          print(standings)
+          PY
+
+      - name: Seal bootstrap result
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('docs/graduation.json')
+          data = json.loads(p.read_text())
+          data['gates']['independent_tests'] = 'pass'
+          p.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+
+          rm .github/workflows/bootstrap-from-stack.yml
+          git config user.name "epac-populate-agent"
+          git config user.email "epac-populate-agent@interdependentway.org"
+          git add -A
+          git commit -m "feat: populate EPAC from pinned stack research"
+          git push origin HEAD:populate/stack-extraction
