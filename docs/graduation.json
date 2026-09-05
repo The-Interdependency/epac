@@ -1,0 +1,66 @@
+{
+  "schema": "the-interdependency.project-graduation-record",
+  "version": "1.0.0",
+  "candidate": "EPAC",
+  "lifecycle_state": "stabilizing",
+  "physical_repository_state": "extracting",
+  "mode": "execution",
+  "authorization": {
+    "external_mutation": "authorized",
+    "authority_transfer": "not-yet-complete"
+  },
+  "forge": {
+    "repository": "The-Interdependency/stack",
+    "source_commit": "ef51f2e8f32ccfd5394525dad72475a61a505bc1",
+    "source_path": "research/epac"
+  },
+  "future_authority": {
+    "repository": "The-Interdependency/epac"
+  },
+  "distribution": {
+    "kind": "hmmm",
+    "artifact": "hmmm",
+    "version": "hmmm",
+    "candidate_immutable_identity": "hmmm",
+    "published_immutable_identity": "hmmm",
+    "published_matches_verified_candidate": "hmmm"
+  },
+  "upstream": [
+    {
+      "repository": "The-Interdependency/ucns",
+      "commit": "828c0b8bbcfc267efb5701da714191c1f73a81ff",
+      "relation": "mathematical representation and Public Gonol dependency",
+      "authority_transfer": false
+    },
+    {
+      "repository": "The-Interdependency/metapat",
+      "commit": "d6699e21b11c8f8394998efc34a468e2d6efc8b0",
+      "relation": "semantic authority for affixiation/harmonic application language",
+      "authority_transfer": false
+    },
+    {
+      "repository": "The-Interdependency/skill-lib",
+      "commit": "8dfb974ea0cee72e4412f9d2c8b597a8930a4d57",
+      "relation": "organization build and evidence doctrine",
+      "authority_transfer": false
+    }
+  ],
+  "gates": {
+    "public_api": "hmmm",
+    "independent_tests": "pending-extraction-verification",
+    "clean_build_install": "fail",
+    "license_distribution_rights": "fail",
+    "release_ownership_authority": "pass",
+    "provenance_preserved": "pass",
+    "exact_candidate_forge_verification": "hmmm",
+    "stable_release": "hmmm",
+    "downstream_reconsumption": "hmmm"
+  },
+  "transition_receipt": "hmmm",
+  "hmmm": [
+    "distribution surface not selected",
+    "repository license not selected",
+    "clean package/install contract not yet established",
+    "stack has not reconsumed a released immutable EPAC artifact"
+  ]
+}
