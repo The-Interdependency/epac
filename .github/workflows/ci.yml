@@ -1,0 +1,86 @@
+name: EPAC CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Resolve pinned UCNS
+        env:
+          UCNS_SHA: 828c0b8bbcfc267efb5701da714191c1f73a81ff
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/The-Interdependency/ucns.git _deps/ucns
+          git -C _deps/ucns checkout --quiet "$UCNS_SHA"
+          test "$(git -C _deps/ucns rev-parse HEAD)" = "$UCNS_SHA"
+
+      - name: Repository regression suite
+        run: |
+          set -euo pipefail
+          PYTHONPATH=".:_deps/ucns/src" python -m unittest discover -s tests -q
+
+      - name: Subatomic executable witnesses
+        run: |
+          set -euo pipefail
+          PYTHONPATH=".:subatomic:_deps/ucns/src" python - <<'PY'
+          from pathlib import Path
+          import importlib.util
+          import inspect
+
+          total = 0
+          for path in sorted(Path("subatomic").glob("test_*.py")):
+              spec = importlib.util.spec_from_file_location(f"epac_subatomic_{path.stem}", path)
+              if spec is None or spec.loader is None:
+                  raise RuntimeError(f"cannot load {path}")
+              module = importlib.util.module_from_spec(spec)
+              spec.loader.exec_module(module)
+              for name, fn in sorted(vars(module).items()):
+                  if not name.startswith("test_") or not callable(fn):
+                      continue
+                  if inspect.signature(fn).parameters:
+                      raise RuntimeError(f"unsupported fixture-bearing witness: {path}:{name}")
+                  fn()
+                  total += 1
+          if total == 0:
+              raise RuntimeError("no subatomic witnesses executed")
+          print(f"{total} subatomic witnesses passed")
+          PY
+
+      - name: Preserve molecular falsification standing
+        run: |
+          set -euo pipefail
+          PYTHONPATH=".:_deps/ucns/src" python - <<'PY'
+          from epac_comparison import compare_after_construction
+          standings = compare_after_construction()["standings"]
+          assert standings
+          assert set(standings.values()) == {"FALSIFIED"}, standings
+          print(standings)
+          PY
+
+      - name: Verify work-graph identity
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          doc = json.loads(Path("docs/work-graph.json").read_text(encoding="utf-8"))
+          payload = {"repositories": doc["repositories"], "boundaries": doc["boundaries"]}
+          actual = hashlib.sha256(
+              json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+          ).hexdigest()
+          assert actual == doc["work_graph_sha256"], (actual, doc["work_graph_sha256"])
+          print(actual)
+          PY
