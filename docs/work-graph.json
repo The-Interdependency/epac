@@ -1,0 +1,42 @@
+{
+  "schema": "the-interdependency.stack-manifest",
+  "version": "1.0.0",
+  "work_graph_sha256": "19f468b9773f71fc78ad58e15ebf3b36ed7fc001ade57846ba0bba9dc84e1631",
+  "repositories": [
+    {
+      "repository": "The-Interdependency/stack",
+      "commit": "ef51f2e8f32ccfd5394525dad72475a61a505bc1",
+      "authority": "forge/provenance authority for the extracted candidate state",
+      "relation": "extraction source"
+    },
+    {
+      "repository": "The-Interdependency/skill-lib",
+      "commit": "8dfb974ea0cee72e4412f9d2c8b597a8930a4d57",
+      "authority": "organization-wide build and evidence doctrine",
+      "relation": "repo-local skill snapshot source"
+    },
+    {
+      "repository": "The-Interdependency/metapat",
+      "commit": "d6699e21b11c8f8394998efc34a468e2d6efc8b0",
+      "authority": "semantic authority for METAPAT application terms",
+      "relation": "semantic source consumed by EPAC"
+    },
+    {
+      "repository": "The-Interdependency/ucns",
+      "commit": "828c0b8bbcfc267efb5701da714191c1f73a81ff",
+      "authority": "geometry and mathematical representation",
+      "relation": "Public Gonol and Möbius dependency consumed by EPAC"
+    }
+  ],
+  "boundaries": {
+    "authority_transfer": false,
+    "proof_status_transfer": false,
+    "measurement_status_transfer": false,
+    "semantic_mapping": "external-provenance",
+    "agent_scope": "cross-repository-work-graph",
+    "hmmm": [
+      "EPAC stable release and stack reconsumption are not complete",
+      "license/distribution rights gate remains unresolved"
+    ]
+  }
+}
