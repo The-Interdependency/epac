@@ -1,0 +1,27 @@
+{
+  "candidate_id": "binding_per_nucleon_commensurability",
+  "equivalence_condition": "|BE/A(x) - BE/A(He-4)| / BE/A(He-4) <= 0.10 (declared tolerance).",
+  "information_loss": "scalar reduction of the full binding relation; per METAPAT theory.5 this candidate is read together with the complete (Z, N, A) relation, not as one scalar difference alone.",
+  "ordered_parameter": {
+    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12",
+    "kind": "nucleon-content-sequence",
+    "time_agnostic": true
+  },
+  "participants": [
+    "H-2",
+    "He-4",
+    "Li-7",
+    "C-12"
+  ],
+  "physical_provenance": [
+    "compiled nuclear data; web-pinned 2026-08-22"
+  ],
+  "receipt": "6a888f65e541363abb220351b9f539b0d0124e4812fe770cfc4eda0b1c3c54e9",
+  "recurrence": {
+    "C-12": true,
+    "Li-7": false
+  },
+  "recurrence_mapping": "Binding energy per nucleon (MeV): H-2 1.11, He-4 7.07, Li-7 5.6, C-12 7.68. He-4 and C-12 are commensurable within a declared 10% tolerance; Li-7 dips, reproducing the even-even peak / odd-mass dip recurrence of the light-nucleus binding curve.",
+  "relation_kind": "commensurability",
+  "status": "CROSS-DOMAIN-HYPOTHESIS"
+}

@@ -1,0 +1,306 @@
+---
+name: msdmd
+description: Module Self-Declared Metadata in Markdown — the foundational convention where each module declares its own structured metadata in a fenced comment block. Other skills in this lib (doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, etc.) are thin applications on top of this convention. Load this when authoring a new metadata-driven skill, when extending the block schema, or when building a parser/executor for a new application.
+---
+
+# msdmd — Module Self-Declared Metadata in Markdown
+
+## The doctrine
+
+Every cross-cutting fact a module owns — its behavior obligations,
+public documentation, declared capabilities, dependency edges, owner,
+runtime boundaries, or executable evidence — should live **in the same
+file as the module that owns that fact**, in a structured comment
+block. A meta-runner walks the tree, parses every block, and acts on
+it.
+
+Modules without the relevant block surface as visible coverage gaps in
+the runner output. Coverage is observable, not implicit.
+
+This is the inverse of the conventional "keep your docs/tests/configs in
+sync with code" approach, which fails because the contract and the
+implementation live in different files. Anyone can delete the code and
+forget the doc; the lie persists. msdmd makes the lie structurally
+visible: when the implementation-owning file disappears, its owned
+block disappears in the same diff.
+
+For tests, ownership is split rather than flattened: source modules own
+`CONTRACTS` obligations; test modules own `CHECKS` evidence that
+claims to prove those obligations. See
+[`test-build/SKILL.md`](../test-build/SKILL.md) and
+[`doctrine/msdmd-checks.md`](../doctrine/msdmd-checks.md).
+
+## Block syntax
+
+```python
+# === <BLOCK_NAME> ===
+# id: <unique_snake_case_id>
+#   <field>: <value>
+#   <field>: <value>
+#
+# id: <next_entry_id>
+#   <field>: <value>
+# === END <BLOCK_NAME> ===
+```
+
+### Universal rules
+
+- **Fence**: `=== <BLOCK_NAME> ===` opens, `=== END <BLOCK_NAME> ===`
+  closes. Block name is uppercase snake_case (e.g. `CONTRACTS`,
+  `CHECKS`, `DOCS`, `CAPABILITIES`, `OWNERS`).
+- **Comment marker**: whatever is idiomatic for the file's language.
+  `#` for Python / Ruby / Elixir / shell. `//` for TS / JS / Rust / Go /
+  Java / C / C++ / Swift. `--` for SQL / Lua / Haskell. The marker
+  appears at the start of every line inside the block.
+- **Entry boundary**: every entry begins with `id:`. The id must be
+  unique within its block and stable across refactors (so it can be
+  referenced from external tooling).
+- **Field lines**: indented one level beneath the id (two spaces of
+  visible indent inside the comment). Field names are lowercase
+  snake_case followed by `:` and a value.
+- **Multiple blocks per file**: a module may declare more than one
+  block, of the same or different types. The parser concatenates
+  entries.
+- **Multiple block types per file**: a module may declare both
+  `CONTRACTS` and `DOCS` (and any others). Each is parsed
+  independently by its respective application.
+
+### Example (Python source module)
+
+```python
+# === CONTRACTS ===
+# id: chat_get_other_owner_404
+#   given: GET /api/v1/conversations/{id} with x-user-id != row.user_id
+#   then:  404 (existence non-disclosure)
+#   class: security
+# === END CONTRACTS ===
+```
+
+### Example (Python test module)
+
+```python
+# === CHECKS ===
+# id: check_chat_get_other_owner_404_http
+#   proves: chat_get_other_owner_404
+#   call: self::test_chat_get_other_owner_404_http
+#   requires: python3, posix_shell
+#   timeout: 20
+#   mutates: db
+#   cleanup: transaction_rollback
+# === END CHECKS ===
+```
+
+### Example (TypeScript source module)
+
+```typescript
+// === CONTRACTS ===
+// id: chat_input_send_disabled_while_pending
+//   given: a message is in flight
+//   then:  send button is disabled and shows pending state
+//   class: ux_correctness
+// === END CONTRACTS ===
+```
+
+### Example (Elixir)
+
+```elixir
+# === CAPABILITIES ===
+# id: agent_supervisor_dynamic_spawn
+#   summary: spawns child agents under a DynamicSupervisor with max_children=cap
+#   exposes: AgentSupervisor.start_child/1
+# === END CAPABILITIES ===
+```
+
+The block content is identical across languages — only the comment
+marker changes.
+
+## The parser contract
+
+A msdmd parser is a pure function over file text:
+
+```
+parse(file_text: str, block_name: str) -> list[Entry]
+```
+
+where `Entry` is a flat `dict[str, str]` containing at minimum the
+`id` field plus whatever fields the entry declared. The parser:
+
+- Returns all entries from all matching blocks (using
+  `re.finditer`-style iteration, not just the first block).
+- Does not interpret or validate field semantics — that's the
+  application's job. An entry missing a required field surfaces as an
+  error in the executor, not in the parser.
+- Does not fail on missing block type — returns empty list if no block
+  of that name exists.
+
+A reference implementation in pure stdlib Python lives at
+`parsers/universal.py`; the TypeScript equivalent at `parsers/universal.ts`.
+Both commit to zero non-stdlib dependencies so you can copy them into
+any project.
+
+## Repo collection point and visualizer
+
+Every consuming repo SHOULD maintain one repo-level collection point named
+`<reponame>_msdmd.ts` (for example, `a0_msdmd.ts`). This file is the
+canonical aggregation surface for all parsed msdmd declarations in that
+repo. It does not replace module-local blocks; it is generated from them
+or maintained as a thin index over them.
+
+The collection point SHOULD use the shared shapes in `msdmd/collection.ts`
+(or a verbatim copy in consuming repos) and export a `MsdmdCollection`:
+
+```typescript
+import { defineMsdmdCollection } from "./.agents/skills/msdmd/collection";
+
+export default defineMsdmdCollection({
+  repo: "<reponame>",
+  declarations: [
+    { file: "path/to/module.py", block: "CONTRACTS", id: "...", fields: { summary: "..." } },
+    { file: "tests/test_module.py", block: "CHECKS", id: "...", fields: { proves: "..." } },
+  ],
+  gaps: [
+    { file: "path/to/module.py", missing: ["CONTRACTS", "DOCS"] },
+  ],
+  edges: [
+    { from: "module_a", to: "module_b", kind: "requires", source_block: "DEPENDENCIES", source_id: "..." },
+    { from: "check_module_a", to: "module_a_contract", kind: "claims_proves", source_block: "CHECKS", source_id: "..." },
+  ],
+});
+
+export const declarations = [];
+export const gaps = [];
+```
+
+A repo-level msdmd visualizer SHOULD read `<reponame>_msdmd.ts` and render
+relationships between modules using the `MsdmdEdge` shape:
+`DEPENDENCIES.requires`, `CAPABILITIES.exposes`, `OWNERS.owner`,
+`BOUNDARIES` risk fields, `DOCS.covers`, `CHECKS.call`,
+`CHECKS.proves` as `claims_proves`, and any `requires` edges shared
+across application skills. The visualizer is a consumer of the
+collection point, not a second metadata source.
+
+If a repo has no collection point or visualizer yet, record that as `hmmm` in
+repo-local planning rather than pretending the graph exists.
+
+A small stdlib generator prototype lives at `msdmd/collect.py`. Consuming repos
+can run it directly or copy it as a starting point:
+
+```bash
+python -m msdmd.collect --root . --repo <reponame> --out <reponame>_msdmd.ts
+```
+
+The generator is intentionally conservative: it parses module-local blocks,
+emits declarations, optional expected-block gaps, and simple relationship
+edges from reserved fields. Repo-specific runners may enrich the output, but
+should preserve the `MsdmdCollection` shape.
+
+A minimal Mermaid visualizer prototype lives at `msdmd/visualize.py` and reads
+raw JSON or generated TypeScript collection points:
+
+```bash
+python -m msdmd.visualize <reponame>_msdmd.ts --out <reponame>_msdmd.mmd
+```
+
+The visualizer is deliberately small: it renders declaration nodes, normalized
+edge relationships, and visible gap nodes. Rich repo-specific UIs should consume
+the same collection shape rather than re-parsing source files.
+
+
+## The runner protocol
+
+A msdmd runner combines a parser and an executor:
+
+```
+walk(root: Path, block_name: str) -> Iterator[(file: Path, entries: list[Entry])]
+```
+
+Implementation rules every runner MUST follow:
+
+1. **Walk the source tree** under a configurable root, skipping
+   conventional non-source paths (`__pycache__`, `node_modules`,
+   `.git`, build outputs, the runner's own test directory).
+2. **Detect comment marker by extension**, not by content sniffing.
+   `.py / .rb / .ex / .sh → #`. `.ts / .js / .tsx / .jsx / .rs / .go /
+   .java / .c / .cpp / .swift → //`. `.sql / .lua / .hs → --`.
+3. **Parse all matching blocks** in each file. Multiple blocks of the
+   same type concatenate; entries from different blocks are
+   distinguishable only by id, not by source block.
+4. **Visit modules without any block of the requested type** and emit
+   them as a separate "untested" / "undocumented" / "uncapable" gap
+   list. Truncate noise (e.g. show first 20, count the rest), but
+   never silently drop. Visibility is the whole point.
+5. **Exit non-zero** when any entry fails the executor's check. The
+   gap list itself is informational unless the application opts in to
+   strict mode (in which case missing blocks are also a fail).
+
+## Field naming conventions
+
+Reserved field names and their canonical meanings (for cross-skill
+consistency):
+
+| Field | Meaning |
+|---|---|
+| `id` | Unique stable identifier within the block. Required on every entry. |
+| `class` | Free-text tag for grouping (`security`, `correctness`, `idempotency`, etc.). The runner counts entries per class in summaries. |
+| `call` | Executable target owned by an evidence/check declaration. Source `CONTRACTS` do not use this field for test topology. |
+| `proves` | Comma-separated ids this evidence/check entry claims to prove. The collection edge kind is `claims_proves`; mutation sensitivity is a higher verification rung. |
+| `summary` | One-sentence human description. |
+| `requires` | Comma-separated dependency ids or host capabilities. Exact semantics are application-specific and must be documented by the skill that consumes it. |
+| `owner` | Who is responsible (person, agent role, team). |
+| `since` | Version or date this declaration was added. |
+| `deprecated` | If present, marks the entry as scheduled for removal. |
+
+Application-specific fields (`given`, `then`, `expects`, `inputs`,
+`outputs`, `mutates`, `cleanup`, `timeout`, etc.) are introduced by
+individual SKILLs and documented in their own SKILL.md.
+
+## Authoring a new msdmd application
+
+1. **Pick a block name** that doesn't collide with an existing
+   application. Search the lib README for current names.
+2. **Define the field schema** — which fields are required, which
+   optional, what types they carry. Document in your SKILL.md.
+3. **Write the executor** — the function that takes parsed entries
+   and acts on them. Use the universal parser; do not write a new
+   one unless your block needs syntax the universal parser can't
+   express.
+4. **Implement the visibility report** — your runner must list
+   modules without your block type as gaps, and the gap list must
+   be visible in normal output (not buried behind a flag).
+5. **Author a SKILL.md** in this lib with the convention spec, the
+   executor's behavior, and at least one worked example.
+
+`test-build/` is the canonical reference application for paired source
+`CONTRACTS` and test `CHECKS`. Read its SKILL.md alongside this one to
+see the pattern fully realized; read `doc-build/`, `cap-build/`,
+`deps-build/`, `owner-build/`, `risk-boundary-build/`, and `ratios/`
+for additional applications over the same parser contract.
+
+## Anti-patterns
+
+- **Don't define an owned declaration in a detached side file.** The
+  whole point is that the declaration lives next to the module that
+  owns that fact. Source obligations belong in source; test evidence
+  belongs in the test module that owns the evidence.
+- **Don't put `call:` in source `CONTRACTS`.** Source modules own
+  obligations, not test topology. Put executable targets in `CHECKS`.
+- **Don't make ids reflect implementation details.** `chat_returns_200`
+  tells future-you nothing; `chat_get_other_owner_404` tells you what's
+  protected. Ids are part of the documentation.
+- **Don't silently drop modules without blocks.** Coverage gaps must be
+  visible. If your runner doesn't emit the gap list, it's not a msdmd
+  runner; it's a test discovery tool with extra steps.
+- **Don't introduce parser dialects.** If you need richer syntax than
+  the universal parser handles, propose an extension to msdmd, not a
+  fork. The portability of the convention depends on the parser
+  contract being one thing.
+
+## Versioning
+
+- **Block syntax is stable.** Breaking changes (renaming the fence,
+  changing field-line indentation rules, etc.) go through a major
+  version bump and a migration note in the lib README.
+- **Reserved field names** above are stable. New reserved names are
+  additive only.
+- **Application SKILLs** version independently in their own SKILL.md
+  files.

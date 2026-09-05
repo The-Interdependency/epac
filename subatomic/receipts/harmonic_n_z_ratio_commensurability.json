@@ -1,0 +1,29 @@
+{
+  "candidate_id": "n_z_ratio_commensurability",
+  "equivalence_condition": "N/Z == 1 exactly (rational equality).",
+  "information_loss": "reduces each nuclide to its (N, Z) pair; drops spin, excitation spectrum, and binding energy.",
+  "ordered_parameter": {
+    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12",
+    "kind": "nucleon-content-sequence",
+    "time_agnostic": true
+  },
+  "participants": [
+    "H-1",
+    "H-2",
+    "He-4",
+    "Li-7",
+    "C-12"
+  ],
+  "physical_provenance": [
+    "nuclide chart (N, Z) counts; standard nuclear data",
+    "compiled nuclear data; web-pinned 2026-08-22"
+  ],
+  "receipt": "8a49097a9c0373fa05e80103f6838e0c4216ba9fa6629df0e3eac0f27f76f030",
+  "recurrence": {
+    "C-12": true,
+    "Li-7": false
+  },
+  "recurrence_mapping": "Neutron/proton ratio N/Z as an exact rational: H-1 0/1, H-2 1/1, He-4 2/2 = 1, Li-7 4/3, C-12 6/6 = 1. The value N/Z = 1 recurs for the even-even N=Z nuclei He-4 and C-12.",
+  "relation_kind": "ratio",
+  "status": "CROSS-DOMAIN-HYPOTHESIS"
+}

@@ -1,0 +1,66 @@
+{
+  "atomic_id": "f05ba72b602bc646a82fbf516ddd01fef0dc5d7eadd3689e9323d40871bb551d",
+  "carried_options": [
+    [
+      "Z",
+      "3"
+    ],
+    [
+      "period",
+      "2"
+    ],
+    [
+      "group",
+      "1"
+    ],
+    [
+      "A",
+      "7"
+    ],
+    [
+      "electron-configuration",
+      "1s2.2s1"
+    ],
+    [
+      "valence-electrons",
+      "1"
+    ],
+    [
+      "harmonic-surviving",
+      "alpha_cluster_recurrence,n_z_ratio_commensurability,ground_state_spin_parity_symmetry,binding_per_nucleon_commensurability"
+    ],
+    [
+      "status",
+      "CROSS-DOMAIN-HYPOTHESIS"
+    ]
+  ],
+  "constructor_id": "edcm.gonol",
+  "constructor_version": "v1",
+  "hmmm": [
+    "exact UCNS geometric operation of each Public Gonol function position",
+    "UCNS Mobius-carrier affixiation/coupling law",
+    "which scales and relations, if any, are later selected",
+    "source-supported complete English morphology law"
+  ],
+  "nonclaims": [
+    "not selected canon",
+    "not EDCM measurement validity",
+    "not a mandatory character-word-definition-recursive ladder",
+    "not complete English morphology law",
+    "not a UCNS geometric function operation",
+    "not a UCNS Mobius coupling law",
+    "not METAPAT canon promotion"
+  ],
+  "participant_kinds": [
+    "nucleus",
+    "shell",
+    "shell"
+  ],
+  "receipt_digest": "ff23abd7f8230a1fefeb397f373a7af1cd0279383dbc7166d9305cadf9312c95",
+  "relation": "epac.subatomic.element",
+  "replay_digest": "ff23abd7f8230a1fefeb397f373a7af1cd0279383dbc7166d9305cadf9312c95",
+  "scale": "word",
+  "selection_effect": "none",
+  "source_id": "epac.subatomic.element:Li#0",
+  "standing": "implemented-candidate"
+}

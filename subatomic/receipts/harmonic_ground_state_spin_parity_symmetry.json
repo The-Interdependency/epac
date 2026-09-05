@@ -1,0 +1,28 @@
+{
+  "candidate_id": "ground_state_spin_parity_symmetry",
+  "equivalence_condition": "J^pi == \"0+\" for the even-even symmetry class.",
+  "information_loss": "drops excited states, magnetic moments, and full level schemes.",
+  "ordered_parameter": {
+    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12",
+    "kind": "nucleon-content-sequence",
+    "time_agnostic": true
+  },
+  "participants": [
+    "H-1",
+    "H-2",
+    "He-4",
+    "Li-7",
+    "C-12"
+  ],
+  "physical_provenance": [
+    "compiled nuclear data; web-pinned 2026-08-22"
+  ],
+  "receipt": "b0d5eded85102d8c57a33a8360e47aaa98e67e625f5cdee04469d796561dd77a",
+  "recurrence": {
+    "C-12": true,
+    "Li-7": false
+  },
+  "recurrence_mapping": "Ground-state spin-parity J^pi: H-1 1/2+, H-2 1+, He-4 0+, Li-7 3/2-, C-12 0+. The value 0+ recurs for even-even, paired, closed-shell nuclei He-4 and C-12; odd-mass nuclei take half-integer spins.",
+  "relation_kind": "symmetry",
+  "status": "CROSS-DOMAIN-HYPOTHESIS"
+}

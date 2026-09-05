@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "candidate": "EPAC",
   "lifecycle_state": "stabilizing",
-  "physical_repository_state": "extracting",
+  "physical_repository_state": "extracted",
   "mode": "execution",
   "authorization": {
     "external_mutation": "authorized",
@@ -47,7 +47,7 @@
   ],
   "gates": {
     "public_api": "hmmm",
-    "independent_tests": "pending-extraction-verification",
+    "independent_tests": "pass",
     "clean_build_install": "fail",
     "license_distribution_rights": "fail",
     "release_ownership_authority": "pass",
