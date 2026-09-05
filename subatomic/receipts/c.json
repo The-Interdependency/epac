@@ -1,0 +1,88 @@
+{
+  "A": 12,
+  "Z": 6,
+  "closure_scale": "epac.subatomic.atomic",
+  "element_id": "epac.subatomic_affixiation.c",
+  "neutron_glyphs": [
+    "C",
+    "%",
+    "(",
+    "D",
+    "&",
+    "'"
+  ],
+  "neutron_positions": [
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "ordered_parameter_id": "ucns.native-mobius-turn-index",
+  "proton_glyphs": [
+    "A",
+    "!",
+    "\"",
+    "B",
+    "#",
+    "$"
+  ],
+  "proton_positions": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "receipt": "a4026f197d6a0425b4ea5b3ff72d09d49fd159d5f59440480b5f97793b64cdc6",
+  "relation_id": "metapat.affixiation_harmonics.affixiation",
+  "source_commits": {
+    "metapat": "34d954aa1e2092e615b03a180500f6b6977f501e",
+    "ucns": "1975fe70cf4e0826a8020c2da3047569e277af64"
+  },
+  "status": "CROSS-DOMAIN-HYPOTHESIS",
+  "symbol": "C",
+  "t_states": [
+    {
+      "complete_key": [
+        "ucns.native-mobius-root-loop",
+        "0",
+        "positive-local-frame"
+      ],
+      "frame": "positive-local-frame",
+      "t": 0,
+      "visible_key": [
+        "ucns.native-mobius-root-loop",
+        "0"
+      ]
+    },
+    {
+      "complete_key": [
+        "ucns.native-mobius-root-loop",
+        "0",
+        "reversed-local-frame"
+      ],
+      "frame": "reversed-local-frame",
+      "t": 1,
+      "visible_key": [
+        "ucns.native-mobius-root-loop",
+        "0"
+      ]
+    },
+    {
+      "complete_key": [
+        "ucns.native-mobius-root-loop",
+        "0",
+        "positive-local-frame"
+      ],
+      "frame": "positive-local-frame",
+      "t": 2,
+      "visible_key": [
+        "ucns.native-mobius-root-loop",
+        "0"
+      ]
+    }
+  ]
+}

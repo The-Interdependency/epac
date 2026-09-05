@@ -1,0 +1,12 @@
+{
+  "schema": "epac.sealed-known-molecular-geometry",
+  "version": "v1",
+  "opened_only_after_construction": true,
+  "molecules": {
+    "H2": {"atom_count": 2, "known_shape": "linear"},
+    "H2O": {"atom_count": 3, "known_shape": "bent"},
+    "NH3": {"atom_count": 4, "known_shape": "trigonal-pyramidal"},
+    "CH4": {"atom_count": 5, "known_shape": "tetrahedral"},
+    "CO2": {"atom_count": 3, "known_shape": "linear"}
+  }
+}

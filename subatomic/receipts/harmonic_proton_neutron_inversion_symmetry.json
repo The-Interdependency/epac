@@ -1,0 +1,26 @@
+{
+  "candidate_id": "proton_neutron_inversion_symmetry",
+  "equivalence_condition": "N == Z (self-mirror under p <-> n exchange).",
+  "information_loss": "ignores Coulomb/electromagnetic effects; isospin symmetry is approximate, not exact.",
+  "ordered_parameter": {
+    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12",
+    "kind": "nucleon-content-sequence",
+    "time_agnostic": true
+  },
+  "participants": [
+    "He-4",
+    "C-12"
+  ],
+  "physical_provenance": [
+    "isospin symmetry; standard nuclear physics (Wigner)",
+    "hmmm: exact citation not web-pinned this session"
+  ],
+  "receipt": "9ac380f43069bf69d2eaaa238070dfa8caa40f5029fdb34136310b5877aa52f9",
+  "recurrence": {
+    "C-12": true,
+    "Li-7": false
+  },
+  "recurrence_mapping": "Proton <-> neutron inversion (isospin mirror symmetry): N=Z nuclei He-4 and C-12 map to themselves under p <-> n exchange. H-1 inverts to the free neutron, which is unbound \u2014 a declared asymmetry, not a phase.",
+  "relation_kind": "inversion",
+  "status": "CROSS-DOMAIN-HYPOTHESIS"
+}

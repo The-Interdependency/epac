@@ -1,0 +1,31 @@
+{
+  "schema": "epac.periodic-table-atomic-structure",
+  "version": "v1",
+  "scope": "Z=1-18 ground-state atomic structure for element-gonol construction",
+  "source": "established main-group ground-state electron configurations and typical hydride valences; not a molecular-shape table",
+  "excludes": [
+    "bond-angle",
+    "shape-class",
+    "hybridization-as-shape"
+  ],
+  "elements": [
+    {"Z": 1, "symbol": "H", "period": 1, "group": 1, "electron_configuration": "1s1", "valence_electrons": 1, "typical_valence": 1},
+    {"Z": 2, "symbol": "He", "period": 1, "group": 18, "electron_configuration": "1s2", "valence_electrons": 2, "typical_valence": 0},
+    {"Z": 3, "symbol": "Li", "period": 2, "group": 1, "electron_configuration": "1s2.2s1", "valence_electrons": 1, "typical_valence": 1},
+    {"Z": 4, "symbol": "Be", "period": 2, "group": 2, "electron_configuration": "1s2.2s2", "valence_electrons": 2, "typical_valence": 2},
+    {"Z": 5, "symbol": "B", "period": 2, "group": 13, "electron_configuration": "1s2.2s2.2p1", "valence_electrons": 3, "typical_valence": 3},
+    {"Z": 6, "symbol": "C", "period": 2, "group": 14, "electron_configuration": "1s2.2s2.2p2", "valence_electrons": 4, "typical_valence": 4},
+    {"Z": 7, "symbol": "N", "period": 2, "group": 15, "electron_configuration": "1s2.2s2.2p3", "valence_electrons": 5, "typical_valence": 3},
+    {"Z": 8, "symbol": "O", "period": 2, "group": 16, "electron_configuration": "1s2.2s2.2p4", "valence_electrons": 6, "typical_valence": 2},
+    {"Z": 9, "symbol": "F", "period": 2, "group": 17, "electron_configuration": "1s2.2s2.2p5", "valence_electrons": 7, "typical_valence": 1},
+    {"Z": 10, "symbol": "Ne", "period": 2, "group": 18, "electron_configuration": "1s2.2s2.2p6", "valence_electrons": 8, "typical_valence": 0},
+    {"Z": 11, "symbol": "Na", "period": 3, "group": 1, "electron_configuration": "[Ne].3s1", "valence_electrons": 1, "typical_valence": 1},
+    {"Z": 12, "symbol": "Mg", "period": 3, "group": 2, "electron_configuration": "[Ne].3s2", "valence_electrons": 2, "typical_valence": 2},
+    {"Z": 13, "symbol": "Al", "period": 3, "group": 13, "electron_configuration": "[Ne].3s2.3p1", "valence_electrons": 3, "typical_valence": 3},
+    {"Z": 14, "symbol": "Si", "period": 3, "group": 14, "electron_configuration": "[Ne].3s2.3p2", "valence_electrons": 4, "typical_valence": 4},
+    {"Z": 15, "symbol": "P", "period": 3, "group": 15, "electron_configuration": "[Ne].3s2.3p3", "valence_electrons": 5, "typical_valence": 3},
+    {"Z": 16, "symbol": "S", "period": 3, "group": 16, "electron_configuration": "[Ne].3s2.3p4", "valence_electrons": 6, "typical_valence": 2},
+    {"Z": 17, "symbol": "Cl", "period": 3, "group": 17, "electron_configuration": "[Ne].3s2.3p5", "valence_electrons": 7, "typical_valence": 1},
+    {"Z": 18, "symbol": "Ar", "period": 3, "group": 18, "electron_configuration": "[Ne].3s2.3p6", "valence_electrons": 8, "typical_valence": 0}
+  ]
+}

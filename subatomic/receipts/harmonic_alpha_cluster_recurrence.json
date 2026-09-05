@@ -1,0 +1,27 @@
+{
+  "candidate_id": "alpha_cluster_recurrence",
+  "equivalence_condition": "constituent decomposition contains one or more He-4 closed-shell clusters, each 2p2n with J^pi=0+; equivalence is cluster decomposition, not full state equality.",
+  "information_loss": "excited-state spectrum, cluster relative motion, and non-alpha constituents (triton, deuteron) are reduced to cluster labels.",
+  "ordered_parameter": {
+    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12",
+    "kind": "nucleon-content-sequence",
+    "time_agnostic": true
+  },
+  "participants": [
+    "He-4",
+    "Li-7",
+    "C-12"
+  ],
+  "physical_provenance": [
+    "standard nuclear cluster models; Hoyle (1954) prediction of the C-12 7.65 MeV 0+ state",
+    "hmmm: exact literature citation not web-pinned this session"
+  ],
+  "receipt": "212fd1bfd57f921d76706bcb28b2e3bde272857f102ede870767237b8fd7e5ad",
+  "recurrence": {
+    "C-12": true,
+    "Li-7": true
+  },
+  "recurrence_mapping": "The closed-shell He-4 cluster (2p2n, J^pi=0+, doubly magic) recurs as a constituent: Li-7 ~ alpha + triton; C-12 ~ 3 x alpha (3-alpha cluster model; Hoyle 0+ state near 7.65 MeV excitation).",
+  "relation_kind": "recurrence",
+  "status": "CROSS-DOMAIN-HYPOTHESIS"
+}
