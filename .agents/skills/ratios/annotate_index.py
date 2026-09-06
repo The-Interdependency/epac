@@ -1,4 +1,4 @@
-# ratios: loc_comments=232:33 imports_exports=7:4 calls_definitions=83:14
+# ratios: loc_comments=264:34 imports_exports=7:4 calls_definitions=99:17
 """Portable computer for the canonical ratios seal — a0's `N:M C:D I:O`.
 
 This is the shared, stdlib port of `The-Interdependency/a0`'s
@@ -59,12 +59,30 @@ def _is_seal(line: str, ext: str) -> bool:
     return bool((_ANN_PY if ext == ".py" else _ANN_TS).match(s))
 
 
+def _has_valid_shebang(lines: list[str]) -> bool:
+    """Return whether literal line 1 is a non-empty interpreter directive."""
+    return bool(lines and lines[0].startswith("#!") and lines[0][2:].strip())
+
+
+def _opening_index(lines: list[str]) -> int:
+    return 1 if _has_valid_shebang(lines) else 0
+
+
+def _last_nonblank_index(lines: list[str]) -> int | None:
+    for index in range(len(lines) - 1, -1, -1):
+        if lines[index].strip():
+            return index
+    return None
+
+
 def _strip_seal(lines: list[str], ext: str) -> list[str]:
     w = lines[:]
-    if w and _is_seal(w[0], ext):
-        w = w[1:]
-    if w and _is_seal(w[-1], ext):
-        w = w[:-1]
+    opening = _opening_index(w)
+    if len(w) > opening and _is_seal(w[opening], ext):
+        del w[opening]
+    closing = _last_nonblank_index(w)
+    if closing is not None and _is_seal(w[closing], ext):
+        del w[closing]
     return w
 
 
@@ -289,18 +307,39 @@ def main(argv: list[str] | None = None) -> int:
             lines = path.read_text(encoding="utf-8").splitlines()
         except OSError:
             continue
-        have = lines[0].strip() if lines else ""
-        placed_ok = bool(lines) and _is_seal(lines[0], ext) and _is_seal(lines[-1], ext)
+        opening = _opening_index(lines)
+        closing = _last_nonblank_index(lines)
+        have = lines[opening].strip() if len(lines) > opening else ""
+        close = lines[closing].strip() if closing is not None else ""
+        placed_ok = (
+            len(lines) > opening
+            and _is_seal(lines[opening], ext)
+            and closing is not None
+            and _is_seal(lines[closing], ext)
+            and not (
+                opening == 0
+                and len(lines) > 1
+                and lines[1].startswith("#!")
+                and bool(lines[1][2:].strip())
+            )
+        )
         if write:
             working = _strip_seal(lines, ext)
-            new = "\n".join([want] + working + [want]) + "\n"
+            if _has_valid_shebang(working):
+                new_lines = [working[0], want, *working[1:], want]
+            else:
+                new_lines = [want, *working, want]
+            new = "\n".join(new_lines) + "\n"
             if new != path.read_text(encoding="utf-8"):
                 path.write_text(new, encoding="utf-8")
                 print(f"  stamped {path.relative_to(root)}  [{want}]")
         else:
-            if not placed_ok or have != want:
+            if not placed_ok or have != want or close != want:
                 drift += 1
-                print(f"  DRIFT {path.relative_to(root)}: have '{have}' want '{want}'")
+                print(
+                    f"  DRIFT {path.relative_to(root)}: "
+                    f"opening '{have}' closing '{close}' want '{want}'"
+                )
     if check:
         print(f"annotate_index: {len(files)} files, {drift} drift/misplaced")
         return 1 if drift else 0
@@ -309,4 +348,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=232:33 imports_exports=7:4 calls_definitions=83:14
+# ratios: loc_comments=264:34 imports_exports=7:4 calls_definitions=99:17

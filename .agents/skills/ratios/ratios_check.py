@@ -1,18 +1,21 @@
-# ratios: loc_comments=190:27 imports_exports=6:7 calls_definitions=78:10
+# ratios: loc_comments=218:33 imports_exports=6:7 calls_definitions=86:10
 """ratios skill executor — recompute the canonical ratios and gate on drift.
 
 Reference runner for the ``ratios`` skill. It reads the single-line RATIOS
 declaration (``<marker> ratios: loc_comments=N:M imports_exports=N:M
-calls_definitions=N:M``) from a file's first and last non-blank lines,
+calls_definitions=N:M``) from a file's opening and closing source boundaries,
 recomputes each ratio from the source, and fails on:
 
   * drift      — a recorded ratio no longer matches what the source computes;
-  * misplaced  — a RATIOS declaration not on both the first and last line;
-  * gaps       — (only under ``--strict``) source files with no RATIOS at all.
+  * misplaced  — a RATIOS declaration not on both source boundaries;
+  * gaps       — (only under ``--strict``) computer-supported files with no
+                 RATIOS at all.
 
 ``value: hmmm`` is reported as pending, never a failure. A recorded id with no
 registered computer is reported as unverifiable (informational). Pure stdlib;
 the single-line reader is reused from the msdmd universal parser, not forked.
+The bundled computers are Python-specific. Parser support for another language
+does not silently opt that language into Python metric semantics.
 
 Usage:
     python ratios_check.py path/to/module.py      # verify one file
@@ -148,6 +151,11 @@ COMPUTERS = {
     "calls_definitions": compute_calls_definitions,
 }
 
+# The named-form computers above use Python imports, definitions, docstrings,
+# and call syntax. Other parser-supported languages remain discoverable without
+# becoming false strict-mode gaps or receiving Python-shaped verification.
+COMPUTER_EXTENSIONS = {".py"}
+
 
 def _iter_source(root: Path):
     """Yield every source file under ``root`` with a known comment marker."""
@@ -167,13 +175,36 @@ def _verify_file(path: Path, base: Path, rep: dict) -> None:
     text = path.read_text(encoding="utf-8", errors="ignore")
     entries = parse_ratios(text, marker)
     if not entries:
-        rep["gaps"].append(rel)
+        if path.suffix.lower() in COMPUTER_EXTENSIONS:
+            rep["gaps"].append(rel)
+        else:
+            rep["outside_computer_scope"].append(rel)
         return
     rep["covered"] += 1
 
-    first_ok, last_ok = ratios_placement(text, marker)
-    if not (first_ok and last_ok):
-        rep["misplaced"].append({"file": rel, "first_line": first_ok, "last_line": last_ok})
+    opening_ok, closing_ok = ratios_placement(text, marker)
+    if not (opening_ok and closing_ok):
+        rep["misplaced"].append(
+            {"file": rel, "opening": opening_ok, "closing": closing_ok}
+        )
+
+    if path.suffix.lower() not in COMPUTER_EXTENSIONS:
+        for entry in entries:
+            value = (entry.get("value") or "").strip()
+            if value == "hmmm":
+                rep["pending"].append(
+                    {"file": rel, "id": entry.get("id", ""), "reason": "language computer unavailable"}
+                )
+                continue
+            rep["unverifiable"].append(
+                {
+                    "file": rel,
+                    "id": entry.get("id", ""),
+                    "value": value,
+                    "reason": f"no named-form computer for {path.suffix.lower()}",
+                }
+            )
+        return
 
     for entry in entries:
         cid = entry.get("id", "")
@@ -202,7 +233,7 @@ def run(target: Path) -> dict:
     rep: dict = {
         "skill": "ratios", "root": str(target), "scanned": 0, "covered": 0,
         "gaps": [], "drift": [], "misplaced": [], "pending": [],
-        "verified": [], "unverifiable": [],
+        "verified": [], "unverifiable": [], "outside_computer_scope": [],
     }
     if target.is_file():
         rep["scanned"] = 1
@@ -215,6 +246,7 @@ def run(target: Path) -> dict:
     rep["drift_count"] = len(rep["drift"])
     rep["misplaced_count"] = len(rep["misplaced"])
     rep["pending_count"] = len(rep["pending"])
+    rep["outside_computer_scope_count"] = len(rep["outside_computer_scope"])
     rep["verified_count"] = len(rep["verified"])
     return rep
 
@@ -226,6 +258,7 @@ def summary(rep: dict) -> str:
         f"{rep['verified_count']} verified . {rep['drift_count']} drift . "
         f"{rep['misplaced_count']} misplaced . "
         f"{rep['pending_count']} hmmm . {len(rep['unverifiable'])} unverifiable"
+        f" . {rep['outside_computer_scope_count']} outside-computer-scope"
     )
 
 
@@ -242,7 +275,10 @@ def main(argv: list[str] | None = None) -> int:
     for d in rep["drift"][:30]:
         print(f"  drift: {d['file']} :: {d['id']}: recorded {d['recorded']} != computed {d['computed']}")
     for m in rep["misplaced"][:30]:
-        print(f"  misplaced: {m['file']}: first_line={m['first_line']} last_line={m['last_line']}")
+        print(
+            f"  misplaced: {m['file']}: "
+            f"opening={m['opening']} closing={m['closing']}"
+        )
     if strict:
         for g in rep["gaps"][:30]:
             print(f"  gap: {g}")
@@ -253,4 +289,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=190:27 imports_exports=6:7 calls_definitions=78:10
+# ratios: loc_comments=218:33 imports_exports=6:7 calls_definitions=86:10

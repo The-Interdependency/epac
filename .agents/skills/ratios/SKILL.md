@@ -1,6 +1,6 @@
 ---
 name: ratios
-description: Self-declaring module composition ratios on msdmd — a single comment line on a file's first and last line (never a fenced block). The canonical seal is `The-Interdependency/a0`'s compact positional `N:M C:D I:O` annotation (code:comment · consumed:declared · fan-in:fan-out), computed by a0's `scripts/annotate.py`; the named `loc_comments=… imports_exports=… calls_definitions=…` line is a portable, per-file adaptation for standalone libraries, verified by the stdlib `ratios_check.py` (drift/misplacement failures, visible gaps). JSON/Markdown are out of scope. Load this when recording a module's composition ratios, when authoring or extending the ratio registry, or when wiring ratio verification into CI.
+description: Self-declaring module composition ratios on msdmd — one comment line at a file's opening and closing source boundaries (never a fenced block), with a valid interpreter shebang allowed before the opening seal. The canonical seal is `The-Interdependency/a0`'s compact positional `N:M C:D I:O` annotation (code:comment · consumed:declared · fan-in:fan-out), computed by a0's `scripts/annotate.py`; the named `loc_comments=… imports_exports=… calls_definitions=…` line is a portable, per-file adaptation for standalone libraries, verified by the stdlib `ratios_check.py` (drift/misplacement failures, visible gaps). JSON/Markdown are out of scope. Load this when recording a module's composition ratios, when authoring or extending the ratio registry, or when wiring ratio verification into CI.
 ---
 
 # ratios — Module composition ratios on msdmd
@@ -23,13 +23,18 @@ the file is a build failure, not a stale comment nobody noticed.
 
 `The-Interdependency/a0` is the **canonical origin** of the ratios seal — the
 convention every other form adapts, not the other way round. a0 stamps three
-composition metrics on the first and last line of every Python / TypeScript
-file, written and verified by its own `scripts/annotate.py`:
+composition metrics at the opening and closing source boundaries of every
+Python / TypeScript file, written and verified by its own `scripts/annotate.py`:
 
 ```text
 # N:M C:D I:O        (Python)
 // N:M C:D I:O       (TypeScript / TSX)
 ```
+
+Ordinary modules put the opening seal on literal line 1. Directly executable
+scripts reserve literal line 1 for a non-empty `#!` interpreter directive and
+put the opening seal immediately on literal line 2. The matching closing seal
+is the last non-blank line in both cases.
 
 | pair | meaning | how computed |
 |---|---|---|
@@ -73,16 +78,17 @@ are per-file stand-ins for the surface/graph intent of `C:D` and `I:O`. Repos
 already stamped in this form (skill-lib, aimmh, edcmbone, pcna, pcta, ptca,
 pcea) remain valid and are **not** required to reconvert.
 
-Both forms keep one seal discipline: a single line on the file's first and last
-non-blank line, with nothing above it.
+Both forms keep one seal discipline: a single line at the opening and closing
+source boundaries. Nothing may precede the opening seal except one valid
+interpreter shebang on literal line 1.
 
-### The single line, and the first/last rule
+### The single line and shebang-safe boundary rule
 
 RATIOS is the one msdmd declaration that is **not a fenced block**. It applies
 to executable/source files with a language comment marker (`#`, `//`, or `--`),
 not to JSON, Markdown, or other data/documentation files. In covered source
-files it is a single comment line carrying all three ratios, placed on the
-file's **literal first line and its last non-blank line**:
+files it is a single comment line carrying all three ratios, placed at the
+opening boundary and repeated on the file's last non-blank line:
 
 ```python
 # ratios: loc_comments=128:49 imports_exports=4:7 calls_definitions=51:10
@@ -90,6 +96,20 @@ file's **literal first line and its last non-blank line**:
 ...
 # ratios: loc_comments=128:49 imports_exports=4:7 calls_definitions=51:10
 ```
+
+For a directly executable script:
+
+```bash
+#!/usr/bin/env bash
+# ratios: loc_comments=40:12 imports_exports=0:0 calls_definitions=0:0
+...
+# ratios: loc_comments=40:12 imports_exports=0:0 calls_definitions=0:0
+```
+
+The shebang exception is structural, not a general license for preambles: it
+must be non-empty, occupy literal line 1, and be followed immediately by the
+opening seal. Blank lines, encoding headers, copyright comments, or other text
+before the seal fail placement.
 
 The form is:
 
@@ -101,10 +121,10 @@ The form is:
 - The three ids are fixed: `loc_comments`, `imports_exports`,
   `calls_definitions`. Each carries an `A:B` value, or `hmmm` if the ratio is
   declared-but-not-yet-resolved.
-- The same line opens and closes the file. The file is a self-measuring
-  object; its boundary lines carry the measurement, opening and closing.
+- The same line opens and closes the file. Without a shebang the opening seal
+  is literal line 1; with a valid shebang it is literal line 2.
 - Scope: executable source files only. `json` and `.md` files are out of
-  scope for first/last-line RATIOS bookends.
+  scope for RATIOS boundary seals.
 
 There is no fenced `# === RATIOS === … # === END RATIOS ===` block. An earlier
 draft of this skill described one; that was wrong. Tooling reads the single
@@ -126,7 +146,7 @@ a fork (`msdmd/parsers/universal.py`):
 from msdmd.parsers.universal import parse_ratios, ratios_placement, RATIO_IDS
 
 parse_ratios(text, marker)      # -> [{"id": "loc_comments", "value": "128:49"}, ...]
-ratios_placement(text, marker)  # -> (first_line_ok, last_non_blank_line_ok)
+ratios_placement(text, marker)  # -> (opening_ok, closing_ok)
 ```
 
 `parse_ratios` returns one flat `{"id", "value"}` dict per (declaration line ×
@@ -144,7 +164,7 @@ registry. A computer is a pure function `file_text -> "A:B"`. The runner:
   measurement;
 - compares the recomputed value to the recorded value;
 - on mismatch, emits a **drift** error and exits non-zero;
-- on a declaration that is not on both the first and last line, emits a
+- on a declaration that is not on both source boundaries, emits a
   **misplaced** error and exits non-zero;
 - on `value: hmmm`, reports a living continuation (pending), never a failure —
   the transition out of `hmmm` is the owner's decision;
@@ -152,10 +172,13 @@ registry. A computer is a pure function `file_text -> "A:B"`. The runner:
   unverifiable (informational), so unknown ratios stay visible rather than
   silently trusted.
 
-Covered source files with no `ratios:` line surface as coverage gaps, exactly
-as in the build checker. JSON, Markdown, and other files with no supported
-source comment marker are skipped rather than reported as gaps. The gap list is
-informational unless `--strict`.
+The bundled named-form computers currently implement Python syntax. Python
+files without `ratios:` surface as coverage gaps; other parser-supported
+languages do not become false gaps merely because msdmd learned their comment
+marker. If a non-Python file already carries a named seal, the runner checks
+its placement and reports its values as visible-but-unverifiable until a
+language-aware computer is registered. JSON, Markdown, and unsupported files
+remain out of scope. The Python gap list is informational unless `--strict`.
 
 ## The three ratios
 
@@ -252,9 +275,9 @@ as gaps is expected, not a bug.
   It is a single `ratios:` line; the block form was a mistake.
 - Recording a ratio by hand instead of recomputing it. The point is that the
   file measures itself; a hand-typed value is a contract that drifts.
-- Placing the line anywhere but the file's first and last line. The first/last
-  placement is the convention; a mid-file `ratios:` line defeats the
-  at-a-glance reading and fails the placement gate.
+- Placing anything before opening RATIOS except a valid line-1 shebang, or
+  leaving a gap between that shebang and the opening seal. Either breaks the
+  source-boundary invariant and fails placement.
 - Counting a `ratios:` line in its own ratio. Always self-exclude.
 - Inventing ratio ids whose computer does not exist and recording a number
   for them. If there's no computer, the value cannot be verified — record
@@ -265,16 +288,17 @@ as gaps is expected, not a bug.
 
 ## Completion criteria
 
-A run is complete when every covered executable/source file carries a correctly placed `ratios:`
-line on its first and last line, the registry's three computers
-(`loc_comments`, `imports_exports`, `calls_definitions`) recompute each
-recorded value with no drift, and any unresolved ratio is recorded as `hmmm`
-rather than guessed.
+A run is complete when every computer-covered source file carries a correctly
+placed opening RATIOS line (literal line 1, or line 2 immediately after a valid
+line-1 shebang), an identical closing line on the last non-blank line, the
+registry's three computers (`loc_comments`, `imports_exports`,
+`calls_definitions`) recompute each recorded value with no drift, and any
+unresolved ratio is recorded as `hmmm` rather than guessed.
 
 hmmm
-- the reference computers implement the Python counting rules; language-aware
-  computers for TypeScript/other markers are a documented extension point, not
-  yet implemented in `ratios_check.py`
+- language-aware named-form computers for TypeScript and other parser-supported
+  languages remain an extension point; the runner now exposes them as outside
+  computer scope instead of applying Python semantics
 - whether ratios verification joins CI beside the other msdmd checks
 - calls_definitions: whether lambda assignments count as definitions
 - imports_exports: whether re-exported names from `__init__.py` aggregate
