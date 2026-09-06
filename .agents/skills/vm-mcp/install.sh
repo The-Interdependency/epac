@@ -1,5 +1,5 @@
-# ratios: loc_comments=115:18 imports_exports=0:0 calls_definitions=2:0
 #!/usr/bin/env bash
+# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
 set -euo pipefail
 
 # Install canonical vm-mcp on a Linux VM.
@@ -148,4 +148,4 @@ else
   printf '  root broker:   disabled\n'
 fi
 systemctl --no-pager --full status vm-mcp.service | sed -n '1,14p'
-# ratios: loc_comments=115:18 imports_exports=0:0 calls_definitions=2:0
+# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
