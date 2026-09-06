@@ -542,11 +542,14 @@ def quaternion_structure_readout(structure: Mapping[str, object]) -> tuple[objec
     return tuple(
         sorted(
             (
-                _tuple_tree(item["components"]),
-                _tuple_tree(item["represented_ids"]),
-            )
-            for item in structure.get("quaternions", ())
-        , key=_sortable_tree)
+                (
+                    _tuple_tree(item["components"]),
+                    _tuple_tree(item["represented_ids"]),
+                )
+                for item in structure.get("quaternions", ())
+            ),
+            key=_sortable_tree,
+        )
     )
 
 
