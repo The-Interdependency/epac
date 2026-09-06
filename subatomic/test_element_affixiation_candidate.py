@@ -45,11 +45,8 @@ from ucns import (
 
 
 def test_imports_consume_only_established_ucns_surfaces():
-    # The candidate module surface must stay identity-only. If this test
-    # fails, a position operation or unestablished geometry was introduced.
     assert candidate.CONSTRUCTION_IDS["ordered_parameter"] == "ucns.native-mobius-turn-index"
     assert candidate.CONSTRUCTION_IDS["relation"] == "metapat.affixiation_harmonics.affixiation"
-    # The only UCNS geometry imported is carrier identity + Möbius framing.
     assert public_gonol_function(0).glyph == PUBLIC_GONOL_157[0]
 
 
@@ -64,7 +61,6 @@ def test_element_identity_positions_exact():
         element = candidate.affixiate_element(symbol)
         assert element.proton_positions == expected_p
         assert element.neutron_positions == expected_n
-        # Every assigned position is an identity coordinate on the carrier.
         assert all(0 <= i < len(PUBLIC_GONOL_157) for i in element.proton_positions)
         assert all(0 <= i < len(PUBLIC_GONOL_157) for i in element.neutron_positions)
         assert element.proton_glyphs == tuple(
@@ -94,9 +90,25 @@ def test_receipt_deterministic_and_replayable():
         assert matches is True
         assert replay_receipt == first.receipt
         assert len(first.receipt) == 64
-    # Distinct participant sets produce distinct receipts.
     receipts = {candidate.affixiate_element(s).receipt for s in candidate.ISOTOPE_DEFAULTS}
     assert len(receipts) == len(candidate.ISOTOPE_DEFAULTS)
+
+    frozen = candidate.affixiate_element("He")
+    before = frozen.receipt
+    try:
+        frozen.t_states[0]["frame"] = "tampered"
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("closed t_states must be immutable")
+    try:
+        frozen.source_commits["ucns"] = "tampered"
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("closed source_commits must be immutable")
+    assert frozen.receipt == before
+    assert candidate.replay_element("He") == (True, before)
 
 
 def test_no_physics_or_canon_claim():
@@ -105,5 +117,5 @@ def test_no_physics_or_canon_claim():
         assert element.status == "CROSS-DOMAIN-HYPOTHESIS"
         assert element.closure_scale == "epac.subatomic.atomic"
     assert candidate.SOURCE_COMMITS["metapat"] == "34d954aa1e2092e615b03a180500f6b6977f501e"
-    assert candidate.SOURCE_COMMITS["ucns"] == "1975fe70cf4e0826a8020c2da3047569e277af64"
+    assert candidate.SOURCE_COMMITS["ucns"] == "828c0b8bbcfc267efb5701da714191c1f73a81ff"
     assert PUBLIC_GONOL_SHA256 == "55d10c84529a4d7bc7714786357e977b68d9df2ac3f73d20e229580b552c2ef5"
