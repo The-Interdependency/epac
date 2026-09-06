@@ -6,7 +6,7 @@ EPAC is the independent repository for The Interdependency's elementary/particle
 
 ## Standing
 
-- Physical repository state: extracted from the stack incubator and independently verified.
+- Physical repository state: extracted from the stack incubator; exact candidate/forge verification remains unresolved until a dedicated immutable verification receipt exists.
 - Authority transition: incomplete until the release/reconsumption graduation gates are satisfied.
 - Research status: provisional / cross-domain hypothesis unless a narrower artifact says otherwise.
 - Empirical status: no transfer. Repository independence does not make a physics or chemistry claim true.
@@ -35,14 +35,14 @@ The extraction preserves the stack research artifacts and their epistemic status
 
 ## Verification
 
-The extraction gate executes:
+The current extraction gate executes:
 
 - 41 repository regression tests;
 - 26 subatomic executable witnesses;
 - the preregistered molecular comparison, requiring all four current standings to remain `FALSIFIED`;
 - deterministic work-graph digest verification.
 
-CI independently resolves the pinned UCNS source before running the same gates.
+CI resolves the pinned UCNS source before running those gates. Passing those checks establishes reproducibility of the extracted research tree; it does **not** satisfy `exact_candidate_forge_verification`, stable release, or reconsumption by itself.
 
 ## Usage guidance
 
@@ -52,6 +52,7 @@ Do not treat successful execution as empirical validation. Constructors establis
 
 ## hmmm
 
+- exact candidate/forge verification receipt
 - distribution surface and first immutable release artifact
 - license/distribution-rights selection for this independent repository
 - clean package/install dependency contract for UCNS

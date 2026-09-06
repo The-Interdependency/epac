@@ -30,8 +30,8 @@ Usage guidance
 #   module_kind: experiment
 #   summary: EPAC candidate constructor that closes gonols on the UCNS Public Gonol carrier with oriented couplings and arity charge states; not the EDCM text-domain constructor
 #   owner: The Interdependency
-#   public_surface: CONSTRUCTOR_ID, CONSTRUCTOR_VERSION, PINNED_PUBLIC_GONOL_SHA256, ClosedPublicGonol, PublicGonolReceipt, PublicGonolConstructionError, construct_public_gonol, replay_public_gonol, canonical_receipt_bytes
-#   internal_surface: _require_text, _identity_position, _geometry, _participant_payload, _atomic_payload, _receipt_payload, _digest
+#   public_surface: CONSTRUCTOR_ID, CONSTRUCTOR_VERSION, PINNED_UCNS_COMMIT, PINNED_PUBLIC_GONOL_SHA256, ClosedPublicGonol, PublicGonolReceipt, PublicGonolConstructionError, construct_public_gonol, replay_public_gonol, canonical_receipt_bytes
+#   internal_surface: _require_text, _identity_position, _geometry, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings
 #   auth_boundary: EPAC owns particle/energy gonol closure; UCNS owns Public Gonol carrier identity and native Möbius ε; EDCM text-domain constructor is not used; METAPAT affixiation is consumed, not redefined
 #   storage_boundary: none; receipts remain caller-owned in-memory objects
 #   network_boundary: none
@@ -40,7 +40,7 @@ Usage guidance
 #   tests: tests.test_epac_public_gonol, tests.test_periodic_element_gonols, tests.test_molecular_affixiation
 #   rollout: explicit EPAC candidate constructor; no canon selection, no EDCM scale option sets, no invented position operation
 #   rollback: remove this module; do not fall back to edcm.gonol for EPAC construction
-#   requires: ucns_public_gonol_geometry, ucns_native_mobius_geometry
+#   requires: ucns_public_gonol_geometry, ucns_native_mobius_geometry, epac_dimensional_arity
 #   since: 2026-08-22
 #   unresolved: exact UCNS geometric operation of Public Gonol function positions; UCNS Möbius-carrier affixiation/coupling law; two-letter element symbols have no single carrier glyph
 # === END MODULE_BUILD ===
@@ -54,7 +54,7 @@ Usage guidance
 #
 # id: epac_public_gonol_binds_ucns_carrier_identity
 #   given: identity_glyph is an admitted Public Gonol glyph
-#   then: the closed gonol carries the exact UCNS index/glyph pair and the pinned carrier digest
+#   then: the closed gonol carries the exact UCNS index/glyph pair, EPAC-owned pinned carrier digest, and exact pinned UCNS dependency identity
 #   class: construction
 #   since: 2026-08-22
 #
@@ -66,7 +66,7 @@ Usage guidance
 #
 # id: charged_oriented_couplings_are_the_structure
 #   given: declared oriented couplings with per-slot charges
-#   then: receipt.structure is the combination of those couplings, arity charge states, and degree; no (x,y,z) coupling is inferred
+#   then: receipt.structure is exactly the structure derived from those couplings, arity charge states, degree, representation flags, and quaternion readouts; no caller-fabricated derived fields or (x,y,z) coupling are accepted
 #   class: construction
 #   since: 2026-08-22
 # === END CONTRACTS ===
@@ -81,8 +81,12 @@ import json
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
+from epac_dimensional_arity import (
+    MOBIUS_EPSILON_T0,
+    space,
+    structure_from_charged_couplings,
+)
 from ucns import (
-    PUBLIC_GONOL_SHA256,
     native_mobius_state,
     public_gonol_function,
     public_gonol_sha256,
@@ -91,7 +95,8 @@ from ucns import (
 
 CONSTRUCTOR_ID = "epac.public_gonol"
 CONSTRUCTOR_VERSION = "v1"
-PINNED_PUBLIC_GONOL_SHA256 = PUBLIC_GONOL_SHA256
+PINNED_UCNS_COMMIT = "828c0b8bbcfc267efb5701da714191c1f73a81ff"
+PINNED_PUBLIC_GONOL_SHA256 = "55d10c84529a4d7bc7714786357e977b68d9df2ac3f73d20e229580b552c2ef5"
 STANDING = "implemented-candidate"
 SELECTION_EFFECT = "none"
 
@@ -184,6 +189,7 @@ def _geometry(identity_glyph: str | None, carrier_index: int | None) -> dict[str
         "state": "bound",
         "authority": "ucns.public_gonol",
         "authority_binding": "explicit",
+        "ucns_commit": PINNED_UCNS_COMMIT,
         "carrier_digest": digest,
         "identity_position": identity,
         "mobius_epsilon_t0": origin.frame.sign,
@@ -233,6 +239,67 @@ def _structure_part_signature(item: Mapping[str, Any]) -> tuple[Any, int, Any]:
     )
 
 
+def _coupling_declaration(item: Mapping[str, Any]) -> tuple[tuple[str, ...], tuple[int | None, ...]]:
+    declared = item.get("declared_ids", item.get("coupling"))
+    if not isinstance(declared, SequenceABC) or isinstance(declared, (str, bytes)) or not declared:
+        raise PublicGonolConstructionError("each coupling must declare ordered dimension ids")
+    ids = tuple(declared)
+    if any(not isinstance(name, str) or not name or name.isspace() for name in ids):
+        raise PublicGonolConstructionError("coupling dimension ids must be exact non-empty text")
+    arity = item.get("arity")
+    if isinstance(arity, bool) or not isinstance(arity, int) or arity != len(ids):
+        raise PublicGonolConstructionError("coupling arity must match declared dimension ids")
+
+    slot_charges = item.get("slot_charges")
+    charge_state = item.get("charge_state")
+    if slot_charges is None:
+        if (
+            not isinstance(charge_state, SequenceABC)
+            or isinstance(charge_state, (str, bytes))
+            or len(charge_state) != 2
+        ):
+            raise PublicGonolConstructionError("coupling must carry slot charges or charge_state")
+        slot_charges = charge_state[0]
+    if not isinstance(slot_charges, SequenceABC) or isinstance(slot_charges, (str, bytes)):
+        raise PublicGonolConstructionError("slot_charges must be an ordered sequence")
+    charges = tuple(slot_charges)
+    if len(charges) != len(ids) or any(
+        charge is not None and (isinstance(charge, bool) or not isinstance(charge, int))
+        for charge in charges
+    ):
+        raise PublicGonolConstructionError("slot_charges must align with declared dimensions")
+    if charge_state is not None and _tuple_tree(charge_state) != _tuple_tree(
+        (charges, MOBIUS_EPSILON_T0)
+    ):
+        raise PublicGonolConstructionError("coupling charge_state conflicts with slot charges")
+    return ids, charges
+
+
+def _expected_structure_from_couplings(
+    couplings: Sequence[Mapping[str, Any]],
+) -> Mapping[str, object]:
+    ambient_ids: list[str] = []
+    charge_by_id: dict[str, int | None] = {}
+    declarations: list[tuple[str, ...]] = []
+    for item in couplings:
+        ids, charges = _coupling_declaration(item)
+        declarations.append(ids)
+        for name, charge in zip(ids, charges):
+            if name not in ambient_ids:
+                ambient_ids.append(name)
+            if name in charge_by_id and charge_by_id[name] != charge:
+                raise PublicGonolConstructionError(
+                    f"dimension {name!r} has conflicting charges across couplings"
+                )
+            charge_by_id[name] = charge
+    declared = space(
+        ambient_ids,
+        declarations,
+        charges={name: charge for name, charge in charge_by_id.items() if charge is not None},
+    )
+    return structure_from_charged_couplings(declared)
+
+
 def _validate_structure_matches_couplings(
     couplings: Sequence[Mapping[str, Any]],
     structure: Mapping[str, Any] | None,
@@ -246,11 +313,16 @@ def _validate_structure_matches_couplings(
     parts = structure.get("parts")
     if not isinstance(parts, SequenceABC) or isinstance(parts, (str, bytes)):
         raise PublicGonolConstructionError("structure parts must be a sequence")
-    expected = tuple(sorted((_coupling_signature(item) for item in couplings), key=repr))
-    actual = tuple(sorted((_structure_part_signature(item) for item in parts), key=repr))
-    if expected != actual:
+    expected_parts = tuple(sorted((_coupling_signature(item) for item in couplings), key=repr))
+    actual_parts = tuple(sorted((_structure_part_signature(item) for item in parts), key=repr))
+    if expected_parts != actual_parts:
         raise PublicGonolConstructionError(
             "structure must match the supplied declared couplings before closure"
+        )
+    expected_structure = _expected_structure_from_couplings(couplings)
+    if _tuple_tree(structure) != _tuple_tree(expected_structure):
+        raise PublicGonolConstructionError(
+            "structure derived fields must exactly match the declared couplings before closure"
         )
 
 
@@ -348,7 +420,7 @@ def construct_public_gonol(
     couplings: Sequence[Mapping[str, Any]] = (),
     structure: Mapping[str, Any] | None = None,
 ) -> PublicGonolReceipt:
-    """Close one EPAC gonol on the UCNS Public Gonol carrier."""
+    """Close one EPAC gonol on the pinned UCNS Public Gonol carrier."""
 
     source_id = _require_text(source_id, field="source_id")
     relation = _require_text(relation, field="relation")
@@ -442,6 +514,7 @@ __all__ = [
     "HMMM",
     "NONCLAIMS",
     "PINNED_PUBLIC_GONOL_SHA256",
+    "PINNED_UCNS_COMMIT",
     "PublicGonolConstructionError",
     "PublicGonolReceipt",
     "canonical_receipt_bytes",

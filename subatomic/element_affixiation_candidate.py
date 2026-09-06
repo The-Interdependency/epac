@@ -33,18 +33,18 @@ Usage guidance:
 #   summary: identity-only H/He/Li/C element-gonol candidates over established UCNS carrier identity and native Möbius framing; no position operation invented
 #   owner: The Interdependency
 #   public_surface: ISOTOPE_DEFAULTS, CONSTRUCTION_IDS, ElementCandidate, affixiate_element, replay_element, element_receipt
-#   internal_surface: _canonical_record, _t_states
+#   internal_surface: _canonical_record, _t_states, _freeze_state
 #   auth_boundary: none
 #   storage_boundary: none
 #   network_boundary: none
 #   user_data_boundary: none
 #   admin_only: false
 #   tests: subatomic.test_element_affixiation_candidate
-#   rollout: local candidate module under stack/research/epac/subatomic/
+#   rollout: extracted EPAC candidate; no canon or empirical promotion
 #   rollback: remove module, tests, and generated receipts
 #   requires: ucns_public_gonol_geometry, ucns_native_mobius_geometry
 #   since: 2026-08-22
-#   unresolved: Public Gonol position operations; harmonic notation; isotope defaults are instance-resolved; epac canonical repository absent
+#   unresolved: Public Gonol position operations; harmonic notation; isotope defaults are instance-resolved; release/reconsumption graduation remains incomplete
 # === END MODULE_BUILD ===
 
 # === CONTRACTS ===
@@ -65,7 +65,7 @@ Usage guidance:
 #
 # id: receipt_deterministic_and_replayable
 #   given: the same element and the same pinned source identities
-#   then: the receipt is byte-identical across independent constructions
+#   then: the receipt is byte-identical across independent constructions and returned nested state cannot mutate after closure
 #   class: correctness
 #
 # id: no_physics_or_canon_claim
@@ -76,36 +76,45 @@ Usage guidance:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from fractions import Fraction
 import hashlib
 import json
+from types import MappingProxyType
+from typing import Any
 
 from ucns import native_mobius_state, public_gonol_function
 
-SOURCE_COMMITS = {
-    "metapat": "34d954aa1e2092e615b03a180500f6b6977f501e",
-    "ucns": "1975fe70cf4e0826a8020c2da3047569e277af64",
-}
+SOURCE_COMMITS = MappingProxyType(
+    {
+        "metapat": "34d954aa1e2092e615b03a180500f6b6977f501e",
+        "ucns": "828c0b8bbcfc267efb5701da714191c1f73a81ff",
+    }
+)
 
-CONSTRUCTION_IDS = {
-    "relation": "metapat.affixiation_harmonics.affixiation",
-    "ordered_parameter": "ucns.native-mobius-turn-index",
-    "closure_scale": "epac.subatomic.atomic",
-    "status": "CROSS-DOMAIN-HYPOTHESIS",
-}
+CONSTRUCTION_IDS = MappingProxyType(
+    {
+        "relation": "metapat.affixiation_harmonics.affixiation",
+        "ordered_parameter": "ucns.native-mobius-turn-index",
+        "closure_scale": "epac.subatomic.atomic",
+        "status": "CROSS-DOMAIN-HYPOTHESIS",
+    }
+)
 
 # Default isotope instances are instance-resolved, not canonical admission law.
 # Extended to Z=1..26 (through iron) for the subatomic gonol program.
-ISOTOPE_DEFAULTS = {
-    "H": (1, 1), "He": (2, 4), "Li": (3, 7), "Be": (4, 9),
-    "B": (5, 11), "C": (6, 12), "N": (7, 14), "O": (8, 16),
-    "F": (9, 19), "Ne": (10, 20), "Na": (11, 23), "Mg": (12, 24),
-    "Al": (13, 27), "Si": (14, 28), "P": (15, 31), "S": (16, 32),
-    "Cl": (17, 35), "Ar": (18, 40), "K": (19, 39), "Ca": (20, 40),
-    "Sc": (21, 45), "Ti": (22, 48), "V": (23, 51), "Cr": (24, 52),
-    "Mn": (25, 55), "Fe": (26, 56),
-}
+ISOTOPE_DEFAULTS = MappingProxyType(
+    {
+        "H": (1, 1), "He": (2, 4), "Li": (3, 7), "Be": (4, 9),
+        "B": (5, 11), "C": (6, 12), "N": (7, 14), "O": (8, 16),
+        "F": (9, 19), "Ne": (10, 20), "Na": (11, 23), "Mg": (12, 24),
+        "Al": (13, 27), "Si": (14, 28), "P": (15, 31), "S": (16, 32),
+        "Cl": (17, 35), "Ar": (18, 40), "K": (19, 39), "Ca": (20, 40),
+        "Sc": (21, 45), "Ti": (22, 48), "V": (23, 51), "Cr": (24, 52),
+        "Mn": (25, 55), "Fe": (26, 56),
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,22 +129,22 @@ class ElementCandidate:
     proton_glyphs: tuple[str, ...]
     neutron_positions: tuple[int, ...]
     neutron_glyphs: tuple[str, ...]
-    t_states: tuple[dict, ...]
+    t_states: tuple[Mapping[str, Any], ...]
     relation_id: str
     ordered_parameter_id: str
     closure_scale: str
-    source_commits: dict
+    source_commits: Mapping[str, str]
     status: str
     receipt: str
 
 
-def _t_states() -> tuple[dict, ...]:
-    """Traverse the Möbius turn index t in {0, 1, 2}.
+def _t_states() -> tuple[dict[str, Any], ...]:
+    """Traverse the Möbius turn index t in {0, 1, 2} for the canonical receipt.
 
     Uses only the established native Möbius root-loop quotient. Time is not
     inserted: t is a declared ordered parameter, not physical time.
     """
-    states = []
+    states: list[dict[str, Any]] = []
     for t in (0, 1, 2):
         state = native_mobius_state(Fraction(t))
         states.append(
@@ -153,6 +162,19 @@ def _t_states() -> tuple[dict, ...]:
     return tuple(states)
 
 
+def _freeze_state(state: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Freeze one returned state so closed candidate content cannot drift."""
+
+    return MappingProxyType(
+        {
+            "t": state["t"],
+            "visible_key": tuple(state["visible_key"]),
+            "complete_key": tuple(state["complete_key"]),
+            "frame": state["frame"],
+        }
+    )
+
+
 def _canonical_record(
     element_id: str,
     symbol: str,
@@ -162,7 +184,7 @@ def _canonical_record(
     proton_glyphs: tuple[str, ...],
     neutron_positions: tuple[int, ...],
     neutron_glyphs: tuple[str, ...],
-) -> dict:
+) -> dict[str, Any]:
     return {
         "element_id": element_id,
         "symbol": symbol,
@@ -176,12 +198,12 @@ def _canonical_record(
         "ordered_parameter_id": CONSTRUCTION_IDS["ordered_parameter"],
         "t_states": list(_t_states()),
         "closure_scale": CONSTRUCTION_IDS["closure_scale"],
-        "source_commits": SOURCE_COMMITS,
+        "source_commits": dict(SOURCE_COMMITS),
         "status": CONSTRUCTION_IDS["status"],
     }
 
 
-def element_receipt(record: dict) -> str:
+def element_receipt(record: Mapping[str, Any]) -> str:
     """SHA-256 over canonical JSON of the construction record."""
     payload = json.dumps(record, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -226,7 +248,7 @@ def affixiate_element(symbol: str) -> ElementCandidate:
         proton_glyphs=proton_glyphs,
         neutron_positions=neutron_positions,
         neutron_glyphs=neutron_glyphs,
-        t_states=record["t_states"],
+        t_states=tuple(_freeze_state(state) for state in record["t_states"]),
         relation_id=record["relation_id"],
         ordered_parameter_id=record["ordered_parameter_id"],
         closure_scale=record["closure_scale"],
