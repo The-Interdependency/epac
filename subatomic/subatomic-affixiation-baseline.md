@@ -134,6 +134,9 @@ t-state sequence (0 -> 1 -> 2), closure_scale ("atomic"), source_commits
 
 Independent replay must reproduce the receipt byte-for-byte. A receipt establishes
 reproducibility of the declared construction only — not geometry, physics, or measurement.
+The exact UCNS source commit is recorded only when the imported `public_gonol_function`
+and `native_mobius_state` source files resolve to the pinned clean UCNS checkout;
+otherwise the UCNS source identity is `hmmm`.
 
 ## 5. What this establishes — and what it does not
 
@@ -213,7 +216,7 @@ The frozen minimal decisive action from §7 is now implemented locally (not push
 - These historical records were byte-identical under their original UCNS pin; they are not the
   current extracted-constructor receipts.
 - `receipts/ucns-828c0b8/` — current sealed construction receipts at the extracted EPAC UCNS
-  pin:
+  pin, valid only when runtime source verification reproduces that clean checkout:
 
   | Element | Receipt (SHA-256) |
   |---|---|
@@ -299,7 +302,7 @@ law, and no scale interchange is introduced. Standing is `implemented-candidate`
   atom instances only.
 - Historical evidence at this section's original 2026-08-22 stop: **26/26 subatomic tests
   pass**; sibling epac suite **29 tests OK**; CONTRACTS↔CHECKS audit **closed**
-  (26 contracts / 26 checks). Current extracted-repo gate records **28 subatomic witnesses**
-  and **49 repository tests**.
+  (26 contracts / 26 checks). Current extracted-repo gate records **30 subatomic witnesses**
+  and **50 repository tests**.
 - The dimensional-arity doctrine is implemented by the sibling `epac_dimensional_arity.py`
   (committed); no duplicate is maintained here. Status remains `CROSS-DOMAIN-HYPOTHESIS`.

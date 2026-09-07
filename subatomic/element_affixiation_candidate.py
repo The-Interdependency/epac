@@ -33,7 +33,7 @@ Usage guidance:
 #   summary: identity-only H/He/Li/C element-gonol candidates over established UCNS carrier identity and native Möbius framing; no position operation invented
 #   owner: The Interdependency
 #   public_surface: ISOTOPE_DEFAULTS, CONSTRUCTION_IDS, ElementCandidate, affixiate_element, replay_element, element_receipt
-#   internal_surface: _canonical_record, _t_states, _freeze_state
+#   internal_surface: _canonical_record, _t_states, _freeze_state, _source_commits, _verified_ucns_commit, _json_ready
 #   auth_boundary: none
 #   storage_boundary: none
 #   network_boundary: none
@@ -65,7 +65,7 @@ Usage guidance:
 #
 # id: receipt_deterministic_and_replayable
 #   given: the same element and the same pinned source identities
-#   then: the receipt is byte-identical across independent constructions and returned nested state cannot mutate after closure
+#   then: the receipt is byte-identical across independent constructions and returned nested state cannot mutate after closure; exact UCNS identity is stamped only when imported source files verify clean against the declared pin
 #   class: correctness
 #
 # id: no_physics_or_canon_claim
@@ -76,20 +76,26 @@ Usage guidance:
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from fractions import Fraction
 import hashlib
+import inspect
 import json
+from pathlib import Path
+import subprocess
 from types import MappingProxyType
 from typing import Any
 
 from ucns import native_mobius_state, public_gonol_function
 
+PINNED_METAPAT_COMMIT = "34d954aa1e2092e615b03a180500f6b6977f501e"
+PINNED_UCNS_COMMIT = "828c0b8bbcfc267efb5701da714191c1f73a81ff"
+
 SOURCE_COMMITS = MappingProxyType(
     {
-        "metapat": "34d954aa1e2092e615b03a180500f6b6977f501e",
-        "ucns": "828c0b8bbcfc267efb5701da714191c1f73a81ff",
+        "metapat": PINNED_METAPAT_COMMIT,
+        "ucns": PINNED_UCNS_COMMIT,
     }
 )
 
@@ -175,6 +181,110 @@ def _freeze_state(state: Mapping[str, Any]) -> Mapping[str, Any]:
     )
 
 
+def _git_root_for(path: Path) -> Path | None:
+    try:
+        result = subprocess.run(
+            ("git", "-C", str(path.parent), "rev-parse", "--show-toplevel"),
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return Path(result.stdout.strip()).resolve()
+
+
+def _ucns_source_paths() -> tuple[Path, ...]:
+    paths: list[Path] = []
+    for dependency in (public_gonol_function, native_mobius_state):
+        try:
+            source_path = Path(inspect.getfile(dependency)).resolve()
+        except (OSError, TypeError):
+            return ()
+        if source_path not in paths:
+            paths.append(source_path)
+    return tuple(paths)
+
+
+def _verified_ucns_commit() -> str:
+    """Return the exact pinned UCNS commit only when imported source files match it."""
+
+    source_paths = _ucns_source_paths()
+    if not source_paths:
+        return "hmmm"
+    root = _git_root_for(source_paths[0])
+    if root is None:
+        return "hmmm"
+    relative_paths: list[str] = []
+    for source_path in source_paths:
+        if _git_root_for(source_path) != root:
+            return "hmmm"
+        try:
+            relative_paths.append(source_path.relative_to(root).as_posix())
+        except ValueError:
+            return "hmmm"
+
+    try:
+        result = subprocess.run(
+            ("git", "-C", str(root), "rev-parse", "HEAD"),
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "hmmm"
+    if result.stdout.strip() != PINNED_UCNS_COMMIT:
+        return "hmmm"
+
+    try:
+        for relative_path in relative_paths:
+            subprocess.run(
+                ("git", "-C", str(root), "ls-files", "--error-unmatch", "--", relative_path),
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+        status = subprocess.run(
+            (
+                "git",
+                "-C",
+                str(root),
+                "status",
+                "--porcelain=v1",
+                "--untracked-files=no",
+                "--",
+                *relative_paths,
+            ),
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "hmmm"
+    if status.stdout.strip():
+        return "hmmm"
+    return PINNED_UCNS_COMMIT
+
+
+def _source_commits() -> dict[str, str]:
+    return {
+        "metapat": PINNED_METAPAT_COMMIT,
+        "ucns": _verified_ucns_commit(),
+    }
+
+
+def _json_ready(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {str(key): _json_ready(item) for key, item in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return [_json_ready(item) for item in value]
+    return value
+
+
 def _canonical_record(
     element_id: str,
     symbol: str,
@@ -198,14 +308,14 @@ def _canonical_record(
         "ordered_parameter_id": CONSTRUCTION_IDS["ordered_parameter"],
         "t_states": list(_t_states()),
         "closure_scale": CONSTRUCTION_IDS["closure_scale"],
-        "source_commits": dict(SOURCE_COMMITS),
+        "source_commits": _source_commits(),
         "status": CONSTRUCTION_IDS["status"],
     }
 
 
 def element_receipt(record: Mapping[str, Any]) -> str:
     """SHA-256 over canonical JSON of the construction record."""
-    payload = json.dumps(record, sort_keys=True, separators=(",", ":"))
+    payload = json.dumps(_json_ready(record), sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -252,7 +362,7 @@ def affixiate_element(symbol: str) -> ElementCandidate:
         relation_id=record["relation_id"],
         ordered_parameter_id=record["ordered_parameter_id"],
         closure_scale=record["closure_scale"],
-        source_commits=SOURCE_COMMITS,
+        source_commits=MappingProxyType(dict(record["source_commits"])),
         status=record["status"],
         receipt=receipt,
     )
@@ -284,6 +394,8 @@ __all__ = [
     "ElementCandidate",
     "ISOTOPE_DEFAULTS",
     "SOURCE_COMMITS",
+    "PINNED_METAPAT_COMMIT",
+    "PINNED_UCNS_COMMIT",
     "affixiate_element",
     "element_receipt",
     "replay_element",

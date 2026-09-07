@@ -31,7 +31,7 @@ Usage guidance
 #   summary: EPAC candidate constructor that closes gonols on the UCNS Public Gonol carrier with oriented couplings and arity charge states; not the EDCM text-domain constructor
 #   owner: The Interdependency
 #   public_surface: CONSTRUCTOR_ID, CONSTRUCTOR_VERSION, PINNED_UCNS_COMMIT, PINNED_PUBLIC_GONOL_SHA256, ClosedPublicGonol, PublicGonolReceipt, PublicGonolConstructionError, construct_public_gonol, replay_public_gonol, canonical_receipt_bytes
-#   internal_surface: _require_text, _identity_position, _verified_ucns_commit, _geometry, _tuple_tree, _canonical_coupling_record, _coupling_sort_key, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings
+#   internal_surface: _require_text, _identity_position, _verified_ucns_commit, _geometry, _freeze_json, _json_ready, _tuple_tree, _canonical_coupling_record, _coupling_sort_key, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings, _validate_structure_matches_couplings
 #   auth_boundary: EPAC owns particle/energy gonol closure; UCNS owns Public Gonol carrier identity and native Möbius ε; EDCM text-domain constructor is not used; METAPAT affixiation is consumed, not redefined
 #   storage_boundary: none; receipts remain caller-owned in-memory objects
 #   network_boundary: none
@@ -523,9 +523,9 @@ def _expected_structure_from_couplings(
 def _validate_structure_matches_couplings(
     couplings: Sequence[Mapping[str, Any]],
     structure: Mapping[str, Any] | None,
-) -> None:
+) -> Mapping[str, object] | None:
     if not couplings and structure is None:
-        return
+        return None
     if not couplings or structure is None:
         raise PublicGonolConstructionError(
             "couplings and structure must be supplied together"
@@ -544,6 +544,7 @@ def _validate_structure_matches_couplings(
         raise PublicGonolConstructionError(
             "structure derived fields must exactly match the declared couplings before closure"
         )
+    return expected_structure
 
 
 def _participant_payload(item: ClosedPublicGonol) -> dict[str, Any]:
@@ -663,8 +664,9 @@ def construct_public_gonol(
             key=_coupling_sort_key,
         )
     )
-    frozen_structure = None if structure is None else _freeze_json(structure)
-    _validate_structure_matches_couplings(frozen_couplings, frozen_structure)
+    supplied_structure = None if structure is None else _freeze_json(structure)
+    derived_structure = _validate_structure_matches_couplings(frozen_couplings, supplied_structure)
+    frozen_structure = None if derived_structure is None else _freeze_json(derived_structure)
     glyph, index = _identity_position(identity_glyph)
     geometry = _geometry(glyph, index)
     gonol_payload = _atomic_payload(

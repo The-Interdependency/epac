@@ -132,6 +132,32 @@ class EpacPublicGonolTest(unittest.TestCase):
         self.assertEqual(first.gonol.couplings, second.gonol.couplings)
         self.assertEqual(first.receipt_digest, second.receipt_digest)
 
+    def test_structure_order_is_canonicalized_before_sealing(self) -> None:
+        declared = space(
+            ["x", "z", "y"],
+            [["z", "x"], ["z", "y"]],
+            charges={"z": 8, "x": 1, "y": 1},
+        )
+        geometry = geometry_from_declared_couplings(declared)
+        reordered = copy.deepcopy(geometry["structure"])
+        reordered["parts"] = tuple(reversed(reordered["parts"]))
+        reordered["degree"] = tuple(reversed(reordered["degree"]))
+        reordered["quaternions"] = tuple(reversed(reordered["quaternions"]))
+        first = construct_public_gonol(
+            source_id="epac.test:reordered-structure",
+            relation="epac.affixiation.unpaired-valence",
+            couplings=geometry["couplings"],
+            structure=geometry["structure"],
+        )
+        second = construct_public_gonol(
+            source_id="epac.test:reordered-structure",
+            relation="epac.affixiation.unpaired-valence",
+            couplings=geometry["couplings"],
+            structure=reordered,
+        )
+        self.assertEqual(first.gonol.structure, second.gonol.structure)
+        self.assertEqual(first.receipt_digest, second.receipt_digest)
+
     def test_nested_geometry_is_frozen_after_closure(self) -> None:
         declared = space(
             ["z", "x"],

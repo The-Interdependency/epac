@@ -31,6 +31,18 @@
 #   mutates: none
 #   cleanup: none
 #
+# id: check_unverified_ucns_source_records_hmmm
+#   proves: receipt_deterministic_and_replayable
+#   call: self::test_unverified_ucns_source_records_hmmm
+#   mutates: element_affixiation_candidate.subprocess.run
+#   cleanup: restores subprocess.run
+#
+# id: check_element_receipt_accepts_mapping_records
+#   proves: receipt_deterministic_and_replayable
+#   call: self::test_element_receipt_accepts_mapping_records
+#   mutates: none
+#   cleanup: none
+#
 # id: check_historical_receipts_remain_versioned_evidence
 #   proves: no_physics_or_canon_claim
 #   call: self::test_historical_receipts_remain_versioned_evidence
@@ -44,9 +56,11 @@
 #   cleanup: none
 # === END CHECKS ===
 
+from collections import UserDict
 from fractions import Fraction
 import json
 from pathlib import Path
+from types import MappingProxyType
 
 import element_affixiation_candidate as candidate
 from ucns import (
@@ -146,6 +160,69 @@ def test_current_versioned_receipts_match_declared_ucns_pin():
         observed = json.loads((CURRENT_RECEIPT_ROOT / f"{symbol.lower()}.json").read_text())
         assert observed == expected
         assert observed["source_commits"]["ucns"] == candidate.SOURCE_COMMITS["ucns"]
+
+
+def test_unverified_ucns_source_records_hmmm():
+    original_run = candidate.subprocess.run
+    ucns_root = Path(__file__).resolve().parents[1] / "_deps" / "ucns"
+
+    class Result:
+        def __init__(self, stdout: str) -> None:
+            self.stdout = stdout
+
+    def fake_dirty_run(command, **_kwargs):
+        if command[3:] == ("rev-parse", "--show-toplevel"):
+            return Result(str(ucns_root) + "\n")
+        if command[3:] == ("rev-parse", "HEAD"):
+            return Result(candidate.PINNED_UCNS_COMMIT + "\n")
+        if "ls-files" in command:
+            return Result("")
+        if "status" in command:
+            return Result(" M src/ucns/direct_mobius.py\n")
+        raise AssertionError(f"unexpected git command: {command!r}")
+
+    try:
+        candidate.subprocess.run = fake_dirty_run
+        element = candidate.affixiate_element("H")
+    finally:
+        candidate.subprocess.run = original_run
+    assert element.source_commits["ucns"] == "hmmm"
+
+    def fake_wrong_head_run(command, **_kwargs):
+        if command[3:] == ("rev-parse", "--show-toplevel"):
+            return Result(str(ucns_root) + "\n")
+        if command[3:] == ("rev-parse", "HEAD"):
+            return Result("0" * 40 + "\n")
+        raise AssertionError(f"unexpected git command: {command!r}")
+
+    try:
+        candidate.subprocess.run = fake_wrong_head_run
+        element = candidate.affixiate_element("H")
+    finally:
+        candidate.subprocess.run = original_run
+    assert element.source_commits["ucns"] == "hmmm"
+
+
+def test_element_receipt_accepts_mapping_records():
+    element = candidate.affixiate_element("H")
+    record = candidate._canonical_record(
+        element_id=element.element_id,
+        symbol=element.symbol,
+        Z=element.Z,
+        A=element.A,
+        proton_positions=element.proton_positions,
+        proton_glyphs=element.proton_glyphs,
+        neutron_positions=element.neutron_positions,
+        neutron_glyphs=element.neutron_glyphs,
+    )
+    wrapped = UserDict(
+        {
+            **record,
+            "source_commits": MappingProxyType(record["source_commits"]),
+            "t_states": tuple(MappingProxyType(item) for item in record["t_states"]),
+        }
+    )
+    assert candidate.element_receipt(wrapped) == candidate.element_receipt(record)
 
 
 def test_historical_receipts_remain_versioned_evidence():
