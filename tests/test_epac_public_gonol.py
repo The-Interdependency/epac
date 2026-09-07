@@ -8,7 +8,8 @@ from pathlib import Path
 EPAC_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(EPAC_ROOT))
 
-from epac_dimensional_arity import space, geometry_from_declared_couplings
+from epac_dimensional_arity import DimensionalArityError, space, geometry_from_declared_couplings
+import epac_public_gonol as public_gonol_module
 from epac_public_gonol import (
     CONSTRUCTOR_ID,
     PINNED_PUBLIC_GONOL_SHA256,
@@ -90,6 +91,25 @@ class EpacPublicGonolTest(unittest.TestCase):
         )
         self.assertEqual(native_mobius_state(0).frame.sign, 1)
 
+    def test_order_insensitive_derived_collections_still_seal(self) -> None:
+        declared = space(
+            ["x", "z", "y"],
+            [["z", "x"], ["z", "y"]],
+            charges={"z": 8, "x": 1, "y": 1},
+        )
+        geometry = geometry_from_declared_couplings(declared)
+        structure = copy.deepcopy(geometry["structure"])
+        structure["parts"] = tuple(reversed(structure["parts"]))
+        structure["degree"] = tuple(reversed(structure["degree"]))
+        structure["quaternions"] = tuple(reversed(structure["quaternions"]))
+        receipt = construct_public_gonol(
+            source_id="epac.test:ambient-order-seal",
+            relation="epac.affixiation.unpaired-valence",
+            couplings=geometry["couplings"],
+            structure=structure,
+        )
+        self.assertEqual(receipt.structure["participating_dimension_count"], 3)
+
     def test_nested_geometry_is_frozen_after_closure(self) -> None:
         declared = space(
             ["z", "x"],
@@ -156,6 +176,60 @@ class EpacPublicGonolTest(unittest.TestCase):
                 relation="epac.affixiation.unpaired-valence",
                 couplings=geometry["couplings"],
             )
+
+    def test_standalone_mobius_epsilon_must_match_charge_state(self) -> None:
+        declared = space(
+            ["z", "x"],
+            [["z", "x"]],
+            charges={"z": 8, "x": 1},
+        )
+        geometry = geometry_from_declared_couplings(declared)
+        bad_couplings = copy.deepcopy(geometry["couplings"])
+        bad_couplings[0]["mobius_epsilon_t0"] = -1
+        with self.assertRaisesRegex(PublicGonolConstructionError, "mobius_epsilon_t0"):
+            construct_public_gonol(
+                source_id="epac.test:bad-epsilon",
+                relation="epac.affixiation.unpaired-valence",
+                couplings=bad_couplings,
+                structure=geometry["structure"],
+            )
+
+    def test_dimensional_errors_are_normalized_at_public_boundary(self) -> None:
+        duplicated = (
+            {
+                "declared_ids": ("x", "x"),
+                "arity": 2,
+                "slot_charges": (1, 1),
+                "charge_state": ((1, 1), 1),
+                "mobius_epsilon_t0": 1,
+            },
+        )
+        structure = {
+            "parts": (
+                {
+                    "coupling": ("x", "x"),
+                    "arity": 2,
+                    "charge_state": ((1, 1), 1),
+                },
+            )
+        }
+        with self.assertRaises(PublicGonolConstructionError) as raised:
+            construct_public_gonol(
+                source_id="epac.test:duplicate-dimension",
+                relation="epac.affixiation.unpaired-valence",
+                couplings=duplicated,
+                structure=structure,
+            )
+        self.assertIsInstance(raised.exception.__cause__, DimensionalArityError)
+
+    def test_ucns_commit_is_not_stamped_when_runtime_head_is_not_verified(self) -> None:
+        original_pin = public_gonol_module.PINNED_UCNS_COMMIT
+        public_gonol_module.PINNED_UCNS_COMMIT = "0" * 40
+        try:
+            geometry = public_gonol_module._geometry(None, None)
+        finally:
+            public_gonol_module.PINNED_UCNS_COMMIT = original_pin
+        self.assertEqual(geometry["ucns_commit"], "hmmm")
 
     def test_unknown_glyph_fails_closed(self) -> None:
         with self.assertRaises(PublicGonolConstructionError):

@@ -37,8 +37,8 @@ The extraction preserves the stack research artifacts and their epistemic status
 
 The current extraction gate executes:
 
-- 41 repository regression tests;
-- 26 subatomic executable witnesses;
+- 45 repository regression tests;
+- 28 subatomic executable witnesses;
 - the preregistered molecular comparison, requiring all four current standings to remain `FALSIFIED`;
 - deterministic work-graph digest verification.
 

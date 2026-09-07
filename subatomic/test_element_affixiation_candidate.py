@@ -25,6 +25,18 @@
 #   mutates: none
 #   cleanup: none
 #
+# id: check_current_versioned_receipts_match_declared_ucns_pin
+#   proves: receipt_deterministic_and_replayable
+#   call: self::test_current_versioned_receipts_match_declared_ucns_pin
+#   mutates: none
+#   cleanup: none
+#
+# id: check_historical_receipts_remain_versioned_evidence
+#   proves: no_physics_or_canon_claim
+#   call: self::test_historical_receipts_remain_versioned_evidence
+#   mutates: none
+#   cleanup: none
+#
 # id: check_no_physics_or_canon_claim
 #   proves: no_physics_or_canon_claim
 #   call: self::test_no_physics_or_canon_claim
@@ -33,6 +45,8 @@
 # === END CHECKS ===
 
 from fractions import Fraction
+import json
+from pathlib import Path
 
 import element_affixiation_candidate as candidate
 from ucns import (
@@ -42,6 +56,10 @@ from ucns import (
     native_mobius_state,
     public_gonol_function,
 )
+
+
+RECEIPT_ROOT = Path(__file__).resolve().parent / "receipts"
+CURRENT_RECEIPT_ROOT = RECEIPT_ROOT / "ucns-828c0b8"
 
 
 def test_imports_consume_only_established_ucns_surfaces():
@@ -109,6 +127,32 @@ def test_receipt_deterministic_and_replayable():
         raise AssertionError("closed source_commits must be immutable")
     assert frozen.receipt == before
     assert candidate.replay_element("He") == (True, before)
+
+
+def test_current_versioned_receipts_match_declared_ucns_pin():
+    for symbol in ("H", "He", "Li", "C"):
+        element = candidate.affixiate_element(symbol)
+        expected = candidate._canonical_record(
+            element_id=element.element_id,
+            symbol=element.symbol,
+            Z=element.Z,
+            A=element.A,
+            proton_positions=element.proton_positions,
+            proton_glyphs=element.proton_glyphs,
+            neutron_positions=element.neutron_positions,
+            neutron_glyphs=element.neutron_glyphs,
+        )
+        expected["receipt"] = element.receipt
+        observed = json.loads((CURRENT_RECEIPT_ROOT / f"{symbol.lower()}.json").read_text())
+        assert observed == expected
+        assert observed["source_commits"]["ucns"] == candidate.SOURCE_COMMITS["ucns"]
+
+
+def test_historical_receipts_remain_versioned_evidence():
+    for name in ("h", "he", "li", "c"):
+        historical = json.loads((RECEIPT_ROOT / f"{name}.json").read_text())
+        assert historical["source_commits"]["ucns"] == "1975fe70cf4e0826a8020c2da3047569e277af64"
+        assert historical["source_commits"]["ucns"] != candidate.SOURCE_COMMITS["ucns"]
 
 
 def test_no_physics_or_canon_claim():

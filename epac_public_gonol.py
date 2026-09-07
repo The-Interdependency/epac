@@ -31,7 +31,7 @@ Usage guidance
 #   summary: EPAC candidate constructor that closes gonols on the UCNS Public Gonol carrier with oriented couplings and arity charge states; not the EDCM text-domain constructor
 #   owner: The Interdependency
 #   public_surface: CONSTRUCTOR_ID, CONSTRUCTOR_VERSION, PINNED_UCNS_COMMIT, PINNED_PUBLIC_GONOL_SHA256, ClosedPublicGonol, PublicGonolReceipt, PublicGonolConstructionError, construct_public_gonol, replay_public_gonol, canonical_receipt_bytes
-#   internal_surface: _require_text, _identity_position, _geometry, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings
+#   internal_surface: _require_text, _identity_position, _verified_ucns_commit, _geometry, _tuple_tree, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings
 #   auth_boundary: EPAC owns particle/energy gonol closure; UCNS owns Public Gonol carrier identity and native Möbius ε; EDCM text-domain constructor is not used; METAPAT affixiation is consumed, not redefined
 #   storage_boundary: none; receipts remain caller-owned in-memory objects
 #   network_boundary: none
@@ -54,7 +54,7 @@ Usage guidance
 #
 # id: epac_public_gonol_binds_ucns_carrier_identity
 #   given: identity_glyph is an admitted Public Gonol glyph
-#   then: the closed gonol carries the exact UCNS index/glyph pair, EPAC-owned pinned carrier digest, and exact pinned UCNS dependency identity
+#   then: the closed gonol carries the exact UCNS index/glyph pair, EPAC-owned pinned carrier digest, and exact pinned UCNS dependency identity only when the imported checkout head verifies; otherwise dependency identity remains hmmm
 #   class: construction
 #   since: 2026-08-22
 #
@@ -77,11 +77,15 @@ from collections.abc import Mapping as MappingABC
 from collections.abc import Sequence as SequenceABC
 from dataclasses import dataclass
 from hashlib import sha256
+import inspect
 import json
+from pathlib import Path
+import subprocess
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
 from epac_dimensional_arity import (
+    DimensionalArityError,
     MOBIUS_EPSILON_T0,
     space,
     structure_from_charged_couplings,
@@ -113,7 +117,10 @@ HMMM: tuple[str, ...] = (
     "exact UCNS geometric operation of each Public Gonol function position",
     "UCNS Möbius-carrier affixiation/coupling law",
     "two-letter element symbols have no single Public Gonol glyph",
+    "runtime UCNS commit identity when the imported checkout head cannot be verified against the pin",
 )
+
+ORDER_INSENSITIVE_STRUCTURE_FIELDS = frozenset(("parts", "degree", "quaternions"))
 
 
 class PublicGonolConstructionError(RuntimeError):
@@ -174,6 +181,33 @@ def _identity_position(identity_glyph: str | None) -> tuple[str | None, int | No
     return (position.glyph, position.index)
 
 
+def _verified_ucns_commit() -> str:
+    """Return the observed UCNS git commit only when it matches the pin."""
+
+    try:
+        source_path = Path(inspect.getfile(public_gonol_function)).resolve()
+    except (OSError, TypeError):
+        return "hmmm"
+    for parent in source_path.parents:
+        if not (parent / ".git").exists():
+            continue
+        try:
+            result = subprocess.run(
+                ("git", "-C", str(parent), "rev-parse", "HEAD"),
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return "hmmm"
+        observed = result.stdout.strip()
+        if observed == PINNED_UCNS_COMMIT:
+            return observed
+        return "hmmm"
+    return "hmmm"
+
+
 def _geometry(identity_glyph: str | None, carrier_index: int | None) -> dict[str, Any]:
     digest = public_gonol_sha256()
     if digest != PINNED_PUBLIC_GONOL_SHA256:
@@ -189,7 +223,7 @@ def _geometry(identity_glyph: str | None, carrier_index: int | None) -> dict[str
         "state": "bound",
         "authority": "ucns.public_gonol",
         "authority_binding": "explicit",
-        "ucns_commit": PINNED_UCNS_COMMIT,
+        "ucns_commit": _verified_ucns_commit(),
         "carrier_digest": digest,
         "identity_position": identity,
         "mobius_epsilon_t0": origin.frame.sign,
@@ -221,6 +255,25 @@ def _tuple_tree(value: Any) -> Any:
     if isinstance(value, SequenceABC) and not isinstance(value, (str, bytes)):
         return tuple(_tuple_tree(item) for item in value)
     return value
+
+
+def _canonical_structure_tree(structure: Mapping[str, Any]) -> Any:
+    canonical: list[tuple[str, Any]] = []
+    for key, value in structure.items():
+        field = str(key)
+        if field in ORDER_INSENSITIVE_STRUCTURE_FIELDS:
+            if not isinstance(value, SequenceABC) or isinstance(value, (str, bytes)):
+                canonical.append((field, _tuple_tree(value)))
+                continue
+            canonical.append(
+                (
+                    field,
+                    tuple(sorted((_tuple_tree(item) for item in value), key=repr)),
+                )
+            )
+            continue
+        canonical.append((field, _tuple_tree(value)))
+    return tuple(sorted(canonical))
 
 
 def _coupling_signature(item: Mapping[str, Any]) -> tuple[Any, int, Any]:
@@ -268,6 +321,13 @@ def _coupling_declaration(item: Mapping[str, Any]) -> tuple[tuple[str, ...], tup
         for charge in charges
     ):
         raise PublicGonolConstructionError("slot_charges must align with declared dimensions")
+    epsilon = item.get("mobius_epsilon_t0")
+    if epsilon is not None and (
+        isinstance(epsilon, bool)
+        or not isinstance(epsilon, int)
+        or epsilon != MOBIUS_EPSILON_T0
+    ):
+        raise PublicGonolConstructionError("coupling mobius_epsilon_t0 conflicts with canonical epsilon")
     if charge_state is not None and _tuple_tree(charge_state) != _tuple_tree(
         (charges, MOBIUS_EPSILON_T0)
     ):
@@ -292,12 +352,15 @@ def _expected_structure_from_couplings(
                     f"dimension {name!r} has conflicting charges across couplings"
                 )
             charge_by_id[name] = charge
-    declared = space(
-        ambient_ids,
-        declarations,
-        charges={name: charge for name, charge in charge_by_id.items() if charge is not None},
-    )
-    return structure_from_charged_couplings(declared)
+    try:
+        declared = space(
+            ambient_ids,
+            declarations,
+            charges={name: charge for name, charge in charge_by_id.items() if charge is not None},
+        )
+        return structure_from_charged_couplings(declared)
+    except DimensionalArityError as exc:
+        raise PublicGonolConstructionError(str(exc)) from exc
 
 
 def _validate_structure_matches_couplings(
@@ -320,7 +383,7 @@ def _validate_structure_matches_couplings(
             "structure must match the supplied declared couplings before closure"
         )
     expected_structure = _expected_structure_from_couplings(couplings)
-    if _tuple_tree(structure) != _tuple_tree(expected_structure):
+    if _canonical_structure_tree(structure) != _canonical_structure_tree(expected_structure):
         raise PublicGonolConstructionError(
             "structure derived fields must exactly match the declared couplings before closure"
         )
