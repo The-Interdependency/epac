@@ -31,7 +31,7 @@ Usage guidance
 #   summary: EPAC candidate constructor that closes gonols on the UCNS Public Gonol carrier with oriented couplings and arity charge states; not the EDCM text-domain constructor
 #   owner: The Interdependency
 #   public_surface: CONSTRUCTOR_ID, CONSTRUCTOR_VERSION, PINNED_UCNS_COMMIT, PINNED_PUBLIC_GONOL_SHA256, ClosedPublicGonol, PublicGonolReceipt, PublicGonolConstructionError, construct_public_gonol, replay_public_gonol, canonical_receipt_bytes
-#   internal_surface: _require_text, _identity_position, _verified_ucns_commit, _geometry, _tuple_tree, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings
+#   internal_surface: _require_text, _identity_position, _verified_ucns_commit, _geometry, _tuple_tree, _canonical_coupling_record, _coupling_sort_key, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings
 #   auth_boundary: EPAC owns particle/energy gonol closure; UCNS owns Public Gonol carrier identity and native Möbius ε; EDCM text-domain constructor is not used; METAPAT affixiation is consumed, not redefined
 #   storage_boundary: none; receipts remain caller-owned in-memory objects
 #   network_boundary: none
@@ -54,7 +54,7 @@ Usage guidance
 #
 # id: epac_public_gonol_binds_ucns_carrier_identity
 #   given: identity_glyph is an admitted Public Gonol glyph
-#   then: the closed gonol carries the exact UCNS index/glyph pair, EPAC-owned pinned carrier digest, and exact pinned UCNS dependency identity only when the imported checkout head verifies; otherwise dependency identity remains hmmm
+#   then: the closed gonol carries the exact UCNS index/glyph pair, EPAC-owned pinned carrier digest, and exact pinned UCNS dependency identity only when the imported checkout head and relevant source files verify clean; otherwise dependency identity remains hmmm
 #   class: construction
 #   since: 2026-08-22
 #
@@ -117,10 +117,20 @@ HMMM: tuple[str, ...] = (
     "exact UCNS geometric operation of each Public Gonol function position",
     "UCNS Möbius-carrier affixiation/coupling law",
     "two-letter element symbols have no single Public Gonol glyph",
-    "runtime UCNS commit identity when the imported checkout head cannot be verified against the pin",
+    "runtime UCNS commit identity when the imported checkout head and relevant source files cannot be verified clean against the pin",
 )
 
 ORDER_INSENSITIVE_STRUCTURE_FIELDS = frozenset(("parts", "degree", "quaternions"))
+COUPLING_SCHEMA_FIELDS = frozenset(
+    (
+        "declared_ids",
+        "coupling",
+        "arity",
+        "slot_charges",
+        "charge_state",
+        "mobius_epsilon_t0",
+    )
+)
 
 
 class PublicGonolConstructionError(RuntimeError):
@@ -181,31 +191,94 @@ def _identity_position(identity_glyph: str | None) -> tuple[str | None, int | No
     return (position.glyph, position.index)
 
 
+def _git_root_for(path: Path) -> Path | None:
+    try:
+        result = subprocess.run(
+            ("git", "-C", str(path.parent), "rev-parse", "--show-toplevel"),
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return Path(result.stdout.strip()).resolve()
+
+
+def _ucns_source_paths() -> tuple[Path, ...]:
+    paths: list[Path] = []
+    for dependency in (public_gonol_function, public_gonol_sha256, native_mobius_state):
+        try:
+            source_path = Path(inspect.getfile(dependency)).resolve()
+        except (OSError, TypeError):
+            return ()
+        if source_path not in paths:
+            paths.append(source_path)
+    return tuple(paths)
+
+
 def _verified_ucns_commit() -> str:
-    """Return the observed UCNS git commit only when it matches the pin."""
+    """Return the observed UCNS git commit only when source bytes match the pin."""
+
+    source_paths = _ucns_source_paths()
+    if not source_paths:
+        return "hmmm"
+    root = _git_root_for(source_paths[0])
+    if root is None:
+        return "hmmm"
+    relative_paths: list[str] = []
+    for source_path in source_paths:
+        if _git_root_for(source_path) != root:
+            return "hmmm"
+        try:
+            relative_paths.append(source_path.relative_to(root).as_posix())
+        except ValueError:
+            return "hmmm"
 
     try:
-        source_path = Path(inspect.getfile(public_gonol_function)).resolve()
-    except (OSError, TypeError):
+        result = subprocess.run(
+            ("git", "-C", str(root), "rev-parse", "HEAD"),
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.SubprocessError):
         return "hmmm"
-    for parent in source_path.parents:
-        if not (parent / ".git").exists():
-            continue
-        try:
-            result = subprocess.run(
-                ("git", "-C", str(parent), "rev-parse", "HEAD"),
+    observed = result.stdout.strip()
+    if observed != PINNED_UCNS_COMMIT:
+        return "hmmm"
+
+    try:
+        for relative_path in relative_paths:
+            subprocess.run(
+                ("git", "-C", str(root), "ls-files", "--error-unmatch", "--", relative_path),
                 check=True,
                 capture_output=True,
                 text=True,
                 timeout=2,
             )
-        except (OSError, subprocess.SubprocessError):
-            return "hmmm"
-        observed = result.stdout.strip()
-        if observed == PINNED_UCNS_COMMIT:
-            return observed
+        status = subprocess.run(
+            (
+                "git",
+                "-C",
+                str(root),
+                "status",
+                "--porcelain=v1",
+                "--untracked-files=no",
+                "--",
+                *relative_paths,
+            ),
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.SubprocessError):
         return "hmmm"
-    return "hmmm"
+    if status.stdout.strip():
+        return "hmmm"
+    return observed
 
 
 def _geometry(identity_glyph: str | None, carrier_index: int | None) -> dict[str, Any]:
@@ -265,12 +338,69 @@ def _canonical_structure_tree(structure: Mapping[str, Any]) -> Any:
             if not isinstance(value, SequenceABC) or isinstance(value, (str, bytes)):
                 canonical.append((field, _tuple_tree(value)))
                 continue
-            canonical.append(
-                (
-                    field,
-                    tuple(sorted((_tuple_tree(item) for item in value), key=repr)),
-                )
+            canonical_items = tuple(
+                _canonical_degree_tree(item)
+                if field == "degree"
+                else _canonical_quaternion_tree(item)
+                if field == "quaternions"
+                else _tuple_tree(item)
+                for item in value
             )
+            canonical.append((field, tuple(sorted(canonical_items, key=repr))))
+            continue
+        canonical.append((field, _tuple_tree(value)))
+    return tuple(sorted(canonical))
+
+
+def _canonical_quaternion_tree(item: Any) -> Any:
+    if not isinstance(item, MappingABC):
+        return _tuple_tree(item)
+    represented_ids = item.get("represented_ids")
+    components = item.get("components")
+    axes = item.get("axes")
+    if (
+        isinstance(represented_ids, SequenceABC)
+        and not isinstance(represented_ids, (str, bytes))
+        and isinstance(components, SequenceABC)
+        and not isinstance(components, (str, bytes))
+        and isinstance(axes, SequenceABC)
+        and not isinstance(axes, (str, bytes))
+        and len(represented_ids) == 3
+        and len(components) == 4
+        and len(axes) == 4
+    ):
+        local_three = (
+            (axes[0], components[0]),
+            (represented_ids[0], axes[1], components[1]),
+            tuple(
+                sorted(
+                    (
+                        (represented_ids[1], axes[2], components[2]),
+                        (represented_ids[2], axes[3], components[3]),
+                    ),
+                    key=repr,
+                )
+            ),
+        )
+        generic_fields = tuple(
+            sorted(
+                (str(key), _tuple_tree(value))
+                for key, value in item.items()
+                if str(key) not in {"axes", "components", "represented_ids"}
+            )
+        )
+        return generic_fields + (("local_three", _tuple_tree(local_three)),)
+    return _tuple_tree(item)
+
+
+def _canonical_degree_tree(item: Any) -> Any:
+    if not isinstance(item, MappingABC):
+        return _tuple_tree(item)
+    canonical: list[tuple[str, Any]] = []
+    for key, value in item.items():
+        field = str(key)
+        if field == "incidences" and isinstance(value, SequenceABC) and not isinstance(value, (str, bytes)):
+            canonical.append((field, tuple(sorted((_tuple_tree(entry) for entry in value), key=repr))))
             continue
         canonical.append((field, _tuple_tree(value)))
     return tuple(sorted(canonical))
@@ -293,6 +423,16 @@ def _structure_part_signature(item: Mapping[str, Any]) -> tuple[Any, int, Any]:
 
 
 def _coupling_declaration(item: Mapping[str, Any]) -> tuple[tuple[str, ...], tuple[int | None, ...]]:
+    if not isinstance(item, MappingABC):
+        raise PublicGonolConstructionError("each coupling must be a mapping")
+    extra_fields = frozenset(str(key) for key in item) - COUPLING_SCHEMA_FIELDS
+    if extra_fields:
+        names = ", ".join(sorted(extra_fields))
+        raise PublicGonolConstructionError(f"coupling carries undeclared field(s): {names}")
+    if "declared_ids" in item and "coupling" in item and _tuple_tree(item["declared_ids"]) != _tuple_tree(
+        item["coupling"]
+    ):
+        raise PublicGonolConstructionError("coupling declared_ids conflicts with coupling")
     declared = item.get("declared_ids", item.get("coupling"))
     if not isinstance(declared, SequenceABC) or isinstance(declared, (str, bytes)) or not declared:
         raise PublicGonolConstructionError("each coupling must declare ordered dimension ids")
@@ -321,9 +461,9 @@ def _coupling_declaration(item: Mapping[str, Any]) -> tuple[tuple[str, ...], tup
         for charge in charges
     ):
         raise PublicGonolConstructionError("slot_charges must align with declared dimensions")
-    epsilon = item.get("mobius_epsilon_t0")
-    if epsilon is not None and (
-        isinstance(epsilon, bool)
+    if "mobius_epsilon_t0" in item and (
+        (epsilon := item["mobius_epsilon_t0"]) is None
+        or isinstance(epsilon, bool)
         or not isinstance(epsilon, int)
         or epsilon != MOBIUS_EPSILON_T0
     ):
@@ -333,6 +473,23 @@ def _coupling_declaration(item: Mapping[str, Any]) -> tuple[tuple[str, ...], tup
     ):
         raise PublicGonolConstructionError("coupling charge_state conflicts with slot charges")
     return ids, charges
+
+
+def _canonical_coupling_record(item: Mapping[str, Any]) -> Mapping[str, Any]:
+    ids, charges = _coupling_declaration(item)
+    return _freeze_json(
+        {
+            "declared_ids": ids,
+            "arity": len(ids),
+            "slot_charges": charges,
+            "charge_state": (charges, MOBIUS_EPSILON_T0),
+            "mobius_epsilon_t0": MOBIUS_EPSILON_T0,
+        }
+    )
+
+
+def _coupling_sort_key(item: Mapping[str, Any]) -> str:
+    return repr(_coupling_signature(item))
 
 
 def _expected_structure_from_couplings(
@@ -500,7 +657,12 @@ def construct_public_gonol(
         )
         for key, value in carried_options
     )
-    frozen_couplings = tuple(_freeze_json(item) for item in couplings)
+    frozen_couplings = tuple(
+        sorted(
+            (_canonical_coupling_record(item) for item in couplings),
+            key=_coupling_sort_key,
+        )
+    )
     frozen_structure = None if structure is None else _freeze_json(structure)
     _validate_structure_matches_couplings(frozen_couplings, frozen_structure)
     glyph, index = _identity_position(identity_glyph)

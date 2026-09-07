@@ -110,6 +110,28 @@ class EpacPublicGonolTest(unittest.TestCase):
         )
         self.assertEqual(receipt.structure["participating_dimension_count"], 3)
 
+    def test_coupling_collection_order_is_canonicalized_before_sealing(self) -> None:
+        declared = space(
+            ["z", "x", "y"],
+            [["z", "x"], ["z", "y"]],
+            charges={"z": 8, "x": 1, "y": 1},
+        )
+        geometry = geometry_from_declared_couplings(declared)
+        first = construct_public_gonol(
+            source_id="epac.test:reordered-couplings",
+            relation="epac.affixiation.unpaired-valence",
+            couplings=geometry["couplings"],
+            structure=geometry["structure"],
+        )
+        second = construct_public_gonol(
+            source_id="epac.test:reordered-couplings",
+            relation="epac.affixiation.unpaired-valence",
+            couplings=tuple(reversed(geometry["couplings"])),
+            structure=geometry["structure"],
+        )
+        self.assertEqual(first.gonol.couplings, second.gonol.couplings)
+        self.assertEqual(first.receipt_digest, second.receipt_digest)
+
     def test_nested_geometry_is_frozen_after_closure(self) -> None:
         declared = space(
             ["z", "x"],
@@ -194,6 +216,59 @@ class EpacPublicGonolTest(unittest.TestCase):
                 structure=geometry["structure"],
             )
 
+        null_couplings = copy.deepcopy(geometry["couplings"])
+        null_couplings[0]["mobius_epsilon_t0"] = None
+        with self.assertRaisesRegex(PublicGonolConstructionError, "mobius_epsilon_t0"):
+            construct_public_gonol(
+                source_id="epac.test:null-epsilon",
+                relation="epac.affixiation.unpaired-valence",
+                couplings=null_couplings,
+                structure=geometry["structure"],
+            )
+
+    def test_coupling_records_reject_undeclared_fields_before_sealing(self) -> None:
+        declared = space(
+            ["z", "x"],
+            [["z", "x"]],
+            charges={"z": 8, "x": 1},
+        )
+        geometry = geometry_from_declared_couplings(declared)
+        bad_couplings = copy.deepcopy(geometry["couplings"])
+        bad_couplings[0]["degree"] = 999
+        with self.assertRaisesRegex(PublicGonolConstructionError, "undeclared field"):
+            construct_public_gonol(
+                source_id="epac.test:extra-coupling-field",
+                relation="epac.affixiation.unpaired-valence",
+                couplings=bad_couplings,
+                structure=geometry["structure"],
+            )
+
+    def test_coupling_alias_input_seals_to_canonical_declared_ids_payload(self) -> None:
+        declared = space(
+            ["z", "x"],
+            [["z", "x"]],
+            charges={"z": 8, "x": 1},
+        )
+        geometry = geometry_from_declared_couplings(declared)
+        alias_couplings = tuple(
+            {
+                "coupling": item["declared_ids"],
+                "arity": item["arity"],
+                "slot_charges": item["slot_charges"],
+                "charge_state": item["charge_state"],
+                "mobius_epsilon_t0": item["mobius_epsilon_t0"],
+            }
+            for item in geometry["couplings"]
+        )
+        receipt = construct_public_gonol(
+            source_id="epac.test:coupling-alias",
+            relation="epac.affixiation.unpaired-valence",
+            couplings=alias_couplings,
+            structure=geometry["structure"],
+        )
+        self.assertEqual(tuple(receipt.gonol.couplings[0]), ("declared_ids", "arity", "slot_charges", "charge_state", "mobius_epsilon_t0"))
+        self.assertEqual(receipt.gonol.couplings[0]["declared_ids"], ("z", "x"))
+
     def test_dimensional_errors_are_normalized_at_public_boundary(self) -> None:
         duplicated = (
             {
@@ -229,6 +304,32 @@ class EpacPublicGonolTest(unittest.TestCase):
             geometry = public_gonol_module._geometry(None, None)
         finally:
             public_gonol_module.PINNED_UCNS_COMMIT = original_pin
+        self.assertEqual(geometry["ucns_commit"], "hmmm")
+
+    def test_ucns_commit_is_not_stamped_when_runtime_source_is_dirty(self) -> None:
+        original_run = public_gonol_module.subprocess.run
+        ucns_root = EPAC_ROOT / "_deps" / "ucns"
+
+        class Result:
+            def __init__(self, stdout: str) -> None:
+                self.stdout = stdout
+
+        def fake_run(command, **_kwargs):
+            if command[3:] == ("rev-parse", "--show-toplevel"):
+                return Result(str(ucns_root) + "\n")
+            if command[3:] == ("rev-parse", "HEAD"):
+                return Result(PINNED_UCNS_COMMIT + "\n")
+            if "ls-files" in command:
+                return Result("")
+            if "status" in command:
+                return Result(" M src/ucns/public_gonol.py\n")
+            raise AssertionError(f"unexpected git command: {command!r}")
+
+        public_gonol_module.subprocess.run = fake_run
+        try:
+            geometry = public_gonol_module._geometry(None, None)
+        finally:
+            public_gonol_module.subprocess.run = original_run
         self.assertEqual(geometry["ucns_commit"], "hmmm")
 
     def test_unknown_glyph_fails_closed(self) -> None:
