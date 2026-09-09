@@ -99,6 +99,23 @@ class EpacPublicGonolTest(unittest.TestCase):
         ):
             replay_public_gonol(replace(first, constructor_version="v1"))
 
+        parent = construct_public_gonol(
+            source_id="epac.test:H2",
+            relation="epac.molecular.participation",
+            participants=(first.gonol,),
+        )
+        forged_child_geometry = dict(first.gonol.geometry)
+        forged_child_geometry["ucns_commit"] = "forged-child-commit"
+        forged_child = replace(first.gonol, geometry=forged_child_geometry)
+        forged_parent = replace(
+            parent,
+            gonol=replace(parent.gonol, participants=(forged_child,)),
+        )
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "retained geometry digest"
+        ):
+            replay_public_gonol(forged_parent)
+
     def test_charged_couplings_are_the_structure(self) -> None:
         declared = space(
             ["z", "x", "y"],

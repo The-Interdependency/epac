@@ -31,7 +31,7 @@ Usage guidance
 #   summary: EPAC candidate constructor that closes gonols on the UCNS Public Gonol carrier with oriented couplings and arity charge states; not the EDCM text-domain constructor
 #   owner: The Interdependency
 #   public_surface: CONSTRUCTOR_ID, CONSTRUCTOR_VERSION, PINNED_UCNS_COMMIT, PINNED_PUBLIC_GONOL_SHA256, ClosedPublicGonol, PublicGonolReceipt, PublicGonolConstructionError, construct_public_gonol, replay_public_gonol, canonical_receipt_bytes
-#   internal_surface: _require_text, _identity_position, _verified_ucns_commit, _geometry, _freeze_json, _json_ready, _tuple_tree, _canonical_coupling_record, _coupling_sort_key, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings, _validate_structure_matches_couplings, _validate_retained_receipt
+#   internal_surface: _require_text, _identity_position, _verified_ucns_commit, _geometry, _freeze_json, _json_ready, _tuple_tree, _canonical_coupling_record, _coupling_sort_key, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings, _validate_structure_matches_couplings, _validate_retained_geometry_tree, _validate_retained_receipt
 #   auth_boundary: EPAC owns particle/energy gonol closure; UCNS owns Public Gonol carrier identity and native Möbius ε; EDCM text-domain constructor is not used; METAPAT affixiation is consumed, not redefined
 #   storage_boundary: none; receipts remain caller-owned in-memory objects
 #   network_boundary: none
@@ -549,6 +549,22 @@ def _digest(payload: Mapping[str, Any]) -> str:
     return sha256(canonical_receipt_bytes(payload)).hexdigest()
 
 
+def _validate_retained_geometry_tree(gonol: ClosedPublicGonol) -> None:
+    """Validate the geometry digest of every retained closed participant."""
+
+    if not isinstance(gonol, ClosedPublicGonol):
+        raise PublicGonolConstructionError(
+            "retained participants must be closed EPAC public gonols"
+        )
+    geometry = _freeze_json(gonol.geometry)
+    if gonol.geometry_digest != _digest({"geometry": geometry}):
+        raise PublicGonolConstructionError(
+            "retained geometry digest does not match geometry"
+        )
+    for participant in gonol.participants:
+        _validate_retained_geometry_tree(participant)
+
+
 def _validate_retained_receipt(receipt: PublicGonolReceipt) -> None:
     """Reject contradictory or stale duplicate fields before replay."""
 
@@ -575,8 +591,7 @@ def _validate_retained_receipt(receipt: PublicGonolReceipt) -> None:
         raise PublicGonolConstructionError("retained receipt geometries disagree")
     if _tuple_tree(receipt.structure) != _tuple_tree(gonol.structure):
         raise PublicGonolConstructionError("retained receipt structures disagree")
-    if gonol.geometry_digest != _digest({"geometry": gonol_geometry}):
-        raise PublicGonolConstructionError("retained geometry digest does not match geometry")
+    _validate_retained_geometry_tree(gonol)
     expected_atomic_id = _digest(
         {
             "atomic": _atomic_payload(
