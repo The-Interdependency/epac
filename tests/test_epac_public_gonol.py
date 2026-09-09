@@ -284,16 +284,17 @@ class EpacPublicGonolTest(unittest.TestCase):
             relation="epac.atomic.element",
             identity_glyph="O",
         )
-        mutations = {
-            "state": "invented",
-            "authority": "caller.asserted",
-            "authority_binding": "implicit",
-            "ucns_commit": "forged-commit",
-            "carrier_digest": "0" * 64,
-            "mobius_epsilon_t0": -1,
-            "position_operation": "caller.asserted",
-        }
-        for field, value in mutations.items():
+        mutations = (
+            ("state", "invented"),
+            ("authority", "caller.asserted"),
+            ("authority_binding", "implicit"),
+            ("ucns_commit", "forged-commit"),
+            ("carrier_digest", "0" * 64),
+            ("mobius_epsilon_t0", -1),
+            ("mobius_epsilon_t0", True),
+            ("position_operation", "caller.asserted"),
+        )
+        for field, value in mutations:
             with self.subTest(field=field):
                 geometry = public_gonol_module._json_ready(receipt.gonol.geometry)
                 geometry[field] = value
