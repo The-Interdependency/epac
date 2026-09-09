@@ -236,7 +236,7 @@ def _verify_witness(
     if head != pinned_commit:
         return "hmmm"
     root = Path(root_text)
-    relative_paths = sorted({str(record[0]) for record in records})
+    disk_records: dict[str, tuple[Path, str]] = {}
     for relative, absolute, qualname, loaded_digest, disk_digest, _mode in records:
         path = Path(str(absolute))
         try:
@@ -247,6 +247,7 @@ def _verify_witness(
         expected_digest = _expected_code_fingerprint(path, str(qualname))
         if expected_digest is None or expected_digest != loaded_digest:
             return "hmmm"
+        disk_records[str(relative)] = (path, f"{int(_mode) & 0o177777:06o}")
     try:
         observed = runner(
             ("git", "-C", str(root), "rev-parse", "HEAD"),
@@ -257,33 +258,28 @@ def _verify_witness(
         )
         if getattr(observed, "stdout", "").strip() != pinned_commit:
             return "hmmm"
-        for relative_path in relative_paths:
-            runner(
-                ("git", "-C", str(root), "ls-files", "--error-unmatch", "--", relative_path),
+        for relative_path, (path, disk_mode) in sorted(disk_records.items()):
+            tree_entry = runner(
+                ("git", "-C", str(root), "ls-tree", pinned_commit, "--", relative_path),
                 check=True,
                 capture_output=True,
                 text=True,
                 timeout=2,
             )
-        status = runner(
-            (
-                "git",
-                "-C",
-                str(root),
-                "status",
-                "--porcelain=v1",
-                "--untracked-files=no",
-                "--",
-                *relative_paths,
-            ),
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=2,
-        )
+            fields = getattr(tree_entry, "stdout", "").strip().split(None, 3)
+            if len(fields) != 4 or fields[0] != disk_mode or fields[1] != "blob":
+                return "hmmm"
+            pinned_blob = runner(
+                ("git", "-C", str(root), "cat-file", "blob", fields[2]),
+                check=True,
+                capture_output=True,
+                timeout=2,
+            )
+            if getattr(pinned_blob, "stdout", b"") != path.read_bytes():
+                return "hmmm"
     except (OSError, subprocess.SubprocessError):
         return "hmmm"
-    return pinned_commit if not getattr(status, "stdout", "").strip() else "hmmm"
+    return pinned_commit
 
 
 def verify_loaded_ucns_commit(

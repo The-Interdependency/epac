@@ -148,6 +148,7 @@ class ClosedPublicGonol:
     carried_options: tuple[tuple[str, str], ...]
     couplings: tuple[Mapping[str, Any], ...]
     structure: Mapping[str, Any] | None
+    geometry: Mapping[str, Any]
     atomic_id: str
     receipt_digest: str
     geometry_digest: str
@@ -165,6 +166,7 @@ class PublicGonolReceipt:
     gonol: ClosedPublicGonol
     receipt_digest: str
     structure: Mapping[str, Any] | None
+    geometry: Mapping[str, Any]
     nonclaims: tuple[str, ...]
     hmmm: tuple[str, ...]
 
@@ -547,6 +549,73 @@ def _digest(payload: Mapping[str, Any]) -> str:
     return sha256(canonical_receipt_bytes(payload)).hexdigest()
 
 
+def _seal_public_gonol(
+    *,
+    source_id: str,
+    relation: str,
+    participants: tuple[ClosedPublicGonol, ...],
+    identity_glyph: str | None,
+    carrier_index: int | None,
+    occurrence: int,
+    carried_options: tuple[tuple[str, str], ...],
+    couplings: tuple[Mapping[str, Any], ...],
+    structure: Mapping[str, Any] | None,
+    geometry: Mapping[str, Any],
+) -> PublicGonolReceipt:
+    """Seal already validated canonical fields with one immutable geometry receipt."""
+
+    frozen_geometry = _freeze_json(geometry)
+    gonol_payload = _atomic_payload(
+        source_id=source_id,
+        occurrence=occurrence,
+        relation=relation,
+        identity_glyph=identity_glyph,
+        carrier_index=carrier_index,
+        participants=participants,
+        carried_options=carried_options,
+        couplings=couplings,
+        structure=structure,
+    )
+    atomic_id = _digest({"atomic": gonol_payload})
+    geometry_digest = _digest({"geometry": frozen_geometry})
+    receipt_payload = _receipt_payload(
+        source_id=source_id,
+        gonol_payload=gonol_payload,
+        geometry=frozen_geometry,
+        atomic_id=atomic_id,
+        geometry_digest=geometry_digest,
+    )
+    receipt_digest = _digest(receipt_payload)
+    gonol = ClosedPublicGonol(
+        source_id=source_id,
+        occurrence=occurrence,
+        relation=relation,
+        identity_glyph=identity_glyph,
+        carrier_index=carrier_index,
+        participants=participants,
+        carried_options=carried_options,
+        couplings=couplings,
+        structure=structure,
+        geometry=frozen_geometry,
+        atomic_id=atomic_id,
+        receipt_digest=receipt_digest,
+        geometry_digest=geometry_digest,
+    )
+    return PublicGonolReceipt(
+        constructor_id=CONSTRUCTOR_ID,
+        constructor_version=CONSTRUCTOR_VERSION,
+        standing=STANDING,
+        selection_effect=SELECTION_EFFECT,
+        source_id=source_id,
+        gonol=gonol,
+        receipt_digest=receipt_digest,
+        structure=structure,
+        geometry=frozen_geometry,
+        nonclaims=NONCLAIMS,
+        hmmm=HMMM,
+    )
+
+
 def construct_public_gonol(
     *,
     source_id: str,
@@ -586,52 +655,17 @@ def construct_public_gonol(
     frozen_structure = None if derived_structure is None else _freeze_json(derived_structure)
     glyph, index = _identity_position(identity_glyph)
     geometry = _geometry(glyph, index)
-    gonol_payload = _atomic_payload(
+    return _seal_public_gonol(
         source_id=source_id,
-        occurrence=occurrence,
         relation=relation,
+        participants=closed_participants,
         identity_glyph=glyph,
         carrier_index=index,
-        participants=closed_participants,
+        occurrence=occurrence,
         carried_options=options,
         couplings=frozen_couplings,
         structure=frozen_structure,
-    )
-    atomic_id = _digest({"atomic": gonol_payload})
-    geometry_digest = _digest({"geometry": geometry})
-    receipt_payload = _receipt_payload(
-        source_id=source_id,
-        gonol_payload=gonol_payload,
         geometry=geometry,
-        atomic_id=atomic_id,
-        geometry_digest=geometry_digest,
-    )
-    receipt_digest = _digest(receipt_payload)
-    gonol = ClosedPublicGonol(
-        source_id=source_id,
-        occurrence=occurrence,
-        relation=relation,
-        identity_glyph=glyph,
-        carrier_index=index,
-        participants=closed_participants,
-        carried_options=options,
-        couplings=frozen_couplings,
-        structure=frozen_structure,
-        atomic_id=atomic_id,
-        receipt_digest=receipt_digest,
-        geometry_digest=geometry_digest,
-    )
-    return PublicGonolReceipt(
-        constructor_id=CONSTRUCTOR_ID,
-        constructor_version=CONSTRUCTOR_VERSION,
-        standing=STANDING,
-        selection_effect=SELECTION_EFFECT,
-        source_id=source_id,
-        gonol=gonol,
-        receipt_digest=receipt_digest,
-        structure=frozen_structure,
-        nonclaims=NONCLAIMS,
-        hmmm=HMMM,
     )
 
 
@@ -639,16 +673,26 @@ def replay_public_gonol(receipt: PublicGonolReceipt) -> PublicGonolReceipt:
     """Replay one receipt from its closed gonol. Reproduces construction identity."""
 
     gonol = receipt.gonol
-    return construct_public_gonol(
+    derived_structure = _validate_structure_matches_couplings(
+        gonol.couplings,
+        gonol.structure,
+    )
+    frozen_structure = None if derived_structure is None else _freeze_json(derived_structure)
+    replayed = _seal_public_gonol(
         source_id=gonol.source_id,
         relation=gonol.relation,
         participants=gonol.participants,
         identity_glyph=gonol.identity_glyph,
+        carrier_index=gonol.carrier_index,
         occurrence=gonol.occurrence,
         carried_options=gonol.carried_options,
         couplings=gonol.couplings,
-        structure=gonol.structure,
+        structure=frozen_structure,
+        geometry=receipt.geometry,
     )
+    if replayed.receipt_digest != receipt.receipt_digest:
+        raise PublicGonolConstructionError("receipt does not match its retained canonical payload")
+    return replayed
 
 
 __all__ = [

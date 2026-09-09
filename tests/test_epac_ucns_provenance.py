@@ -12,6 +12,12 @@
 #   call: self::test_unchanged_witness_runs_git_once
 #   mutates: in-memory verification cache
 #   cleanup: clears verification cache
+#
+# id: check_epac_ucns_pin_compares_pinned_blob_bytes
+#   proves: epac_ucns_pin_matches_loaded_code
+#   call: self::test_pinned_blob_mismatch_returns_hmmm
+#   mutates: none
+#   cleanup: clears verification cache
 # === END CHECKS ===
 
 from __future__ import annotations
@@ -77,6 +83,20 @@ class UcnsProvenanceTest(unittest.TestCase):
         self.assertGreater(first_call_count, 0)
         self.assertEqual(len(calls), first_call_count)
         self.assertEqual(ucns_verification_cache_info().hits, 1)
+
+    def test_pinned_blob_mismatch_returns_hmmm(self) -> None:
+        def mismatched_blob_runner(command, **kwargs):
+            if "cat-file" in command:
+                return subprocess.CompletedProcess(command, 0, stdout=b"not-the-pinned-source")
+            return subprocess.run(command, **kwargs)
+
+        observed = verify_loaded_ucns_commit(
+            pinned_commit=PINNED_UCNS_COMMIT,
+            dependencies=(public_gonol_function, native_mobius_state),
+            runner=mismatched_blob_runner,
+        )
+
+        self.assertEqual(observed, "hmmm")
 
 
 if __name__ == "__main__":

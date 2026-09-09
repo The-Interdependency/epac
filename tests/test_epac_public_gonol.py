@@ -35,6 +35,8 @@ class EpacPublicGonolTest(unittest.TestCase):
         self.assertEqual(CONSTRUCTOR_ID, "epac.public_gonol")
         self.assertEqual(receipt.gonol.identity_glyph, "O")
         self.assertEqual(receipt.gonol.carrier_index, public_gonol_function("O").index)
+        self.assertEqual(receipt.geometry["ucns_commit"], PINNED_UCNS_COMMIT)
+        self.assertEqual(receipt.gonol.geometry, receipt.geometry)
         self.assertEqual(PINNED_UCNS_COMMIT, "828c0b8bbcfc267efb5701da714191c1f73a81ff")
         self.assertEqual(
             PINNED_PUBLIC_GONOL_SHA256,
@@ -349,11 +351,17 @@ class EpacPublicGonolTest(unittest.TestCase):
         public_gonol_module.public_gonol_function = namespace["public_gonol_function"]
         epac_ucns_provenance.clear_ucns_verification_cache()
         try:
-            geometry = public_gonol_module._geometry(None, None)
+            receipt = construct_public_gonol(
+                source_id="epac.test:stale-ucns",
+                relation="epac.provenance.test",
+            )
         finally:
             public_gonol_module.public_gonol_function = original_function
             epac_ucns_provenance.clear_ucns_verification_cache()
-        self.assertEqual(geometry["ucns_commit"], "hmmm")
+        self.assertEqual(receipt.geometry["ucns_commit"], "hmmm")
+        replayed = replay_public_gonol(receipt)
+        self.assertEqual(replayed.receipt_digest, receipt.receipt_digest)
+        self.assertEqual(replayed.geometry["ucns_commit"], "hmmm")
 
     def test_unknown_glyph_fails_closed(self) -> None:
         with self.assertRaises(PublicGonolConstructionError):
