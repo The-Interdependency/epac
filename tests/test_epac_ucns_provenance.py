@@ -27,6 +27,7 @@ import subprocess
 import unittest
 
 from epac_ucns_provenance import (
+    _git_blob_mode,
     clear_ucns_verification_cache,
     ucns_verification_cache_info,
     verify_loaded_ucns_commit,
@@ -38,6 +39,13 @@ from ucns import native_mobius_state, public_gonol_function
 class UcnsProvenanceTest(unittest.TestCase):
     def tearDown(self) -> None:
         clear_ucns_verification_cache()
+
+    def test_filesystem_permissions_normalize_to_git_blob_modes(self) -> None:
+        self.assertEqual(_git_blob_mode(0o100600), "100644")
+        self.assertEqual(_git_blob_mode(0o100644), "100644")
+        self.assertEqual(_git_blob_mode(0o100664), "100644")
+        self.assertEqual(_git_blob_mode(0o100755), "100755")
+        self.assertEqual(_git_blob_mode(0o100775), "100755")
 
     def test_loaded_code_mismatch_returns_hmmm(self) -> None:
         namespace: dict[str, object] = {}

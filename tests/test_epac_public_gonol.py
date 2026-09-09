@@ -77,7 +77,11 @@ class EpacPublicGonolTest(unittest.TestCase):
         self.assertEqual(first.receipt_digest, second.receipt_digest)
 
         contradictory_geometry = dict(first.gonol.geometry)
-        contradictory_geometry["ucns_commit"] = "hmmm"
+        contradictory_geometry["ucns_commit"] = (
+            "0" * 40
+            if contradictory_geometry["ucns_commit"] != "0" * 40
+            else "1" * 40
+        )
         contradictory_gonol = replace(
             first.gonol,
             geometry=contradictory_geometry,
@@ -115,6 +119,28 @@ class EpacPublicGonolTest(unittest.TestCase):
             PublicGonolConstructionError, "retained geometry digest"
         ):
             replay_public_gonol(forged_parent)
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "retained geometry digest"
+        ):
+            construct_public_gonol(
+                source_id="epac.test:forged-child-parent",
+                relation="epac.molecular.participation",
+                participants=(forged_child,),
+            )
+
+        forged_identity = replace(first.gonol, source_id="epac.test:forged-H")
+        forged_identity_parent = replace(
+            parent,
+            gonol=replace(parent.gonol, participants=(forged_identity,)),
+        )
+        with self.assertRaisesRegex(PublicGonolConstructionError, "atomic id"):
+            replay_public_gonol(forged_identity_parent)
+        with self.assertRaisesRegex(PublicGonolConstructionError, "atomic id"):
+            construct_public_gonol(
+                source_id="epac.test:forged-identity-parent",
+                relation="epac.molecular.participation",
+                participants=(forged_identity,),
+            )
 
     def test_charged_couplings_are_the_structure(self) -> None:
         declared = space(
@@ -241,6 +267,30 @@ class EpacPublicGonolTest(unittest.TestCase):
                 relation="epac.affixiation.unpaired-valence",
                 couplings=geometry["couplings"],
                 structure=bad_part,
+            )
+
+        malformed_arity = copy.deepcopy(geometry["structure"])
+        malformed_arity["parts"][0]["arity"] = None
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "structure part arity must be an integer"
+        ):
+            construct_public_gonol(
+                source_id="epac.test:null-structure-arity",
+                relation="epac.affixiation.unpaired-valence",
+                couplings=geometry["couplings"],
+                structure=malformed_arity,
+            )
+
+        nonmapping_part = copy.deepcopy(geometry["structure"])
+        nonmapping_part["parts"] = ("not-a-mapping",)
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "structure part must be a mapping"
+        ):
+            construct_public_gonol(
+                source_id="epac.test:nonmapping-structure-part",
+                relation="epac.affixiation.unpaired-valence",
+                couplings=geometry["couplings"],
+                structure=nonmapping_part,
             )
 
         mutations = {

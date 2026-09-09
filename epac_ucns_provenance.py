@@ -338,6 +338,12 @@ def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path
     return root, tuple(records)
 
 
+def _git_blob_mode(filesystem_mode: int) -> str:
+    """Collapse platform permission bits to the executable bit Git tracks."""
+
+    return "100755" if filesystem_mode & 0o111 else "100644"
+
+
 @lru_cache(maxsize=32)
 def _verify_witness(
     pinned_commit: str,
@@ -361,7 +367,7 @@ def _verify_witness(
         except OSError:
             return "hmmm"
         relative_text = str(relative)
-        mode = f"{int(_mode) & 0o177777:06o}"
+        mode = _git_blob_mode(int(_mode))
         existing = disk_records.get(relative_text)
         if existing is None:
             disk_records[relative_text] = (
