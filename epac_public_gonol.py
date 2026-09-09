@@ -559,15 +559,19 @@ def _digest(payload: Mapping[str, Any]) -> str:
     return sha256(canonical_receipt_bytes(payload)).hexdigest()
 
 
-def _validate_retained_gonol_tree(gonol: ClosedPublicGonol) -> None:
-    """Validate every retained participant's geometry and sealed identity."""
+def _validate_retained_gonol_tree(gonol: ClosedPublicGonol) -> ClosedPublicGonol:
+    """Validate and deeply freeze every retained participant envelope."""
 
     if not isinstance(gonol, ClosedPublicGonol):
         raise PublicGonolConstructionError(
             "retained participants must be closed EPAC public gonols"
         )
-    for participant in gonol.participants:
+    frozen_participants = tuple(
         _validate_retained_gonol_tree(participant)
+        for participant in gonol.participants
+    )
+    if not isinstance(gonol.geometry, MappingABC):
+        raise PublicGonolConstructionError("retained geometry must be a mapping")
     geometry = _freeze_json(gonol.geometry)
     expected_geometry_digest = _digest({"geometry": geometry})
     if gonol.geometry_digest != expected_geometry_digest:
@@ -576,6 +580,20 @@ def _validate_retained_gonol_tree(gonol: ClosedPublicGonol) -> None:
         )
     if gonol.structure is not None and not isinstance(gonol.structure, MappingABC):
         raise PublicGonolConstructionError("retained structure must be a mapping")
+    expected_glyph, expected_index = _identity_position(gonol.identity_glyph)
+    expected_position = (
+        None
+        if expected_glyph is None
+        else {"index": expected_index, "glyph": expected_glyph}
+    )
+    if (
+        gonol.carrier_index != expected_index
+        or _tuple_tree(geometry.get("identity_position"))
+        != _tuple_tree(expected_position)
+    ):
+        raise PublicGonolConstructionError(
+            "retained carrier identity does not match geometry"
+        )
     _validate_structure_matches_couplings(gonol.couplings, gonol.structure)
     gonol_payload = _atomic_payload(
         source_id=gonol.source_id,
@@ -583,7 +601,7 @@ def _validate_retained_gonol_tree(gonol: ClosedPublicGonol) -> None:
         relation=gonol.relation,
         identity_glyph=gonol.identity_glyph,
         carrier_index=gonol.carrier_index,
-        participants=gonol.participants,
+        participants=frozen_participants,
         carried_options=gonol.carried_options,
         couplings=gonol.couplings,
         structure=gonol.structure,
@@ -604,9 +622,24 @@ def _validate_retained_gonol_tree(gonol: ClosedPublicGonol) -> None:
         raise PublicGonolConstructionError(
             "retained receipt digest does not match gonol"
         )
+    return ClosedPublicGonol(
+        source_id=gonol.source_id,
+        occurrence=gonol.occurrence,
+        relation=gonol.relation,
+        identity_glyph=gonol.identity_glyph,
+        carrier_index=gonol.carrier_index,
+        participants=frozen_participants,
+        carried_options=_freeze_json(gonol.carried_options),
+        couplings=_freeze_json(gonol.couplings),
+        structure=_freeze_json(gonol.structure),
+        geometry=geometry,
+        atomic_id=gonol.atomic_id,
+        receipt_digest=gonol.receipt_digest,
+        geometry_digest=gonol.geometry_digest,
+    )
 
 
-def _validate_retained_receipt(receipt: PublicGonolReceipt) -> None:
+def _validate_retained_receipt(receipt: PublicGonolReceipt) -> ClosedPublicGonol:
     """Reject contradictory or stale duplicate fields before replay."""
 
     if not isinstance(receipt, PublicGonolReceipt) or not isinstance(
@@ -632,7 +665,7 @@ def _validate_retained_receipt(receipt: PublicGonolReceipt) -> None:
         raise PublicGonolConstructionError("retained receipt geometries disagree")
     if _tuple_tree(receipt.structure) != _tuple_tree(gonol.structure):
         raise PublicGonolConstructionError("retained receipt structures disagree")
-    _validate_retained_gonol_tree(gonol)
+    return _validate_retained_gonol_tree(gonol)
 
 
 def _seal_public_gonol(
@@ -719,11 +752,9 @@ def construct_public_gonol(
     relation = _require_text(relation, field="relation")
     if isinstance(occurrence, bool) or not isinstance(occurrence, int) or occurrence < 0:
         raise PublicGonolConstructionError("occurrence must be a non-negative int")
-    closed_participants = tuple(participants)
-    for item in closed_participants:
-        if not isinstance(item, ClosedPublicGonol):
-            raise PublicGonolConstructionError("participants must already be closed EPAC public gonols")
-        _validate_retained_gonol_tree(item)
+    closed_participants = tuple(
+        _validate_retained_gonol_tree(item) for item in participants
+    )
     options = tuple(
         (
             _require_text(key, field="carried option key"),
@@ -759,8 +790,7 @@ def construct_public_gonol(
 def replay_public_gonol(receipt: PublicGonolReceipt) -> PublicGonolReceipt:
     """Replay one receipt from its closed gonol. Reproduces construction identity."""
 
-    _validate_retained_receipt(receipt)
-    gonol = receipt.gonol
+    gonol = _validate_retained_receipt(receipt)
     derived_structure = _validate_structure_matches_couplings(
         gonol.couplings,
         gonol.structure,
