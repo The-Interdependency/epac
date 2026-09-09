@@ -267,7 +267,9 @@ def _validate_retained_geometry(
     if ucns_commit not in {PINNED_UCNS_COMMIT, "hmmm"}:
         raise PublicGonolConstructionError("retained UCNS commit is not pinned or hmmm")
     expected = _geometry_record(identity_glyph, carrier_index, ucns_commit)
-    if _tuple_tree(geometry) != _tuple_tree(expected):
+    if canonical_receipt_bytes({"geometry": geometry}) != canonical_receipt_bytes(
+        {"geometry": expected}
+    ):
         raise PublicGonolConstructionError("retained geometry is not canonical")
     return _freeze_json(expected)
 
@@ -668,6 +670,10 @@ def _validate_retained_gonol_tree(gonol: ClosedPublicGonol) -> ClosedPublicGonol
         expected_glyph,
         expected_index,
     )
+    if _digest({"geometry": geometry}) != expected_geometry_digest:
+        raise PublicGonolConstructionError(
+            "retained geometry digest does not match canonical geometry"
+        )
     canonical_couplings, canonical_structure = _canonical_couplings_and_structure(
         gonol.couplings,
         gonol.structure,
