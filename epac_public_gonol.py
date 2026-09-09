@@ -77,10 +77,7 @@ from collections.abc import Mapping as MappingABC
 from collections.abc import Sequence as SequenceABC
 from dataclasses import dataclass
 from hashlib import sha256
-import inspect
 import json
-from pathlib import Path
-import subprocess
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
@@ -90,6 +87,7 @@ from epac_dimensional_arity import (
     space,
     structure_from_charged_couplings,
 )
+from epac_ucns_provenance import verify_loaded_ucns_commit
 from ucns import (
     native_mobius_state,
     public_gonol_function,
@@ -191,94 +189,13 @@ def _identity_position(identity_glyph: str | None) -> tuple[str | None, int | No
     return (position.glyph, position.index)
 
 
-def _git_root_for(path: Path) -> Path | None:
-    try:
-        result = subprocess.run(
-            ("git", "-C", str(path.parent), "rev-parse", "--show-toplevel"),
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=2,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return None
-    return Path(result.stdout.strip()).resolve()
-
-
-def _ucns_source_paths() -> tuple[Path, ...]:
-    paths: list[Path] = []
-    for dependency in (public_gonol_function, public_gonol_sha256, native_mobius_state):
-        try:
-            source_path = Path(inspect.getfile(dependency)).resolve()
-        except (OSError, TypeError):
-            return ()
-        if source_path not in paths:
-            paths.append(source_path)
-    return tuple(paths)
-
-
 def _verified_ucns_commit() -> str:
-    """Return the observed UCNS git commit only when source bytes match the pin."""
+    """Return the pin only when current source and executing UCNS code agree."""
 
-    source_paths = _ucns_source_paths()
-    if not source_paths:
-        return "hmmm"
-    root = _git_root_for(source_paths[0])
-    if root is None:
-        return "hmmm"
-    relative_paths: list[str] = []
-    for source_path in source_paths:
-        if _git_root_for(source_path) != root:
-            return "hmmm"
-        try:
-            relative_paths.append(source_path.relative_to(root).as_posix())
-        except ValueError:
-            return "hmmm"
-
-    try:
-        result = subprocess.run(
-            ("git", "-C", str(root), "rev-parse", "HEAD"),
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=2,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return "hmmm"
-    observed = result.stdout.strip()
-    if observed != PINNED_UCNS_COMMIT:
-        return "hmmm"
-
-    try:
-        for relative_path in relative_paths:
-            subprocess.run(
-                ("git", "-C", str(root), "ls-files", "--error-unmatch", "--", relative_path),
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=2,
-            )
-        status = subprocess.run(
-            (
-                "git",
-                "-C",
-                str(root),
-                "status",
-                "--porcelain=v1",
-                "--untracked-files=no",
-                "--",
-                *relative_paths,
-            ),
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=2,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return "hmmm"
-    if status.stdout.strip():
-        return "hmmm"
-    return observed
+    return verify_loaded_ucns_commit(
+        pinned_commit=PINNED_UCNS_COMMIT,
+        dependencies=(public_gonol_function, public_gonol_sha256, native_mobius_state),
+    )
 
 
 def _geometry(identity_glyph: str | None, carrier_index: int | None) -> dict[str, Any]:

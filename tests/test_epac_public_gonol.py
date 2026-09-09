@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import inspect
 import sys
 import unittest
 from pathlib import Path
@@ -10,6 +11,7 @@ sys.path.insert(0, str(EPAC_ROOT))
 
 from epac_dimensional_arity import DimensionalArityError, space, geometry_from_declared_couplings
 import epac_public_gonol as public_gonol_module
+import epac_ucns_provenance
 from epac_public_gonol import (
     CONSTRUCTOR_ID,
     PINNED_PUBLIC_GONOL_SHA256,
@@ -332,30 +334,25 @@ class EpacPublicGonolTest(unittest.TestCase):
             public_gonol_module.PINNED_UCNS_COMMIT = original_pin
         self.assertEqual(geometry["ucns_commit"], "hmmm")
 
-    def test_ucns_commit_is_not_stamped_when_runtime_source_is_dirty(self) -> None:
-        original_run = public_gonol_module.subprocess.run
-        ucns_root = EPAC_ROOT / "_deps" / "ucns"
-
-        class Result:
-            def __init__(self, stdout: str) -> None:
-                self.stdout = stdout
-
-        def fake_run(command, **_kwargs):
-            if command[3:] == ("rev-parse", "--show-toplevel"):
-                return Result(str(ucns_root) + "\n")
-            if command[3:] == ("rev-parse", "HEAD"):
-                return Result(PINNED_UCNS_COMMIT + "\n")
-            if "ls-files" in command:
-                return Result("")
-            if "status" in command:
-                return Result(" M src/ucns/public_gonol.py\n")
-            raise AssertionError(f"unexpected git command: {command!r}")
-
-        public_gonol_module.subprocess.run = fake_run
+    def test_ucns_commit_is_not_stamped_when_loaded_code_is_stale(self) -> None:
+        original_function = public_gonol_module.public_gonol_function
+        namespace: dict[str, object] = {}
+        source_path = inspect.getfile(original_function)
+        exec(
+            compile(
+                "def public_gonol_function(value):\n    return value\n",
+                source_path,
+                "exec",
+            ),
+            namespace,
+        )
+        public_gonol_module.public_gonol_function = namespace["public_gonol_function"]
+        epac_ucns_provenance.clear_ucns_verification_cache()
         try:
             geometry = public_gonol_module._geometry(None, None)
         finally:
-            public_gonol_module.subprocess.run = original_run
+            public_gonol_module.public_gonol_function = original_function
+            epac_ucns_provenance.clear_ucns_verification_cache()
         self.assertEqual(geometry["ucns_commit"], "hmmm")
 
     def test_unknown_glyph_fails_closed(self) -> None:

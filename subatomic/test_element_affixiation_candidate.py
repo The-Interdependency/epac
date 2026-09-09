@@ -34,8 +34,8 @@
 # id: check_unverified_ucns_source_records_hmmm
 #   proves: receipt_deterministic_and_replayable
 #   call: self::test_unverified_ucns_source_records_hmmm
-#   mutates: element_affixiation_candidate.subprocess.run
-#   cleanup: restores subprocess.run
+#   mutates: element_affixiation_candidate.PINNED_UCNS_COMMIT
+#   cleanup: restores PINNED_UCNS_COMMIT
 #
 # id: check_element_receipt_accepts_mapping_records
 #   proves: receipt_deterministic_and_replayable
@@ -163,43 +163,12 @@ def test_current_versioned_receipts_match_declared_ucns_pin():
 
 
 def test_unverified_ucns_source_records_hmmm():
-    original_run = candidate.subprocess.run
-    ucns_root = Path(__file__).resolve().parents[1] / "_deps" / "ucns"
-
-    class Result:
-        def __init__(self, stdout: str) -> None:
-            self.stdout = stdout
-
-    def fake_dirty_run(command, **_kwargs):
-        if command[3:] == ("rev-parse", "--show-toplevel"):
-            return Result(str(ucns_root) + "\n")
-        if command[3:] == ("rev-parse", "HEAD"):
-            return Result(candidate.PINNED_UCNS_COMMIT + "\n")
-        if "ls-files" in command:
-            return Result("")
-        if "status" in command:
-            return Result(" M src/ucns/direct_mobius.py\n")
-        raise AssertionError(f"unexpected git command: {command!r}")
-
+    original_pin = candidate.PINNED_UCNS_COMMIT
+    candidate.PINNED_UCNS_COMMIT = "0" * 40
     try:
-        candidate.subprocess.run = fake_dirty_run
         element = candidate.affixiate_element("H")
     finally:
-        candidate.subprocess.run = original_run
-    assert element.source_commits["ucns"] == "hmmm"
-
-    def fake_wrong_head_run(command, **_kwargs):
-        if command[3:] == ("rev-parse", "--show-toplevel"):
-            return Result(str(ucns_root) + "\n")
-        if command[3:] == ("rev-parse", "HEAD"):
-            return Result("0" * 40 + "\n")
-        raise AssertionError(f"unexpected git command: {command!r}")
-
-    try:
-        candidate.subprocess.run = fake_wrong_head_run
-        element = candidate.affixiate_element("H")
-    finally:
-        candidate.subprocess.run = original_run
+        candidate.PINNED_UCNS_COMMIT = original_pin
     assert element.source_commits["ucns"] == "hmmm"
 
 

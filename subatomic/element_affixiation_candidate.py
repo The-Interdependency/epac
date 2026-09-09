@@ -80,14 +80,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from fractions import Fraction
 import hashlib
-import inspect
 import json
-from pathlib import Path
-import subprocess
 from types import MappingProxyType
 from typing import Any
 
 from ucns import native_mobius_state, public_gonol_function
+from epac_ucns_provenance import verify_loaded_ucns_commit
 
 PINNED_METAPAT_COMMIT = "34d954aa1e2092e615b03a180500f6b6977f501e"
 PINNED_UCNS_COMMIT = "828c0b8bbcfc267efb5701da714191c1f73a81ff"
@@ -181,93 +179,13 @@ def _freeze_state(state: Mapping[str, Any]) -> Mapping[str, Any]:
     )
 
 
-def _git_root_for(path: Path) -> Path | None:
-    try:
-        result = subprocess.run(
-            ("git", "-C", str(path.parent), "rev-parse", "--show-toplevel"),
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=2,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return None
-    return Path(result.stdout.strip()).resolve()
-
-
-def _ucns_source_paths() -> tuple[Path, ...]:
-    paths: list[Path] = []
-    for dependency in (public_gonol_function, native_mobius_state):
-        try:
-            source_path = Path(inspect.getfile(dependency)).resolve()
-        except (OSError, TypeError):
-            return ()
-        if source_path not in paths:
-            paths.append(source_path)
-    return tuple(paths)
-
-
 def _verified_ucns_commit() -> str:
-    """Return the exact pinned UCNS commit only when imported source files match it."""
+    """Return the pin only when current source and executing UCNS code agree."""
 
-    source_paths = _ucns_source_paths()
-    if not source_paths:
-        return "hmmm"
-    root = _git_root_for(source_paths[0])
-    if root is None:
-        return "hmmm"
-    relative_paths: list[str] = []
-    for source_path in source_paths:
-        if _git_root_for(source_path) != root:
-            return "hmmm"
-        try:
-            relative_paths.append(source_path.relative_to(root).as_posix())
-        except ValueError:
-            return "hmmm"
-
-    try:
-        result = subprocess.run(
-            ("git", "-C", str(root), "rev-parse", "HEAD"),
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=2,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return "hmmm"
-    if result.stdout.strip() != PINNED_UCNS_COMMIT:
-        return "hmmm"
-
-    try:
-        for relative_path in relative_paths:
-            subprocess.run(
-                ("git", "-C", str(root), "ls-files", "--error-unmatch", "--", relative_path),
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=2,
-            )
-        status = subprocess.run(
-            (
-                "git",
-                "-C",
-                str(root),
-                "status",
-                "--porcelain=v1",
-                "--untracked-files=no",
-                "--",
-                *relative_paths,
-            ),
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=2,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return "hmmm"
-    if status.stdout.strip():
-        return "hmmm"
-    return PINNED_UCNS_COMMIT
+    return verify_loaded_ucns_commit(
+        pinned_commit=PINNED_UCNS_COMMIT,
+        dependencies=(public_gonol_function, native_mobius_state),
+    )
 
 
 def _source_commits() -> dict[str, str]:
