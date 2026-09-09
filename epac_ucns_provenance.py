@@ -1,10 +1,10 @@
 """Loaded-code-aware UCNS provenance verification shared by EPAC constructors.
 
-The verifier stamps a UCNS commit only when the executing function bytecode
-matches the clean source at the declared commit. Verification is cached by a
-witness containing HEAD, index state, source bytes, file modes, and loaded code,
-so repeated nested construction avoids Git subprocesses without preserving a
-stale answer.
+The verifier stamps a UCNS commit only when each executing function and its
+transitively referenced UCNS runtime state match the clean source at the
+declared commit. Verification is cached by a witness containing HEAD, index
+state, source bytes, file modes, and loaded state, so repeated nested
+construction avoids Git subprocesses without preserving a stale answer.
 
 Usage guidance:
 
@@ -19,10 +19,10 @@ Usage guidance:
 # id: epac_ucns_loaded_provenance
 #   module_name: epac_ucns_provenance
 #   module_kind: service
-#   summary: binds UCNS receipt provenance to clean pinned source and the function code actually executing
+#   summary: binds UCNS receipt provenance to clean pinned source and the transitive UCNS runtime state actually executing
 #   owner: The Interdependency
 #   public_surface: verify_loaded_ucns_commit, clear_ucns_verification_cache, ucns_verification_cache_info
-#   internal_surface: source witness, Git metadata resolution, code fingerprint, cached verification
+#   internal_surface: source witness, Git metadata resolution, transitive loaded-state fingerprint, cached verification
 #   auth_boundary: none
 #   storage_boundary: read
 #   network_boundary: none
@@ -37,7 +37,7 @@ Usage guidance:
 # === CONTRACTS ===
 # id: epac_ucns_pin_matches_loaded_code
 #   given: EPAC is about to stamp a pinned UCNS dependency identity
-#   then: each executing dependency function matches the clean tracked source at that exact HEAD; otherwise the identity is hmmm
+#   then: each executing dependency function and its transitively referenced UCNS helpers, classes, defaults, closures, and globals match the clean tracked source at that exact HEAD; otherwise the identity is hmmm
 #   class: provenance
 #
 # id: epac_ucns_verification_reuses_only_identical_witness
@@ -50,12 +50,16 @@ from __future__ import annotations
 
 from functools import lru_cache
 from hashlib import sha256
+import importlib.util
 import inspect
 import marshal
 from pathlib import Path
 import re
 import subprocess
-from types import CodeType
+import sys
+from dataclasses import fields, is_dataclass
+from enum import Enum
+from types import CodeType, FunctionType, ModuleType
 from typing import Callable, Sequence
 
 
@@ -157,23 +161,142 @@ def _normalized_code(code: CodeType) -> tuple[object, ...]:
     )
 
 
-def _code_fingerprint(code: CodeType) -> str:
-    return sha256(marshal.dumps(_normalized_code(code))).hexdigest()
+def _freeze_loaded_state(
+    value: object,
+    owner_module: str,
+    seen: dict[int, int],
+) -> tuple[object, ...]:
+    """Normalize one transitive callable state without module-name noise."""
 
-
-def _find_code(module_code: CodeType, qualname: str) -> CodeType | None:
-    matches: list[CodeType] = []
-
-    def walk(code: CodeType) -> None:
-        for item in code.co_consts:
-            if not isinstance(item, CodeType):
+    if isinstance(value, Enum):
+        return ("enum-member", value.name, _freeze_loaded_state(value.value, owner_module, seen))
+    if value is None or isinstance(value, (bool, int, str, bytes)):
+        return ("literal", type(value).__name__, value)
+    if isinstance(value, float):
+        return ("float", value.hex())
+    identity = id(value)
+    if identity in seen:
+        return ("ref", seen[identity])
+    seen[identity] = len(seen)
+    if isinstance(value, tuple):
+        return ("tuple", *(_freeze_loaded_state(item, owner_module, seen) for item in value))
+    if isinstance(value, list):
+        return ("list", *(_freeze_loaded_state(item, owner_module, seen) for item in value))
+    if isinstance(value, (set, frozenset)):
+        items = [_freeze_loaded_state(item, owner_module, seen) for item in value]
+        return ("set", *sorted(items, key=repr))
+    if isinstance(value, dict):
+        items = [
+            (
+                _freeze_loaded_state(key, owner_module, seen),
+                _freeze_loaded_state(item, owner_module, seen),
+            )
+            for key, item in value.items()
+        ]
+        return ("dict", *sorted(items, key=repr))
+    if isinstance(value, ModuleType):
+        return ("external-module", value.__name__)
+    if isinstance(value, CodeType):
+        return ("code", _normalized_code(value))
+    if isinstance(value, FunctionType):
+        module_name = getattr(value, "__module__", "")
+        if module_name != owner_module:
+            return ("external-function", module_name, value.__qualname__)
+        global_state = []
+        for name in sorted(set(value.__code__.co_names)):
+            if name in value.__globals__:
+                global_state.append(
+                    (name, _freeze_loaded_state(value.__globals__[name], owner_module, seen))
+                )
+        closure = tuple(
+            _freeze_loaded_state(cell.cell_contents, owner_module, seen)
+            for cell in (value.__closure__ or ())
+        )
+        return (
+            "function",
+            value.__qualname__,
+            _normalized_code(value.__code__),
+            _freeze_loaded_state(value.__defaults__, owner_module, seen),
+            _freeze_loaded_state(value.__kwdefaults__, owner_module, seen),
+            _freeze_loaded_state(value.__annotations__, owner_module, seen),
+            tuple(global_state),
+            closure,
+        )
+    if isinstance(value, type):
+        module_name = getattr(value, "__module__", "")
+        if module_name != owner_module:
+            return ("external-class", module_name, value.__qualname__)
+        attributes = []
+        for name, item in sorted(vars(value).items()):
+            if name in {"__module__", "__doc__", "__dict__", "__weakref__"}:
                 continue
-            if item.co_qualname == qualname:
-                matches.append(item)
-            walk(item)
+            if isinstance(item, (staticmethod, classmethod)):
+                item = item.__func__
+            if isinstance(item, property):
+                item = (item.fget, item.fset, item.fdel)
+            if (
+                name.startswith("__")
+                and name not in {"__annotations__", "__match_args__", "__slots__"}
+                and not callable(item)
+            ):
+                continue
+            attributes.append((name, _freeze_loaded_state(item, owner_module, seen)))
+        members = tuple(
+            (name, _freeze_loaded_state(item.value, owner_module, seen))
+            for name, item in getattr(value, "__members__", {}).items()
+        )
+        return ("class", value.__qualname__, tuple(attributes), members)
+    value_type = type(value)
+    if value_type.__module__ == owner_module and is_dataclass(value):
+        return (
+            "dataclass-instance",
+            value_type.__qualname__,
+            tuple(
+                (field.name, _freeze_loaded_state(getattr(value, field.name), owner_module, seen))
+                for field in fields(value)
+            ),
+        )
+    if value_type.__module__ == "fractions" and hasattr(value, "numerator"):
+        return ("fraction", int(value.numerator), int(value.denominator))
+    return ("external-object", value_type.__module__, value_type.__qualname__)
 
-    walk(module_code)
-    return matches[0] if len(matches) == 1 else None
+
+def _transitive_fingerprint(dependency: Callable[..., object]) -> str:
+    owner_module = getattr(dependency, "__module__", "")
+    frozen = _freeze_loaded_state(dependency, owner_module, {})
+    return sha256(marshal.dumps(frozen)).hexdigest()
+
+
+def _fresh_dependency_fingerprints(
+    path: Path,
+    disk_digest: str,
+    qualnames: Sequence[str],
+) -> dict[str, str] | None:
+    module_name = f"_epac_ucns_verified_{disk_digest[:20]}"
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    prior = sys.modules.get(module_name)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+        result: dict[str, str] = {}
+        for qualname in qualnames:
+            item: object = module
+            for part in qualname.split("."):
+                item = getattr(item, part)
+            if not isinstance(item, FunctionType):
+                return None
+            result[qualname] = _transitive_fingerprint(item)
+        return result
+    except (AttributeError, ImportError, OSError, RuntimeError, TypeError, ValueError):
+        return None
+    finally:
+        if prior is None:
+            sys.modules.pop(module_name, None)
+        else:
+            sys.modules[module_name] = prior
 
 
 def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path, tuple[tuple[object, ...], ...]] | None:
@@ -203,7 +326,7 @@ def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path
                 relative,
                 str(path),
                 qualname,
-                _code_fingerprint(code),
+                _transitive_fingerprint(dependency),
                 sha256(data).hexdigest(),
                 stat.st_mode,
             )
@@ -211,15 +334,6 @@ def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path
     if root is None:
         return None
     return root, tuple(records)
-
-
-def _expected_code_fingerprint(path: Path, qualname: str) -> str | None:
-    try:
-        module_code = compile(path.read_bytes(), str(path), "exec", dont_inherit=True)
-    except (OSError, SyntaxError, ValueError):
-        return None
-    code = _find_code(module_code, qualname)
-    return None if code is None else _code_fingerprint(code)
 
 
 @lru_cache(maxsize=32)
@@ -236,7 +350,7 @@ def _verify_witness(
     if head != pinned_commit:
         return "hmmm"
     root = Path(root_text)
-    disk_records: dict[str, tuple[Path, str]] = {}
+    disk_records: dict[str, tuple[Path, str, str, list[tuple[str, str]]]] = {}
     for relative, absolute, qualname, loaded_digest, disk_digest, _mode in records:
         path = Path(str(absolute))
         try:
@@ -244,10 +358,25 @@ def _verify_witness(
                 return "hmmm"
         except OSError:
             return "hmmm"
-        expected_digest = _expected_code_fingerprint(path, str(qualname))
-        if expected_digest is None or expected_digest != loaded_digest:
-            return "hmmm"
-        disk_records[str(relative)] = (path, f"{int(_mode) & 0o177777:06o}")
+        relative_text = str(relative)
+        mode = f"{int(_mode) & 0o177777:06o}"
+        existing = disk_records.get(relative_text)
+        if existing is None:
+            disk_records[relative_text] = (
+                path,
+                mode,
+                str(disk_digest),
+                [(str(qualname), str(loaded_digest))],
+            )
+        else:
+            existing_path, existing_mode, existing_digest, dependencies = existing
+            if (
+                existing_path != path
+                or existing_mode != mode
+                or existing_digest != disk_digest
+            ):
+                return "hmmm"
+            dependencies.append((str(qualname), str(loaded_digest)))
     try:
         observed = runner(
             ("git", "-C", str(root), "rev-parse", "HEAD"),
@@ -258,7 +387,9 @@ def _verify_witness(
         )
         if getattr(observed, "stdout", "").strip() != pinned_commit:
             return "hmmm"
-        for relative_path, (path, disk_mode) in sorted(disk_records.items()):
+        for relative_path, (path, disk_mode, _disk_digest, _dependencies) in sorted(
+            disk_records.items()
+        ):
             tree_entry = runner(
                 ("git", "-C", str(root), "ls-tree", pinned_commit, "--", relative_path),
                 check=True,
@@ -279,6 +410,19 @@ def _verify_witness(
                 return "hmmm"
     except (OSError, subprocess.SubprocessError):
         return "hmmm"
+    for path, _disk_mode, disk_digest, dependencies in disk_records.values():
+        expected = _fresh_dependency_fingerprints(
+            path,
+            disk_digest,
+            tuple(qualname for qualname, _loaded_digest in dependencies),
+        )
+        if expected is None:
+            return "hmmm"
+        if any(
+            expected.get(qualname) != loaded_digest
+            for qualname, loaded_digest in dependencies
+        ):
+            return "hmmm"
     return pinned_commit
 
 
@@ -288,7 +432,7 @@ def verify_loaded_ucns_commit(
     dependencies: Sequence[Callable[..., object]],
     runner: Runner = subprocess.run,
 ) -> str:
-    """Return ``pinned_commit`` only for a clean, loaded-code-matched runtime."""
+    """Return ``pinned_commit`` only for a clean, loaded-state-matched runtime."""
 
     if not HEX40.fullmatch(pinned_commit):
         return "hmmm"

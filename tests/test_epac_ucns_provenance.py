@@ -58,6 +58,32 @@ class UcnsProvenanceTest(unittest.TestCase):
 
         self.assertEqual(observed, "hmmm")
 
+        helper_namespace: dict[str, object] = {
+            "__name__": public_gonol_function.__module__
+        }
+        exec(
+            compile(
+                "def public_gonol_position(value):\n    return None\n",
+                inspect.getfile(public_gonol_function),
+                "exec",
+            ),
+            helper_namespace,
+        )
+        loaded_globals = public_gonol_function.__globals__
+        original_helper = loaded_globals["public_gonol_position"]
+        try:
+            loaded_globals["public_gonol_position"] = helper_namespace[
+                "public_gonol_position"
+            ]
+            transitive_observed = verify_loaded_ucns_commit(
+                pinned_commit=PINNED_UCNS_COMMIT,
+                dependencies=(public_gonol_function, native_mobius_state),
+            )
+        finally:
+            loaded_globals["public_gonol_position"] = original_helper
+
+        self.assertEqual(transitive_observed, "hmmm")
+
     def test_unchanged_witness_runs_git_once(self) -> None:
         calls: list[tuple[str, ...]] = []
 
