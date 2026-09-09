@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from dataclasses import replace
 import inspect
 import sys
 import unittest
@@ -14,6 +15,7 @@ import epac_public_gonol as public_gonol_module
 import epac_ucns_provenance
 from epac_public_gonol import (
     CONSTRUCTOR_ID,
+    CONSTRUCTOR_VERSION,
     PINNED_PUBLIC_GONOL_SHA256,
     PINNED_UCNS_COMMIT,
     PublicGonolConstructionError,
@@ -33,6 +35,7 @@ class EpacPublicGonolTest(unittest.TestCase):
         )
         self.assertEqual(receipt.constructor_id, CONSTRUCTOR_ID)
         self.assertEqual(CONSTRUCTOR_ID, "epac.public_gonol")
+        self.assertEqual(CONSTRUCTOR_VERSION, "v2")
         self.assertEqual(receipt.gonol.identity_glyph, "O")
         self.assertEqual(receipt.gonol.carrier_index, public_gonol_function("O").index)
         self.assertEqual(receipt.geometry["ucns_commit"], PINNED_UCNS_COMMIT)
@@ -72,6 +75,29 @@ class EpacPublicGonolTest(unittest.TestCase):
         )
         second = replay_public_gonol(first)
         self.assertEqual(first.receipt_digest, second.receipt_digest)
+
+        contradictory_geometry = dict(first.gonol.geometry)
+        contradictory_geometry["ucns_commit"] = "hmmm"
+        contradictory_gonol = replace(
+            first.gonol,
+            geometry=contradictory_geometry,
+        )
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "retained receipt geometries disagree"
+        ):
+            replay_public_gonol(replace(first, gonol=contradictory_gonol))
+
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "geometry digest"
+        ):
+            replay_public_gonol(
+                replace(first, gonol=replace(first.gonol, geometry_digest="0" * 64))
+            )
+
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "receipt envelope"
+        ):
+            replay_public_gonol(replace(first, constructor_version="v1"))
 
     def test_charged_couplings_are_the_structure(self) -> None:
         declared = space(

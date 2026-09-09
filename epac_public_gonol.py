@@ -31,7 +31,7 @@ Usage guidance
 #   summary: EPAC candidate constructor that closes gonols on the UCNS Public Gonol carrier with oriented couplings and arity charge states; not the EDCM text-domain constructor
 #   owner: The Interdependency
 #   public_surface: CONSTRUCTOR_ID, CONSTRUCTOR_VERSION, PINNED_UCNS_COMMIT, PINNED_PUBLIC_GONOL_SHA256, ClosedPublicGonol, PublicGonolReceipt, PublicGonolConstructionError, construct_public_gonol, replay_public_gonol, canonical_receipt_bytes
-#   internal_surface: _require_text, _identity_position, _verified_ucns_commit, _geometry, _freeze_json, _json_ready, _tuple_tree, _canonical_coupling_record, _coupling_sort_key, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings, _validate_structure_matches_couplings
+#   internal_surface: _require_text, _identity_position, _verified_ucns_commit, _geometry, _freeze_json, _json_ready, _tuple_tree, _canonical_coupling_record, _coupling_sort_key, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings, _validate_structure_matches_couplings, _validate_retained_receipt
 #   auth_boundary: EPAC owns particle/energy gonol closure; UCNS owns Public Gonol carrier identity and native Möbius ε; EDCM text-domain constructor is not used; METAPAT affixiation is consumed, not redefined
 #   storage_boundary: none; receipts remain caller-owned in-memory objects
 #   network_boundary: none
@@ -60,7 +60,7 @@ Usage guidance
 #
 # id: epac_public_gonol_replays_byte_identical
 #   given: a PublicGonolReceipt
-#   then: replay_public_gonol reproduces the same receipt_digest
+#   then: replay_public_gonol validates the complete retained envelope and reproduces the same receipt_digest
 #   class: correctness
 #   since: 2026-08-22
 #
@@ -96,7 +96,7 @@ from ucns import (
 
 
 CONSTRUCTOR_ID = "epac.public_gonol"
-CONSTRUCTOR_VERSION = "v1"
+CONSTRUCTOR_VERSION = "v2"
 PINNED_UCNS_COMMIT = "828c0b8bbcfc267efb5701da714191c1f73a81ff"
 PINNED_PUBLIC_GONOL_SHA256 = "55d10c84529a4d7bc7714786357e977b68d9df2ac3f73d20e229580b552c2ef5"
 STANDING = "implemented-candidate"
@@ -549,6 +549,53 @@ def _digest(payload: Mapping[str, Any]) -> str:
     return sha256(canonical_receipt_bytes(payload)).hexdigest()
 
 
+def _validate_retained_receipt(receipt: PublicGonolReceipt) -> None:
+    """Reject contradictory or stale duplicate fields before replay."""
+
+    if not isinstance(receipt, PublicGonolReceipt) or not isinstance(
+        receipt.gonol, ClosedPublicGonol
+    ):
+        raise PublicGonolConstructionError("replay requires a PublicGonolReceipt")
+    gonol = receipt.gonol
+    expected_envelope = (
+        receipt.constructor_id == CONSTRUCTOR_ID
+        and receipt.constructor_version == CONSTRUCTOR_VERSION
+        and receipt.standing == STANDING
+        and receipt.selection_effect == SELECTION_EFFECT
+        and receipt.nonclaims == NONCLAIMS
+        and receipt.hmmm == HMMM
+        and receipt.source_id == gonol.source_id
+        and receipt.receipt_digest == gonol.receipt_digest
+    )
+    if not expected_envelope:
+        raise PublicGonolConstructionError("receipt envelope is not canonical")
+    outer_geometry = _freeze_json(receipt.geometry)
+    gonol_geometry = _freeze_json(gonol.geometry)
+    if _tuple_tree(outer_geometry) != _tuple_tree(gonol_geometry):
+        raise PublicGonolConstructionError("retained receipt geometries disagree")
+    if _tuple_tree(receipt.structure) != _tuple_tree(gonol.structure):
+        raise PublicGonolConstructionError("retained receipt structures disagree")
+    if gonol.geometry_digest != _digest({"geometry": gonol_geometry}):
+        raise PublicGonolConstructionError("retained geometry digest does not match geometry")
+    expected_atomic_id = _digest(
+        {
+            "atomic": _atomic_payload(
+                source_id=gonol.source_id,
+                occurrence=gonol.occurrence,
+                relation=gonol.relation,
+                identity_glyph=gonol.identity_glyph,
+                carrier_index=gonol.carrier_index,
+                participants=gonol.participants,
+                carried_options=gonol.carried_options,
+                couplings=gonol.couplings,
+                structure=gonol.structure,
+            )
+        }
+    )
+    if gonol.atomic_id != expected_atomic_id:
+        raise PublicGonolConstructionError("retained atomic id does not match gonol")
+
+
 def _seal_public_gonol(
     *,
     source_id: str,
@@ -672,6 +719,7 @@ def construct_public_gonol(
 def replay_public_gonol(receipt: PublicGonolReceipt) -> PublicGonolReceipt:
     """Replay one receipt from its closed gonol. Reproduces construction identity."""
 
+    _validate_retained_receipt(receipt)
     gonol = receipt.gonol
     derived_structure = _validate_structure_matches_couplings(
         gonol.couplings,
@@ -688,7 +736,7 @@ def replay_public_gonol(receipt: PublicGonolReceipt) -> PublicGonolReceipt:
         carried_options=gonol.carried_options,
         couplings=gonol.couplings,
         structure=frozen_structure,
-        geometry=receipt.geometry,
+        geometry=gonol.geometry,
     )
     if replayed.receipt_digest != receipt.receipt_digest:
         raise PublicGonolConstructionError("receipt does not match its retained canonical payload")

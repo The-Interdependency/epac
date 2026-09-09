@@ -50,7 +50,6 @@ from __future__ import annotations
 
 from functools import lru_cache
 from hashlib import sha256
-import importlib.util
 import inspect
 import marshal
 from pathlib import Path
@@ -273,14 +272,17 @@ def _fresh_dependency_fingerprints(
     qualnames: Sequence[str],
 ) -> dict[str, str] | None:
     module_name = f"_epac_ucns_verified_{disk_digest[:20]}"
-    spec = importlib.util.spec_from_file_location(module_name, path)
-    if spec is None or spec.loader is None:
-        return None
-    module = importlib.util.module_from_spec(spec)
+    module = ModuleType(module_name)
+    module.__file__ = str(path)
+    module.__package__ = ""
     prior = sys.modules.get(module_name)
     sys.modules[module_name] = module
     try:
-        spec.loader.exec_module(module)
+        source = path.read_bytes()
+        if sha256(source).hexdigest() != disk_digest:
+            return None
+        code = compile(source, str(path), "exec", dont_inherit=True)
+        exec(code, module.__dict__)
         result: dict[str, str] = {}
         for qualname in qualnames:
             item: object = module
