@@ -160,6 +160,64 @@ class EpacPublicGonolTest(unittest.TestCase):
                 participants=(forged_identity,),
             )
 
+        bad_index = first.gonol.carrier_index + 1
+        bad_payload = public_gonol_module._atomic_payload(
+            source_id=first.gonol.source_id,
+            occurrence=first.gonol.occurrence,
+            relation=first.gonol.relation,
+            identity_glyph=first.gonol.identity_glyph,
+            carrier_index=bad_index,
+            participants=first.gonol.participants,
+            carried_options=first.gonol.carried_options,
+            couplings=first.gonol.couplings,
+            structure=first.gonol.structure,
+        )
+        bad_atomic_id = public_gonol_module._digest({"atomic": bad_payload})
+        bad_receipt_digest = public_gonol_module._digest(
+            public_gonol_module._receipt_payload(
+                source_id=first.gonol.source_id,
+                gonol_payload=bad_payload,
+                geometry=first.gonol.geometry,
+                atomic_id=bad_atomic_id,
+                geometry_digest=first.gonol.geometry_digest,
+            )
+        )
+        contradictory_carrier = replace(
+            first.gonol,
+            carrier_index=bad_index,
+            atomic_id=bad_atomic_id,
+            receipt_digest=bad_receipt_digest,
+        )
+        contradictory_parent = replace(
+            parent,
+            gonol=replace(parent.gonol, participants=(contradictory_carrier,)),
+        )
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "carrier identity"
+        ):
+            replay_public_gonol(contradictory_parent)
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "carrier identity"
+        ):
+            construct_public_gonol(
+                source_id="epac.test:contradictory-carrier-parent",
+                relation="epac.molecular.participation",
+                participants=(contradictory_carrier,),
+            )
+
+        mutable_geometry = public_gonol_module._json_ready(first.gonol.geometry)
+        mutable_child = replace(first.gonol, geometry=mutable_geometry)
+        frozen_parent = construct_public_gonol(
+            source_id="epac.test:mutable-child-parent",
+            relation="epac.molecular.participation",
+            participants=(mutable_child,),
+        )
+        mutable_geometry["ucns_commit"] = "post-seal-drift"
+        retained_geometry = frozen_parent.gonol.participants[0].geometry
+        self.assertNotEqual(retained_geometry["ucns_commit"], "post-seal-drift")
+        with self.assertRaises(TypeError):
+            retained_geometry["ucns_commit"] = "blocked"
+
     def test_charged_couplings_are_the_structure(self) -> None:
         declared = space(
             ["z", "x", "y"],
