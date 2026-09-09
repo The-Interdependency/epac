@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+# === CHECKS ===
+# id: check_epac_public_gonol_retained_constructor_boundary
+#   proves: epac_public_gonol_binds_ucns_carrier_identity, epac_public_gonol_replays_byte_identical, charged_oriented_couplings_are_the_structure
+#   call: self::check_epac_public_gonol_retained_constructor_boundary
+#   requires: python3
+#   timeout: 30
+#   mutates: none
+#   cleanup: none
+# === END CHECKS ===
+
 import copy
 from dataclasses import replace
 import inspect
@@ -25,7 +35,57 @@ from epac_public_gonol import (
 from ucns import PUBLIC_GONOL_SHA256, native_mobius_state, public_gonol_function
 
 
+def _reseal_retained_gonol(gonol, **changes):
+    candidate = replace(gonol, **changes)
+    gonol_payload = public_gonol_module._atomic_payload(
+        source_id=candidate.source_id,
+        occurrence=candidate.occurrence,
+        relation=candidate.relation,
+        identity_glyph=candidate.identity_glyph,
+        carrier_index=candidate.carrier_index,
+        participants=candidate.participants,
+        carried_options=candidate.carried_options,
+        couplings=candidate.couplings,
+        structure=candidate.structure,
+    )
+    atomic_id = public_gonol_module._digest({"atomic": gonol_payload})
+    geometry_digest = public_gonol_module._digest({"geometry": candidate.geometry})
+    receipt_digest = public_gonol_module._digest(
+        public_gonol_module._receipt_payload(
+            source_id=candidate.source_id,
+            gonol_payload=gonol_payload,
+            geometry=candidate.geometry,
+            atomic_id=atomic_id,
+            geometry_digest=geometry_digest,
+        )
+    )
+    return replace(
+        candidate,
+        atomic_id=atomic_id,
+        geometry_digest=geometry_digest,
+        receipt_digest=receipt_digest,
+    )
+
+
 class EpacPublicGonolTest(unittest.TestCase):
+    def assert_retained_rejected(self, child, pattern: str) -> None:
+        with self.assertRaisesRegex(PublicGonolConstructionError, pattern):
+            construct_public_gonol(
+                source_id="epac.test:retained-boundary-parent",
+                relation="epac.molecular.participation",
+                participants=(child,),
+            )
+        parent = construct_public_gonol(
+            source_id="epac.test:replay-boundary-parent",
+            relation="epac.molecular.participation",
+        )
+        forged_parent = replace(
+            parent,
+            gonol=replace(parent.gonol, participants=(child,)),
+        )
+        with self.assertRaisesRegex(PublicGonolConstructionError, pattern):
+            replay_public_gonol(forged_parent)
+
     def test_constructor_is_not_edcm(self) -> None:
         receipt = construct_public_gonol(
             source_id="epac.test:O",
@@ -217,6 +277,75 @@ class EpacPublicGonolTest(unittest.TestCase):
         self.assertNotEqual(retained_geometry["ucns_commit"], "post-seal-drift")
         with self.assertRaises(TypeError):
             retained_geometry["ucns_commit"] = "blocked"
+
+    def test_retained_geometry_requires_the_complete_constructor_schema(self) -> None:
+        receipt = construct_public_gonol(
+            source_id="epac.test:canonical-geometry",
+            relation="epac.atomic.element",
+            identity_glyph="O",
+        )
+        mutations = {
+            "state": "invented",
+            "authority": "caller.asserted",
+            "authority_binding": "implicit",
+            "ucns_commit": "forged-commit",
+            "carrier_digest": "0" * 64,
+            "mobius_epsilon_t0": -1,
+            "position_operation": "caller.asserted",
+        }
+        for field, value in mutations.items():
+            with self.subTest(field=field):
+                geometry = public_gonol_module._json_ready(receipt.gonol.geometry)
+                geometry[field] = value
+                forged = _reseal_retained_gonol(receipt.gonol, geometry=geometry)
+                self.assert_retained_rejected(forged, "retained")
+
+        geometry = public_gonol_module._json_ready(receipt.gonol.geometry)
+        geometry["invented_field"] = True
+        self.assert_retained_rejected(
+            _reseal_retained_gonol(receipt.gonol, geometry=geometry),
+            "retained geometry is not canonical",
+        )
+
+    def test_retained_couplings_are_canonical_before_identity_checks(self) -> None:
+        declared = space(
+            ["z", "x", "y"],
+            [["z", "x"], ["z", "y"]],
+            charges={"z": 8, "x": 1, "y": 1},
+        )
+        geometry = geometry_from_declared_couplings(declared)
+        receipt = construct_public_gonol(
+            source_id="epac.test:canonical-retained-couplings",
+            relation="epac.affixiation.unpaired-valence",
+            couplings=geometry["couplings"],
+            structure=geometry["structure"],
+        )
+        reversed_couplings = tuple(reversed(receipt.gonol.couplings))
+        self.assertNotEqual(reversed_couplings, receipt.gonol.couplings)
+        forged = _reseal_retained_gonol(
+            receipt.gonol,
+            couplings=reversed_couplings,
+        )
+        self.assert_retained_rejected(forged, "retained atomic id")
+
+    def test_retained_scalars_reuse_constructor_validation(self) -> None:
+        receipt = construct_public_gonol(
+            source_id="epac.test:canonical-scalars",
+            relation="epac.atomic.element",
+            carried_options=(("symbol", "O"),),
+        )
+        mutations = (
+            ({"source_id": ""}, "source_id"),
+            ({"relation": "   "}, "relation"),
+            ({"occurrence": -1}, "occurrence"),
+            ({"occurrence": True}, "occurrence"),
+            ({"carried_options": (("", "O"),)}, "carried option key"),
+            ({"carried_options": (("symbol", " "),)}, "carried option value"),
+        )
+        for changes, pattern in mutations:
+            with self.subTest(changes=changes):
+                forged = _reseal_retained_gonol(receipt.gonol, **changes)
+                self.assert_retained_rejected(forged, pattern)
 
     def test_charged_couplings_are_the_structure(self) -> None:
         declared = space(
@@ -539,6 +668,22 @@ class EpacPublicGonolTest(unittest.TestCase):
                 relation="epac.atomic.element",
                 identity_glyph="He",
             )
+
+
+def check_epac_public_gonol_retained_constructor_boundary() -> None:
+    suite = unittest.TestSuite(
+        EpacPublicGonolTest(name)
+        for name in (
+            "test_retained_geometry_requires_the_complete_constructor_schema",
+            "test_retained_couplings_are_canonical_before_identity_checks",
+            "test_retained_scalars_reuse_constructor_validation",
+        )
+    )
+    result = suite.run(unittest.TestResult())
+    if not result.wasSuccessful():
+        raise AssertionError(
+            f"retained constructor boundary failed: {result.failures!r} {result.errors!r}"
+        )
 
 
 if __name__ == "__main__":
