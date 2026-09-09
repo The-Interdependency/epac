@@ -43,7 +43,9 @@ class UcnsProvenanceTest(unittest.TestCase):
     def test_filesystem_permissions_normalize_to_git_blob_modes(self) -> None:
         self.assertEqual(_git_blob_mode(0o100600), "100644")
         self.assertEqual(_git_blob_mode(0o100644), "100644")
+        self.assertEqual(_git_blob_mode(0o100655), "100644")
         self.assertEqual(_git_blob_mode(0o100664), "100644")
+        self.assertEqual(_git_blob_mode(0o100744), "100755")
         self.assertEqual(_git_blob_mode(0o100755), "100755")
         self.assertEqual(_git_blob_mode(0o100775), "100755")
 
@@ -96,6 +98,7 @@ class UcnsProvenanceTest(unittest.TestCase):
         calls: list[tuple[str, ...]] = []
 
         def counting_runner(command, **kwargs):
+            self.assertNotIn("timeout", kwargs)
             calls.append(tuple(command))
             return subprocess.run(command, **kwargs)
 

@@ -574,6 +574,8 @@ def _validate_retained_gonol_tree(gonol: ClosedPublicGonol) -> None:
         raise PublicGonolConstructionError(
             "retained geometry digest does not match geometry"
         )
+    if gonol.structure is not None and not isinstance(gonol.structure, MappingABC):
+        raise PublicGonolConstructionError("retained structure must be a mapping")
     _validate_structure_matches_couplings(gonol.couplings, gonol.structure)
     gonol_payload = _atomic_payload(
         source_id=gonol.source_id,

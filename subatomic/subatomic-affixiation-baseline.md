@@ -303,6 +303,6 @@ law, and no scale interchange is introduced. Standing is `implemented-candidate`
 - Historical evidence at this section's original 2026-08-22 stop: **26/26 subatomic tests
   pass**; sibling epac suite **29 tests OK**; CONTRACTS↔CHECKS audit **closed**
   (26 contracts / 26 checks). Current extracted-repo gate records **30 subatomic witnesses**
-  and **53 repository tests**.
+  and **54 repository tests**.
 - The dimensional-arity doctrine is implemented by the sibling `epac_dimensional_arity.py`
   (committed); no duplicate is maintained here. Status remains `CROSS-DOMAIN-HYPOTHESIS`.

@@ -339,9 +339,9 @@ def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path
 
 
 def _git_blob_mode(filesystem_mode: int) -> str:
-    """Collapse platform permission bits to the executable bit Git tracks."""
+    """Collapse permissions to Git's owner-executable regular-file modes."""
 
-    return "100755" if filesystem_mode & 0o111 else "100644"
+    return "100755" if filesystem_mode & 0o100 else "100644"
 
 
 @lru_cache(maxsize=32)
@@ -391,7 +391,6 @@ def _verify_witness(
             check=True,
             capture_output=True,
             text=True,
-            timeout=2,
         )
         if getattr(observed, "stdout", "").strip() != pinned_commit:
             return "hmmm"
@@ -403,7 +402,6 @@ def _verify_witness(
                 check=True,
                 capture_output=True,
                 text=True,
-                timeout=2,
             )
             fields = getattr(tree_entry, "stdout", "").strip().split(None, 3)
             if len(fields) != 4 or fields[0] != disk_mode or fields[1] != "blob":
@@ -412,7 +410,6 @@ def _verify_witness(
                 ("git", "-C", str(root), "cat-file", "blob", fields[2]),
                 check=True,
                 capture_output=True,
-                timeout=2,
             )
             if getattr(pinned_blob, "stdout", b"") != path.read_bytes():
                 return "hmmm"

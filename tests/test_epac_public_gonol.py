@@ -128,6 +128,24 @@ class EpacPublicGonolTest(unittest.TestCase):
                 participants=(forged_child,),
             )
 
+        malformed_structure = replace(first.gonol, structure="not-a-mapping")
+        malformed_parent = replace(
+            parent,
+            gonol=replace(parent.gonol, participants=(malformed_structure,)),
+        )
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "retained structure must be a mapping"
+        ):
+            replay_public_gonol(malformed_parent)
+        with self.assertRaisesRegex(
+            PublicGonolConstructionError, "retained structure must be a mapping"
+        ):
+            construct_public_gonol(
+                source_id="epac.test:malformed-structure-parent",
+                relation="epac.molecular.participation",
+                participants=(malformed_structure,),
+            )
+
         forged_identity = replace(first.gonol, source_id="epac.test:forged-H")
         forged_identity_parent = replace(
             parent,
