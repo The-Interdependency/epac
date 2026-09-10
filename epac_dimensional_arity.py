@@ -163,6 +163,11 @@ class DimensionalSpace:
         ambient_ids = [dimension.id for dimension in self.ambient_dimensions]
         if len(ambient_ids) != len(set(ambient_ids)):
             raise DimensionalArityError("ambient dimensions must be unique")
+        coupling_ids = [item.declared_ids for item in self.couplings]
+        if len(coupling_ids) != len(set(coupling_ids)):
+            raise DimensionalArityError(
+                "coupling declarations must be unique; repeated physical occurrences require unique dimension ids"
+            )
         ambient = set(ambient_ids)
         for item in self.couplings:
             missing = [name for name in item.declared_ids if name not in ambient]
@@ -170,7 +175,7 @@ class DimensionalSpace:
                 raise DimensionalArityError(
                     f"coupling {item.declared_ids} uses undeclared dimensions {tuple(missing)}"
                 )
-        declared = {item.declared_ids for item in self.couplings}
+        declared = set(coupling_ids)
         for proof in self.proofs:
             conclusion_missing = [
                 name for name in proof.conclusion.declared_ids if name not in ambient
@@ -537,10 +542,13 @@ def quaternion_structure_readout(structure: Mapping[str, object]) -> tuple[objec
     return tuple(
         sorted(
             (
-                _tuple_tree(item["components"]),
-                _tuple_tree(item["represented_ids"]),
-            )
-            for item in structure.get("quaternions", ())
+                (
+                    _tuple_tree(item["components"]),
+                    _tuple_tree(item["represented_ids"]),
+                )
+                for item in structure.get("quaternions", ())
+            ),
+            key=_sortable_tree,
         )
     )
 

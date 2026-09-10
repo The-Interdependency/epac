@@ -59,7 +59,9 @@ hydrogen/helium/lithium claims exist in current metapat or ucns checkouts. Resol
 
 ## 3. UCNS established baseline (implemented surfaces only)
 
-Cited from current UCNS at `1975fe70`:
+Cited from the historical UCNS baseline at `1975fe70`; the extracted EPAC
+constructor currently pins UCNS `828c0b8bbcfc267efb5701da714191c1f73a81ff` and
+retains the historical receipts as prior-version evidence:
 
 - **Public Gonol carrier** (`implemented`): exactly 157 one-scalar glyph positions in fixed order;
   digest `55d10c84529a4d7bc7714786357e977b68d9df2ac3f73d20e229580b552c2ef5`; every glyph is a
@@ -132,6 +134,9 @@ t-state sequence (0 -> 1 -> 2), closure_scale ("atomic"), source_commits
 
 Independent replay must reproduce the receipt byte-for-byte. A receipt establishes
 reproducibility of the declared construction only — not geometry, physics, or measurement.
+The exact UCNS source commit is recorded only when the imported `public_gonol_function`
+and `native_mobius_state` source files resolve to the pinned clean UCNS checkout;
+otherwise the UCNS source identity is `hmmm`.
 
 ## 5. What this establishes — and what it does not
 
@@ -147,7 +152,8 @@ projection; any canon promotion in METAPAT, UCNS, or elsewhere.
 
 To replay by hand:
 
-1. Pin sources: METAPAT `34d954a`, UCNS `1975fe7` (recorded above and in `STACK_MANIFEST.md`).
+1. Pin sources: METAPAT `34d954a`, UCNS `828c0b8` for the current extracted constructor; the
+   `1975fe7` receipt set is historical.
 2. Read `metapat/docs/applications/affixiation-harmonics.md` for the semantic definitions used.
 3. Read `ucns/src/ucns/public_gonol.py` and `ucns/src/ucns/direct_mobius.py` for the carrier and
    Möbius surfaces used.
@@ -194,9 +200,11 @@ The frozen minimal decisive action from §7 is now implemented locally (not push
 - `element_affixiation_candidate.py` — identity-only constructor for H/He/Li/C consuming only
   `ucns.public_gonol_function` and `ucns.native_mobius_state`. Carries `MODULE_BUILD` and
   `CONTRACTS` blocks; no position operation is defined or inferred.
-- `test_element_affixiation_candidate.py` — five executable witnesses with a `CHECKS` block.
-  Result: **5 passed** against the pinned UCNS snapshot package (`ucns/src` at `1975fe7`).
-- `receipts/` — sealed construction receipts, one per element:
+- `test_element_affixiation_candidate.py` — executable witnesses with a `CHECKS` block.
+  Current result: source-synchronized witnesses pass against the extracted EPAC UCNS pin
+  `828c0b8`.
+- `receipts/{h,he,li,c}.json` — historical sealed construction receipts at UCNS `1975fe7`,
+  retained as prior-version evidence:
 
   | Element | Receipt (SHA-256) |
   |---|---|
@@ -205,7 +213,19 @@ The frozen minimal decisive action from §7 is now implemented locally (not push
   | Li | `5efefff19f97e4f42fa0d85d9719adbe07c39fc7dab700a5eea13f434611bb3f` |
   | C | `a4026f197d6a0425b4ea5b3ff72d09d49fd159d5f59440480b5f97793b64cdc6` |
 
-- Independent replay (`replay_element`) is byte-identical for all four elements.
+- These historical records were byte-identical under their original UCNS pin; they are not the
+  current extracted-constructor receipts.
+- `receipts/ucns-828c0b8/` — current sealed construction receipts at the extracted EPAC UCNS
+  pin, valid only when runtime source verification reproduces that clean checkout:
+
+  | Element | Receipt (SHA-256) |
+  |---|---|
+  | H | `0a18ccf77bc26884796993925556204bf1ea3868594e076116389b853e73b248` |
+  | He | `145ceddd22231a681cd4cb57aa46a5eeeb680ab1d93ccfa4d6b454b8264ee0fb` |
+  | Li | `fd883cc78641d2006d1579b4a3a2f5b065cdc2a0c74d6bb1eabf926b9f02685f` |
+  | C | `20277205b5a82f34cd7c78fe70c9235725918f3a025f1ab3427e4cfe46ba6d90` |
+
+- Independent replay (`replay_element`) is byte-identical for the current constructor outputs.
 - Status remains `CROSS-DOMAIN-HYPOTHESIS / provisional`. Nothing here establishes position
   operations, geometry between positions, harmonic notation, physics, or canon.
 
@@ -280,7 +300,9 @@ law, and no scale interchange is introduced. Standing is `implemented-candidate`
   Two-letter names (He, Fe) are two ordered name-characters, not physical `(z, x)` /
   `(z, y)` couplings and not nuclear-Z charge states. Physics 3-structure stays on
   atom instances only.
-- Evidence: **26/26 subatomic tests pass**; sibling epac suite **29 tests OK**;
-  CONTRACTS↔CHECKS audit **closed** (26 contracts / 26 checks).
+- Historical evidence at this section's original 2026-08-22 stop: **26/26 subatomic tests
+  pass**; sibling epac suite **29 tests OK**; CONTRACTS↔CHECKS audit **closed**
+  (26 contracts / 26 checks). Current extracted-repo gate records **30 subatomic witnesses**
+  and **60 repository tests**.
 - The dimensional-arity doctrine is implemented by the sibling `epac_dimensional_arity.py`
   (committed); no duplicate is maintained here. Status remains `CROSS-DOMAIN-HYPOTHESIS`.

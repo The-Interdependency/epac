@@ -30,8 +30,8 @@ Usage guidance
 #   module_kind: experiment
 #   summary: EPAC candidate constructor that closes gonols on the UCNS Public Gonol carrier with oriented couplings and arity charge states; not the EDCM text-domain constructor
 #   owner: The Interdependency
-#   public_surface: CONSTRUCTOR_ID, CONSTRUCTOR_VERSION, PINNED_PUBLIC_GONOL_SHA256, ClosedPublicGonol, PublicGonolReceipt, PublicGonolConstructionError, construct_public_gonol, replay_public_gonol, canonical_receipt_bytes
-#   internal_surface: _require_text, _identity_position, _geometry, _participant_payload, _atomic_payload, _receipt_payload, _digest
+#   public_surface: CONSTRUCTOR_ID, CONSTRUCTOR_VERSION, PINNED_UCNS_COMMIT, PINNED_PUBLIC_GONOL_SHA256, ClosedPublicGonol, PublicGonolReceipt, PublicGonolConstructionError, construct_public_gonol, replay_public_gonol, canonical_receipt_bytes
+#   internal_surface: _require_text, _validate_occurrence, _canonical_carried_options, _identity_position, _verified_ucns_commit, _geometry_record, _geometry, _validate_retained_geometry, _freeze_json, _json_ready, _tuple_tree, _canonical_coupling_record, _coupling_sort_key, _canonical_couplings_and_structure, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings, _validate_structure_matches_couplings, _validate_retained_gonol_tree, _validate_retained_receipt
 #   auth_boundary: EPAC owns particle/energy gonol closure; UCNS owns Public Gonol carrier identity and native Möbius ε; EDCM text-domain constructor is not used; METAPAT affixiation is consumed, not redefined
 #   storage_boundary: none; receipts remain caller-owned in-memory objects
 #   network_boundary: none
@@ -40,7 +40,7 @@ Usage guidance
 #   tests: tests.test_epac_public_gonol, tests.test_periodic_element_gonols, tests.test_molecular_affixiation
 #   rollout: explicit EPAC candidate constructor; no canon selection, no EDCM scale option sets, no invented position operation
 #   rollback: remove this module; do not fall back to edcm.gonol for EPAC construction
-#   requires: ucns_public_gonol_geometry, ucns_native_mobius_geometry
+#   requires: ucns_public_gonol_geometry, ucns_native_mobius_geometry, epac_dimensional_arity
 #   since: 2026-08-22
 #   unresolved: exact UCNS geometric operation of Public Gonol function positions; UCNS Möbius-carrier affixiation/coupling law; two-letter element symbols have no single carrier glyph
 # === END MODULE_BUILD ===
@@ -54,19 +54,19 @@ Usage guidance
 #
 # id: epac_public_gonol_binds_ucns_carrier_identity
 #   given: identity_glyph is an admitted Public Gonol glyph
-#   then: the closed gonol carries the exact UCNS index/glyph pair and the pinned carrier digest
+#   then: the closed gonol carries the exact UCNS index/glyph pair, EPAC-owned pinned carrier digest, and exact pinned UCNS dependency identity only when the imported checkout head and relevant source files verify clean; otherwise dependency identity remains hmmm
 #   class: construction
 #   since: 2026-08-22
 #
 # id: epac_public_gonol_replays_byte_identical
 #   given: a PublicGonolReceipt
-#   then: replay_public_gonol reproduces the same receipt_digest
+#   then: replay_public_gonol validates constructor-admissible scalars and options, canonical couplings and structure, the complete fixed geometry schema, and every retained identity before reproducing the same receipt_digest
 #   class: correctness
 #   since: 2026-08-22
 #
 # id: charged_oriented_couplings_are_the_structure
 #   given: declared oriented couplings with per-slot charges
-#   then: receipt.structure is the combination of those couplings, arity charge states, and degree; no (x,y,z) coupling is inferred
+#   then: receipt.structure is exactly the structure derived from those couplings, arity charge states, degree, representation flags, and quaternion readouts; no caller-fabricated derived fields or (x,y,z) coupling are accepted
 #   class: construction
 #   since: 2026-08-22
 # === END CONTRACTS ===
@@ -81,8 +81,14 @@ import json
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
+from epac_dimensional_arity import (
+    DimensionalArityError,
+    MOBIUS_EPSILON_T0,
+    space,
+    structure_from_charged_couplings,
+)
+from epac_ucns_provenance import verify_loaded_ucns_commit
 from ucns import (
-    PUBLIC_GONOL_SHA256,
     native_mobius_state,
     public_gonol_function,
     public_gonol_sha256,
@@ -90,8 +96,9 @@ from ucns import (
 
 
 CONSTRUCTOR_ID = "epac.public_gonol"
-CONSTRUCTOR_VERSION = "v1"
-PINNED_PUBLIC_GONOL_SHA256 = PUBLIC_GONOL_SHA256
+CONSTRUCTOR_VERSION = "v2"
+PINNED_UCNS_COMMIT = "828c0b8bbcfc267efb5701da714191c1f73a81ff"
+PINNED_PUBLIC_GONOL_SHA256 = "55d10c84529a4d7bc7714786357e977b68d9df2ac3f73d20e229580b552c2ef5"
 STANDING = "implemented-candidate"
 SELECTION_EFFECT = "none"
 
@@ -108,6 +115,19 @@ HMMM: tuple[str, ...] = (
     "exact UCNS geometric operation of each Public Gonol function position",
     "UCNS Möbius-carrier affixiation/coupling law",
     "two-letter element symbols have no single Public Gonol glyph",
+    "runtime UCNS commit identity when the imported checkout head and relevant source files cannot be verified clean against the pin",
+)
+
+ORDER_INSENSITIVE_STRUCTURE_FIELDS = frozenset(("parts", "degree", "quaternions"))
+COUPLING_SCHEMA_FIELDS = frozenset(
+    (
+        "declared_ids",
+        "coupling",
+        "arity",
+        "slot_charges",
+        "charge_state",
+        "mobius_epsilon_t0",
+    )
 )
 
 
@@ -128,6 +148,7 @@ class ClosedPublicGonol:
     carried_options: tuple[tuple[str, str], ...]
     couplings: tuple[Mapping[str, Any], ...]
     structure: Mapping[str, Any] | None
+    geometry: Mapping[str, Any]
     atomic_id: str
     receipt_digest: str
     geometry_digest: str
@@ -145,6 +166,7 @@ class PublicGonolReceipt:
     gonol: ClosedPublicGonol
     receipt_digest: str
     structure: Mapping[str, Any] | None
+    geometry: Mapping[str, Any]
     nonclaims: tuple[str, ...]
     hmmm: tuple[str, ...]
 
@@ -153,6 +175,32 @@ def _require_text(value: str, *, field: str) -> str:
     if not isinstance(value, str) or not value or value.isspace():
         raise PublicGonolConstructionError(f"{field} must be exact non-empty text")
     return value
+
+
+def _validate_occurrence(value: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise PublicGonolConstructionError("occurrence must be a non-negative int")
+    return value
+
+
+def _canonical_carried_options(
+    carried_options: Sequence[tuple[str, str]],
+) -> tuple[tuple[str, str], ...]:
+    if not isinstance(carried_options, SequenceABC) or isinstance(
+        carried_options, (str, bytes)
+    ):
+        raise PublicGonolConstructionError("carried options must be an ordered sequence")
+    options: list[tuple[str, str]] = []
+    for pair in carried_options:
+        if not isinstance(pair, SequenceABC) or isinstance(pair, (str, bytes)) or len(pair) != 2:
+            raise PublicGonolConstructionError("each carried option must be a key/value pair")
+        options.append(
+            (
+                _require_text(pair[0], field="carried option key"),
+                _require_text(pair[1], field="carried option value"),
+            )
+        )
+    return tuple(options)
 
 
 def _identity_position(identity_glyph: str | None) -> tuple[str | None, int | None]:
@@ -169,14 +217,20 @@ def _identity_position(identity_glyph: str | None) -> tuple[str | None, int | No
     return (position.glyph, position.index)
 
 
-def _geometry(identity_glyph: str | None, carrier_index: int | None) -> dict[str, Any]:
-    digest = public_gonol_sha256()
-    if digest != PINNED_PUBLIC_GONOL_SHA256:
-        raise PublicGonolConstructionError(
-            "UCNS Public Gonol digest mismatch: "
-            f"constructor pins {PINNED_PUBLIC_GONOL_SHA256}, computed {digest}"
-        )
-    origin = native_mobius_state(0)
+def _verified_ucns_commit() -> str:
+    """Return the pin only when current source and executing UCNS code agree."""
+
+    return verify_loaded_ucns_commit(
+        pinned_commit=PINNED_UCNS_COMMIT,
+        dependencies=(public_gonol_function, public_gonol_sha256, native_mobius_state),
+    )
+
+
+def _geometry_record(
+    identity_glyph: str | None,
+    carrier_index: int | None,
+    ucns_commit: str,
+) -> dict[str, Any]:
     identity: dict[str, Any] | None = None
     if identity_glyph is not None and carrier_index is not None:
         identity = {"index": carrier_index, "glyph": identity_glyph}
@@ -184,11 +238,43 @@ def _geometry(identity_glyph: str | None, carrier_index: int | None) -> dict[str
         "state": "bound",
         "authority": "ucns.public_gonol",
         "authority_binding": "explicit",
-        "carrier_digest": digest,
+        "ucns_commit": ucns_commit,
+        "carrier_digest": PINNED_PUBLIC_GONOL_SHA256,
         "identity_position": identity,
-        "mobius_epsilon_t0": origin.frame.sign,
+        "mobius_epsilon_t0": MOBIUS_EPSILON_T0,
         "position_operation": "hmmm",
     }
+
+
+def _geometry(identity_glyph: str | None, carrier_index: int | None) -> dict[str, Any]:
+    digest = public_gonol_sha256()
+    if digest != PINNED_PUBLIC_GONOL_SHA256:
+        raise PublicGonolConstructionError(
+            "UCNS Public Gonol digest mismatch: "
+            f"constructor pins {PINNED_PUBLIC_GONOL_SHA256}, computed {digest}"
+        )
+    if native_mobius_state(0).frame.sign != MOBIUS_EPSILON_T0:
+        raise PublicGonolConstructionError("UCNS native Möbius origin is not canonical")
+    return _geometry_record(identity_glyph, carrier_index, _verified_ucns_commit())
+
+
+def _validate_retained_geometry(
+    geometry: Mapping[str, Any],
+    identity_glyph: str | None,
+    carrier_index: int | None,
+) -> Mapping[str, Any]:
+    ucns_commit = geometry.get("ucns_commit")
+    if not isinstance(ucns_commit, str) or ucns_commit not in {
+        PINNED_UCNS_COMMIT,
+        "hmmm",
+    }:
+        raise PublicGonolConstructionError("retained UCNS commit is not pinned or hmmm")
+    expected = _geometry_record(identity_glyph, carrier_index, ucns_commit)
+    if canonical_receipt_bytes({"geometry": geometry}) != canonical_receipt_bytes(
+        {"geometry": expected}
+    ):
+        raise PublicGonolConstructionError("retained geometry is not canonical")
+    return _freeze_json(expected)
 
 
 def _freeze_json(value: Any) -> Any:
@@ -217,28 +303,214 @@ def _tuple_tree(value: Any) -> Any:
     return value
 
 
+def _canonical_structure_tree(structure: Mapping[str, Any]) -> Any:
+    canonical: list[tuple[str, Any]] = []
+    for key, value in structure.items():
+        field = str(key)
+        if field in ORDER_INSENSITIVE_STRUCTURE_FIELDS:
+            if not isinstance(value, SequenceABC) or isinstance(value, (str, bytes)):
+                canonical.append((field, _tuple_tree(value)))
+                continue
+            canonical_items = tuple(
+                _canonical_degree_tree(item)
+                if field == "degree"
+                else _canonical_quaternion_tree(item)
+                if field == "quaternions"
+                else _tuple_tree(item)
+                for item in value
+            )
+            canonical.append((field, tuple(sorted(canonical_items, key=repr))))
+            continue
+        canonical.append((field, _tuple_tree(value)))
+    return tuple(sorted(canonical))
+
+
+def _canonical_quaternion_tree(item: Any) -> Any:
+    if not isinstance(item, MappingABC):
+        return _tuple_tree(item)
+    represented_ids = item.get("represented_ids")
+    components = item.get("components")
+    axes = item.get("axes")
+    if (
+        isinstance(represented_ids, SequenceABC)
+        and not isinstance(represented_ids, (str, bytes))
+        and isinstance(components, SequenceABC)
+        and not isinstance(components, (str, bytes))
+        and isinstance(axes, SequenceABC)
+        and not isinstance(axes, (str, bytes))
+        and len(represented_ids) == 3
+        and len(components) == 4
+        and len(axes) == 4
+    ):
+        local_three = (
+            (axes[0], components[0]),
+            (represented_ids[0], axes[1], components[1]),
+            tuple(
+                sorted(
+                    (
+                        (represented_ids[1], axes[2], components[2]),
+                        (represented_ids[2], axes[3], components[3]),
+                    ),
+                    key=repr,
+                )
+            ),
+        )
+        generic_fields = tuple(
+            sorted(
+                (str(key), _tuple_tree(value))
+                for key, value in item.items()
+                if str(key) not in {"axes", "components", "represented_ids"}
+            )
+        )
+        return generic_fields + (("local_three", _tuple_tree(local_three)),)
+    return _tuple_tree(item)
+
+
+def _canonical_degree_tree(item: Any) -> Any:
+    if not isinstance(item, MappingABC):
+        return _tuple_tree(item)
+    canonical: list[tuple[str, Any]] = []
+    for key, value in item.items():
+        field = str(key)
+        if field == "incidences" and isinstance(value, SequenceABC) and not isinstance(value, (str, bytes)):
+            canonical.append((field, tuple(sorted((_tuple_tree(entry) for entry in value), key=repr))))
+            continue
+        canonical.append((field, _tuple_tree(value)))
+    return tuple(sorted(canonical))
+
+
 def _coupling_signature(item: Mapping[str, Any]) -> tuple[Any, int, Any]:
+    if not isinstance(item, MappingABC):
+        raise PublicGonolConstructionError("each coupling must be a mapping")
+    arity = item.get("arity")
+    if isinstance(arity, bool) or not isinstance(arity, int):
+        raise PublicGonolConstructionError("coupling arity must be an integer")
     declared = item.get("declared_ids", item.get("coupling"))
     charge_state = item.get("charge_state")
     if charge_state is None:
         charge_state = (item.get("slot_charges"), item.get("mobius_epsilon_t0"))
-    return (_tuple_tree(declared), int(item.get("arity", -1)), _tuple_tree(charge_state))
+    return (_tuple_tree(declared), arity, _tuple_tree(charge_state))
 
 
 def _structure_part_signature(item: Mapping[str, Any]) -> tuple[Any, int, Any]:
+    if not isinstance(item, MappingABC):
+        raise PublicGonolConstructionError("each structure part must be a mapping")
+    arity = item.get("arity")
+    if isinstance(arity, bool) or not isinstance(arity, int):
+        raise PublicGonolConstructionError("structure part arity must be an integer")
     return (
         _tuple_tree(item.get("coupling")),
-        int(item.get("arity", -1)),
+        arity,
         _tuple_tree(item.get("charge_state")),
     )
+
+
+def _coupling_declaration(item: Mapping[str, Any]) -> tuple[tuple[str, ...], tuple[int | None, ...]]:
+    if not isinstance(item, MappingABC):
+        raise PublicGonolConstructionError("each coupling must be a mapping")
+    extra_fields = frozenset(str(key) for key in item) - COUPLING_SCHEMA_FIELDS
+    if extra_fields:
+        names = ", ".join(sorted(extra_fields))
+        raise PublicGonolConstructionError(f"coupling carries undeclared field(s): {names}")
+    if "declared_ids" in item and "coupling" in item and _tuple_tree(item["declared_ids"]) != _tuple_tree(
+        item["coupling"]
+    ):
+        raise PublicGonolConstructionError("coupling declared_ids conflicts with coupling")
+    declared = item.get("declared_ids", item.get("coupling"))
+    if not isinstance(declared, SequenceABC) or isinstance(declared, (str, bytes)) or not declared:
+        raise PublicGonolConstructionError("each coupling must declare ordered dimension ids")
+    ids = tuple(declared)
+    if any(not isinstance(name, str) or not name or name.isspace() for name in ids):
+        raise PublicGonolConstructionError("coupling dimension ids must be exact non-empty text")
+    arity = item.get("arity")
+    if isinstance(arity, bool) or not isinstance(arity, int) or arity != len(ids):
+        raise PublicGonolConstructionError("coupling arity must match declared dimension ids")
+
+    slot_charges = item.get("slot_charges")
+    charge_state = item.get("charge_state")
+    if slot_charges is None:
+        if (
+            not isinstance(charge_state, SequenceABC)
+            or isinstance(charge_state, (str, bytes))
+            or len(charge_state) != 2
+        ):
+            raise PublicGonolConstructionError("coupling must carry slot charges or charge_state")
+        slot_charges = charge_state[0]
+    if not isinstance(slot_charges, SequenceABC) or isinstance(slot_charges, (str, bytes)):
+        raise PublicGonolConstructionError("slot_charges must be an ordered sequence")
+    charges = tuple(slot_charges)
+    if len(charges) != len(ids) or any(
+        charge is not None and (isinstance(charge, bool) or not isinstance(charge, int))
+        for charge in charges
+    ):
+        raise PublicGonolConstructionError("slot_charges must align with declared dimensions")
+    if "mobius_epsilon_t0" in item and (
+        (epsilon := item["mobius_epsilon_t0"]) is None
+        or isinstance(epsilon, bool)
+        or not isinstance(epsilon, int)
+        or epsilon != MOBIUS_EPSILON_T0
+    ):
+        raise PublicGonolConstructionError("coupling mobius_epsilon_t0 conflicts with canonical epsilon")
+    if charge_state is not None and canonical_receipt_bytes(
+        {"charge_state": charge_state}
+    ) != canonical_receipt_bytes(
+        {"charge_state": (charges, MOBIUS_EPSILON_T0)}
+    ):
+        raise PublicGonolConstructionError("coupling charge_state conflicts with slot charges")
+    return ids, charges
+
+
+def _canonical_coupling_record(item: Mapping[str, Any]) -> Mapping[str, Any]:
+    ids, charges = _coupling_declaration(item)
+    return _freeze_json(
+        {
+            "declared_ids": ids,
+            "arity": len(ids),
+            "slot_charges": charges,
+            "charge_state": (charges, MOBIUS_EPSILON_T0),
+            "mobius_epsilon_t0": MOBIUS_EPSILON_T0,
+        }
+    )
+
+
+def _coupling_sort_key(item: Mapping[str, Any]) -> str:
+    return repr(_coupling_signature(item))
+
+
+def _expected_structure_from_couplings(
+    couplings: Sequence[Mapping[str, Any]],
+) -> Mapping[str, object]:
+    ambient_ids: list[str] = []
+    charge_by_id: dict[str, int | None] = {}
+    declarations: list[tuple[str, ...]] = []
+    for item in couplings:
+        ids, charges = _coupling_declaration(item)
+        declarations.append(ids)
+        for name, charge in zip(ids, charges):
+            if name not in ambient_ids:
+                ambient_ids.append(name)
+            if name in charge_by_id and charge_by_id[name] != charge:
+                raise PublicGonolConstructionError(
+                    f"dimension {name!r} has conflicting charges across couplings"
+                )
+            charge_by_id[name] = charge
+    try:
+        declared = space(
+            ambient_ids,
+            declarations,
+            charges={name: charge for name, charge in charge_by_id.items() if charge is not None},
+        )
+        return structure_from_charged_couplings(declared)
+    except DimensionalArityError as exc:
+        raise PublicGonolConstructionError(str(exc)) from exc
 
 
 def _validate_structure_matches_couplings(
     couplings: Sequence[Mapping[str, Any]],
     structure: Mapping[str, Any] | None,
-) -> None:
+) -> Mapping[str, object] | None:
     if not couplings and structure is None:
-        return
+        return None
     if not couplings or structure is None:
         raise PublicGonolConstructionError(
             "couplings and structure must be supplied together"
@@ -246,12 +518,47 @@ def _validate_structure_matches_couplings(
     parts = structure.get("parts")
     if not isinstance(parts, SequenceABC) or isinstance(parts, (str, bytes)):
         raise PublicGonolConstructionError("structure parts must be a sequence")
-    expected = tuple(sorted((_coupling_signature(item) for item in couplings), key=repr))
-    actual = tuple(sorted((_structure_part_signature(item) for item in parts), key=repr))
-    if expected != actual:
+    expected_parts = tuple(sorted((_coupling_signature(item) for item in couplings), key=repr))
+    actual_parts = tuple(sorted((_structure_part_signature(item) for item in parts), key=repr))
+    if expected_parts != actual_parts:
         raise PublicGonolConstructionError(
             "structure must match the supplied declared couplings before closure"
         )
+    expected_structure = _expected_structure_from_couplings(couplings)
+    if canonical_receipt_bytes(
+        {"structure": _canonical_structure_tree(structure)}
+    ) != canonical_receipt_bytes(
+        {"structure": _canonical_structure_tree(expected_structure)}
+    ):
+        raise PublicGonolConstructionError(
+            "structure derived fields must exactly match the declared couplings before closure"
+        )
+    return expected_structure
+
+
+def _canonical_couplings_and_structure(
+    couplings: Sequence[Mapping[str, Any]],
+    structure: Mapping[str, Any] | None,
+) -> tuple[tuple[Mapping[str, Any], ...], Mapping[str, Any] | None]:
+    if not isinstance(couplings, SequenceABC) or isinstance(couplings, (str, bytes)):
+        raise PublicGonolConstructionError("couplings must be an ordered sequence")
+    if structure is not None and not isinstance(structure, MappingABC):
+        raise PublicGonolConstructionError("structure must be a mapping")
+    canonical_couplings = tuple(
+        sorted(
+            (_canonical_coupling_record(item) for item in couplings),
+            key=_coupling_sort_key,
+        )
+    )
+    supplied_structure = None if structure is None else _freeze_json(structure)
+    derived_structure = _validate_structure_matches_couplings(
+        canonical_couplings,
+        supplied_structure,
+    )
+    canonical_structure = (
+        None if derived_structure is None else _freeze_json(derived_structure)
+    )
+    return canonical_couplings, canonical_structure
 
 
 def _participant_payload(item: ClosedPublicGonol) -> dict[str, Any]:
@@ -337,56 +644,163 @@ def _digest(payload: Mapping[str, Any]) -> str:
     return sha256(canonical_receipt_bytes(payload)).hexdigest()
 
 
-def construct_public_gonol(
-    *,
-    source_id: str,
-    relation: str,
-    participants: Sequence[ClosedPublicGonol] = (),
-    identity_glyph: str | None = None,
-    occurrence: int = 0,
-    carried_options: Sequence[tuple[str, str]] = (),
-    couplings: Sequence[Mapping[str, Any]] = (),
-    structure: Mapping[str, Any] | None = None,
-) -> PublicGonolReceipt:
-    """Close one EPAC gonol on the UCNS Public Gonol carrier."""
+def _validate_retained_gonol_tree(gonol: ClosedPublicGonol) -> ClosedPublicGonol:
+    """Validate and deeply freeze every retained participant envelope."""
 
-    source_id = _require_text(source_id, field="source_id")
-    relation = _require_text(relation, field="relation")
-    if isinstance(occurrence, bool) or not isinstance(occurrence, int) or occurrence < 0:
-        raise PublicGonolConstructionError("occurrence must be a non-negative int")
-    closed_participants = tuple(participants)
-    for item in closed_participants:
-        if not isinstance(item, ClosedPublicGonol):
-            raise PublicGonolConstructionError("participants must already be closed EPAC public gonols")
-    options = tuple(
-        (
-            _require_text(key, field="carried option key"),
-            _require_text(value, field="carried option value"),
+    if not isinstance(gonol, ClosedPublicGonol):
+        raise PublicGonolConstructionError(
+            "retained participants must be closed EPAC public gonols"
         )
-        for key, value in carried_options
+    source_id = _require_text(gonol.source_id, field="source_id")
+    relation = _require_text(gonol.relation, field="relation")
+    occurrence = _validate_occurrence(gonol.occurrence)
+    carried_options = _canonical_carried_options(gonol.carried_options)
+    frozen_participants = tuple(
+        _validate_retained_gonol_tree(participant)
+        for participant in gonol.participants
     )
-    frozen_couplings = tuple(_freeze_json(item) for item in couplings)
-    frozen_structure = None if structure is None else _freeze_json(structure)
-    _validate_structure_matches_couplings(frozen_couplings, frozen_structure)
-    glyph, index = _identity_position(identity_glyph)
-    geometry = _geometry(glyph, index)
+    if not isinstance(gonol.geometry, MappingABC):
+        raise PublicGonolConstructionError("retained geometry must be a mapping")
+    frozen_geometry = _freeze_json(gonol.geometry)
+    expected_geometry_digest = _digest({"geometry": frozen_geometry})
+    if gonol.geometry_digest != expected_geometry_digest:
+        raise PublicGonolConstructionError(
+            "retained geometry digest does not match geometry"
+        )
+    if gonol.structure is not None and not isinstance(gonol.structure, MappingABC):
+        raise PublicGonolConstructionError("retained structure must be a mapping")
+    expected_glyph, expected_index = _identity_position(gonol.identity_glyph)
+    if canonical_receipt_bytes(
+        {"glyph": gonol.identity_glyph, "index": gonol.carrier_index}
+    ) != canonical_receipt_bytes(
+        {"glyph": expected_glyph, "index": expected_index}
+    ):
+        raise PublicGonolConstructionError(
+            "retained carrier identity does not match geometry"
+        )
+    geometry = _validate_retained_geometry(
+        frozen_geometry,
+        expected_glyph,
+        expected_index,
+    )
+    if _digest({"geometry": geometry}) != expected_geometry_digest:
+        raise PublicGonolConstructionError(
+            "retained geometry digest does not match canonical geometry"
+        )
+    canonical_couplings, canonical_structure = _canonical_couplings_and_structure(
+        gonol.couplings,
+        gonol.structure,
+    )
     gonol_payload = _atomic_payload(
         source_id=source_id,
         occurrence=occurrence,
         relation=relation,
-        identity_glyph=glyph,
-        carrier_index=index,
-        participants=closed_participants,
-        carried_options=options,
-        couplings=frozen_couplings,
-        structure=frozen_structure,
+        identity_glyph=expected_glyph,
+        carrier_index=expected_index,
+        participants=frozen_participants,
+        carried_options=carried_options,
+        couplings=canonical_couplings,
+        structure=canonical_structure,
+    )
+    expected_atomic_id = _digest({"atomic": gonol_payload})
+    if gonol.atomic_id != expected_atomic_id:
+        raise PublicGonolConstructionError("retained atomic id does not match gonol")
+    expected_receipt_digest = _digest(
+        _receipt_payload(
+            source_id=source_id,
+            gonol_payload=gonol_payload,
+            geometry=geometry,
+            atomic_id=expected_atomic_id,
+            geometry_digest=expected_geometry_digest,
+        )
+    )
+    if gonol.receipt_digest != expected_receipt_digest:
+        raise PublicGonolConstructionError(
+            "retained receipt digest does not match gonol"
+        )
+    return ClosedPublicGonol(
+        source_id=source_id,
+        occurrence=occurrence,
+        relation=relation,
+        identity_glyph=expected_glyph,
+        carrier_index=expected_index,
+        participants=frozen_participants,
+        carried_options=carried_options,
+        couplings=canonical_couplings,
+        structure=canonical_structure,
+        geometry=geometry,
+        atomic_id=expected_atomic_id,
+        receipt_digest=expected_receipt_digest,
+        geometry_digest=expected_geometry_digest,
+    )
+
+
+def _validate_retained_receipt(receipt: PublicGonolReceipt) -> ClosedPublicGonol:
+    """Reject contradictory or stale duplicate fields before replay."""
+
+    if not isinstance(receipt, PublicGonolReceipt) or not isinstance(
+        receipt.gonol, ClosedPublicGonol
+    ):
+        raise PublicGonolConstructionError("replay requires a PublicGonolReceipt")
+    gonol = receipt.gonol
+    expected_envelope = (
+        receipt.constructor_id == CONSTRUCTOR_ID
+        and receipt.constructor_version == CONSTRUCTOR_VERSION
+        and receipt.standing == STANDING
+        and receipt.selection_effect == SELECTION_EFFECT
+        and receipt.nonclaims == NONCLAIMS
+        and receipt.hmmm == HMMM
+        and receipt.source_id == gonol.source_id
+        and receipt.receipt_digest == gonol.receipt_digest
+    )
+    if not expected_envelope:
+        raise PublicGonolConstructionError("receipt envelope is not canonical")
+    outer_geometry = _freeze_json(receipt.geometry)
+    gonol_geometry = _freeze_json(gonol.geometry)
+    if canonical_receipt_bytes(
+        {"geometry": outer_geometry}
+    ) != canonical_receipt_bytes({"geometry": gonol_geometry}):
+        raise PublicGonolConstructionError("retained receipt geometries disagree")
+    if canonical_receipt_bytes(
+        {"structure": receipt.structure}
+    ) != canonical_receipt_bytes({"structure": gonol.structure}):
+        raise PublicGonolConstructionError("retained receipt structures disagree")
+    return _validate_retained_gonol_tree(gonol)
+
+
+def _seal_public_gonol(
+    *,
+    source_id: str,
+    relation: str,
+    participants: tuple[ClosedPublicGonol, ...],
+    identity_glyph: str | None,
+    carrier_index: int | None,
+    occurrence: int,
+    carried_options: tuple[tuple[str, str], ...],
+    couplings: tuple[Mapping[str, Any], ...],
+    structure: Mapping[str, Any] | None,
+    geometry: Mapping[str, Any],
+) -> PublicGonolReceipt:
+    """Seal already validated canonical fields with one immutable geometry receipt."""
+
+    frozen_geometry = _freeze_json(geometry)
+    gonol_payload = _atomic_payload(
+        source_id=source_id,
+        occurrence=occurrence,
+        relation=relation,
+        identity_glyph=identity_glyph,
+        carrier_index=carrier_index,
+        participants=participants,
+        carried_options=carried_options,
+        couplings=couplings,
+        structure=structure,
     )
     atomic_id = _digest({"atomic": gonol_payload})
-    geometry_digest = _digest({"geometry": geometry})
+    geometry_digest = _digest({"geometry": frozen_geometry})
     receipt_payload = _receipt_payload(
         source_id=source_id,
         gonol_payload=gonol_payload,
-        geometry=geometry,
+        geometry=frozen_geometry,
         atomic_id=atomic_id,
         geometry_digest=geometry_digest,
     )
@@ -395,12 +809,13 @@ def construct_public_gonol(
         source_id=source_id,
         occurrence=occurrence,
         relation=relation,
-        identity_glyph=glyph,
-        carrier_index=index,
-        participants=closed_participants,
-        carried_options=options,
-        couplings=frozen_couplings,
-        structure=frozen_structure,
+        identity_glyph=identity_glyph,
+        carrier_index=carrier_index,
+        participants=participants,
+        carried_options=carried_options,
+        couplings=couplings,
+        structure=structure,
+        geometry=frozen_geometry,
         atomic_id=atomic_id,
         receipt_digest=receipt_digest,
         geometry_digest=geometry_digest,
@@ -413,26 +828,77 @@ def construct_public_gonol(
         source_id=source_id,
         gonol=gonol,
         receipt_digest=receipt_digest,
-        structure=frozen_structure,
+        structure=structure,
+        geometry=frozen_geometry,
         nonclaims=NONCLAIMS,
         hmmm=HMMM,
+    )
+
+
+def construct_public_gonol(
+    *,
+    source_id: str,
+    relation: str,
+    participants: Sequence[ClosedPublicGonol] = (),
+    identity_glyph: str | None = None,
+    occurrence: int = 0,
+    carried_options: Sequence[tuple[str, str]] = (),
+    couplings: Sequence[Mapping[str, Any]] = (),
+    structure: Mapping[str, Any] | None = None,
+) -> PublicGonolReceipt:
+    """Close one EPAC gonol on the pinned UCNS Public Gonol carrier."""
+
+    source_id = _require_text(source_id, field="source_id")
+    relation = _require_text(relation, field="relation")
+    occurrence = _validate_occurrence(occurrence)
+    closed_participants = tuple(
+        _validate_retained_gonol_tree(item) for item in participants
+    )
+    options = _canonical_carried_options(carried_options)
+    frozen_couplings, frozen_structure = _canonical_couplings_and_structure(
+        couplings,
+        structure,
+    )
+    glyph, index = _identity_position(identity_glyph)
+    geometry = _geometry(glyph, index)
+    return _seal_public_gonol(
+        source_id=source_id,
+        relation=relation,
+        participants=closed_participants,
+        identity_glyph=glyph,
+        carrier_index=index,
+        occurrence=occurrence,
+        carried_options=options,
+        couplings=frozen_couplings,
+        structure=frozen_structure,
+        geometry=geometry,
     )
 
 
 def replay_public_gonol(receipt: PublicGonolReceipt) -> PublicGonolReceipt:
     """Replay one receipt from its closed gonol. Reproduces construction identity."""
 
-    gonol = receipt.gonol
-    return construct_public_gonol(
+    gonol = _validate_retained_receipt(receipt)
+    derived_structure = _validate_structure_matches_couplings(
+        gonol.couplings,
+        gonol.structure,
+    )
+    frozen_structure = None if derived_structure is None else _freeze_json(derived_structure)
+    replayed = _seal_public_gonol(
         source_id=gonol.source_id,
         relation=gonol.relation,
         participants=gonol.participants,
         identity_glyph=gonol.identity_glyph,
+        carrier_index=gonol.carrier_index,
         occurrence=gonol.occurrence,
         carried_options=gonol.carried_options,
         couplings=gonol.couplings,
-        structure=gonol.structure,
+        structure=frozen_structure,
+        geometry=gonol.geometry,
     )
+    if replayed.receipt_digest != receipt.receipt_digest:
+        raise PublicGonolConstructionError("receipt does not match its retained canonical payload")
+    return replayed
 
 
 __all__ = [
@@ -442,6 +908,7 @@ __all__ = [
     "HMMM",
     "NONCLAIMS",
     "PINNED_PUBLIC_GONOL_SHA256",
+    "PINNED_UCNS_COMMIT",
     "PublicGonolConstructionError",
     "PublicGonolReceipt",
     "canonical_receipt_bytes",
