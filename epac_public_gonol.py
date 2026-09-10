@@ -448,8 +448,10 @@ def _coupling_declaration(item: Mapping[str, Any]) -> tuple[tuple[str, ...], tup
         or epsilon != MOBIUS_EPSILON_T0
     ):
         raise PublicGonolConstructionError("coupling mobius_epsilon_t0 conflicts with canonical epsilon")
-    if charge_state is not None and _tuple_tree(charge_state) != _tuple_tree(
-        (charges, MOBIUS_EPSILON_T0)
+    if charge_state is not None and canonical_receipt_bytes(
+        {"charge_state": charge_state}
+    ) != canonical_receipt_bytes(
+        {"charge_state": (charges, MOBIUS_EPSILON_T0)}
     ):
         raise PublicGonolConstructionError("coupling charge_state conflicts with slot charges")
     return ids, charges
@@ -520,7 +522,11 @@ def _validate_structure_matches_couplings(
             "structure must match the supplied declared couplings before closure"
         )
     expected_structure = _expected_structure_from_couplings(couplings)
-    if _canonical_structure_tree(structure) != _canonical_structure_tree(expected_structure):
+    if canonical_receipt_bytes(
+        {"structure": _canonical_structure_tree(structure)}
+    ) != canonical_receipt_bytes(
+        {"structure": _canonical_structure_tree(expected_structure)}
+    ):
         raise PublicGonolConstructionError(
             "structure derived fields must exactly match the declared couplings before closure"
         )
@@ -661,7 +667,11 @@ def _validate_retained_gonol_tree(gonol: ClosedPublicGonol) -> ClosedPublicGonol
     if gonol.structure is not None and not isinstance(gonol.structure, MappingABC):
         raise PublicGonolConstructionError("retained structure must be a mapping")
     expected_glyph, expected_index = _identity_position(gonol.identity_glyph)
-    if gonol.identity_glyph != expected_glyph or gonol.carrier_index != expected_index:
+    if canonical_receipt_bytes(
+        {"glyph": gonol.identity_glyph, "index": gonol.carrier_index}
+    ) != canonical_receipt_bytes(
+        {"glyph": expected_glyph, "index": expected_index}
+    ):
         raise PublicGonolConstructionError(
             "retained carrier identity does not match geometry"
         )
@@ -744,9 +754,13 @@ def _validate_retained_receipt(receipt: PublicGonolReceipt) -> ClosedPublicGonol
         raise PublicGonolConstructionError("receipt envelope is not canonical")
     outer_geometry = _freeze_json(receipt.geometry)
     gonol_geometry = _freeze_json(gonol.geometry)
-    if _tuple_tree(outer_geometry) != _tuple_tree(gonol_geometry):
+    if canonical_receipt_bytes(
+        {"geometry": outer_geometry}
+    ) != canonical_receipt_bytes({"geometry": gonol_geometry}):
         raise PublicGonolConstructionError("retained receipt geometries disagree")
-    if _tuple_tree(receipt.structure) != _tuple_tree(gonol.structure):
+    if canonical_receipt_bytes(
+        {"structure": receipt.structure}
+    ) != canonical_receipt_bytes({"structure": gonol.structure}):
         raise PublicGonolConstructionError("retained receipt structures disagree")
     return _validate_retained_gonol_tree(gonol)
 
