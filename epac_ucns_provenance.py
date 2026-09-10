@@ -52,6 +52,7 @@ from functools import lru_cache
 from hashlib import sha256
 import inspect
 import marshal
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -129,9 +130,16 @@ def _head_and_index_witness(root: Path) -> tuple[str, str] | None:
             return None
     else:
         return None
-    index = git_dir / "index"
-    if not index.exists():
-        index = common_dir / "index"
+    configured_index = os.environ.get("GIT_INDEX_FILE")
+    if configured_index:
+        index = Path(configured_index)
+        if not index.is_absolute():
+            index = root / index
+        index = index.resolve()
+    else:
+        index = git_dir / "index"
+        if not index.exists():
+            index = common_dir / "index"
     return head, sha256(index.read_bytes()).hexdigest()
 
 
