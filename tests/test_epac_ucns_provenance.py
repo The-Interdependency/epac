@@ -4,8 +4,8 @@
 # id: check_epac_ucns_pin_matches_loaded_code
 #   proves: epac_ucns_pin_matches_loaded_code
 #   call: self::check_epac_ucns_pin_matches_loaded_code
-#   mutates: none
-#   cleanup: clears verification cache
+#   mutates: ucns.public_gonol module global public_gonol_position; in-memory verification cache
+#   cleanup: restores public_gonol_position; clears verification cache
 #
 # id: check_epac_ucns_verification_reuses_only_identical_witness
 #   proves: epac_ucns_verification_reuses_only_identical_witness
@@ -16,7 +16,7 @@
 # id: check_epac_ucns_pin_compares_pinned_blob_bytes
 #   proves: epac_ucns_pin_matches_loaded_code
 #   call: self::check_epac_ucns_pin_compares_pinned_blob_bytes
-#   mutates: none
+#   mutates: in-memory verification cache
 #   cleanup: clears verification cache
 # === END CHECKS ===
 
@@ -24,14 +24,17 @@ from __future__ import annotations
 
 import inspect
 from hashlib import sha256
+import os
 from pathlib import Path
 import subprocess
 import tempfile
 from types import FunctionType
 import unittest
+from unittest.mock import patch
 
 from epac_ucns_provenance import (
     _git_blob_mode,
+    _head_and_index_witness,
     _transitive_fingerprint,
     _verify_witness,
     clear_ucns_verification_cache,
@@ -162,6 +165,20 @@ class UcnsProvenanceTest(unittest.TestCase):
 
     def test_staged_blob_mismatch_returns_hmmm(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
+            git_dir = Path(directory) / ".git"
+            git_dir.mkdir()
+            (git_dir / "HEAD").write_text(PINNED_UCNS_COMMIT, encoding="utf-8")
+            (git_dir / "index").write_bytes(b"default-index")
+            alternate_index = Path(directory) / "alternate-index"
+            alternate_index.write_bytes(b"alternate-index-v1")
+            with patch.dict(os.environ, {"GIT_INDEX_FILE": "alternate-index"}):
+                first_witness = _head_and_index_witness(Path(directory))
+                alternate_index.write_bytes(b"alternate-index-v2")
+                second_witness = _head_and_index_witness(Path(directory))
+            self.assertIsNotNone(first_witness)
+            self.assertIsNotNone(second_witness)
+            self.assertNotEqual(first_witness[1], second_witness[1])
+
             path = Path(directory) / "public_gonol.py"
             source = b"def public_gonol_function(value): return value\n"
             path.write_bytes(source)
