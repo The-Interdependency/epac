@@ -3,19 +3,19 @@
 # === CHECKS ===
 # id: check_epac_ucns_pin_matches_loaded_code
 #   proves: epac_ucns_pin_matches_loaded_code
-#   call: self::test_loaded_code_mismatch_returns_hmmm
+#   call: self::check_epac_ucns_pin_matches_loaded_code
 #   mutates: none
 #   cleanup: clears verification cache
 #
 # id: check_epac_ucns_verification_reuses_only_identical_witness
 #   proves: epac_ucns_verification_reuses_only_identical_witness
-#   call: self::test_unchanged_witness_runs_git_once
+#   call: self::check_epac_ucns_verification_reuses_only_identical_witness
 #   mutates: in-memory verification cache
 #   cleanup: clears verification cache
 #
 # id: check_epac_ucns_pin_compares_pinned_blob_bytes
 #   proves: epac_ucns_pin_matches_loaded_code
-#   call: self::test_pinned_blob_mismatch_returns_hmmm
+#   call: self::check_epac_ucns_pin_compares_pinned_blob_bytes
 #   mutates: none
 #   cleanup: clears verification cache
 # === END CHECKS ===
@@ -23,11 +23,17 @@
 from __future__ import annotations
 
 import inspect
+from hashlib import sha256
+from pathlib import Path
 import subprocess
+import tempfile
+from types import FunctionType
 import unittest
 
 from epac_ucns_provenance import (
     _git_blob_mode,
+    _transitive_fingerprint,
+    _verify_witness,
     clear_ucns_verification_cache,
     ucns_verification_cache_info,
     verify_loaded_ucns_commit,
@@ -94,6 +100,25 @@ class UcnsProvenanceTest(unittest.TestCase):
 
         self.assertEqual(transitive_observed, "hmmm")
 
+    def test_effective_builtins_are_part_of_loaded_state(self) -> None:
+        forged_globals = dict(public_gonol_function.__globals__)
+        forged_builtins = dict(public_gonol_function.__builtins__)
+        forged_builtins["len"] = sum
+        forged_globals["__builtins__"] = forged_builtins
+        forged = FunctionType(
+            public_gonol_function.__code__,
+            forged_globals,
+            public_gonol_function.__name__,
+            public_gonol_function.__defaults__,
+            public_gonol_function.__closure__,
+        )
+        forged.__kwdefaults__ = public_gonol_function.__kwdefaults__
+        forged.__annotations__ = public_gonol_function.__annotations__
+        self.assertNotEqual(
+            _transitive_fingerprint(forged),
+            _transitive_fingerprint(public_gonol_function),
+        )
+
     def test_unchanged_witness_runs_git_once(self) -> None:
         calls: list[tuple[str, ...]] = []
 
@@ -134,6 +159,62 @@ class UcnsProvenanceTest(unittest.TestCase):
         )
 
         self.assertEqual(observed, "hmmm")
+
+    def test_staged_blob_mismatch_returns_hmmm(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "public_gonol.py"
+            source = b"def public_gonol_function(value): return value\n"
+            path.write_bytes(source)
+            pinned_blob = "a" * 40
+            staged_blob = "b" * 40
+            calls: list[tuple[str, ...]] = []
+
+            def staged_runner(command, **_kwargs):
+                calls.append(tuple(command))
+                if "rev-parse" in command:
+                    return subprocess.CompletedProcess(command, 0, stdout=PINNED_UCNS_COMMIT + "\n")
+                if "ls-tree" in command:
+                    line = f"100644 blob {pinned_blob}\tpublic_gonol.py\n"
+                    return subprocess.CompletedProcess(command, 0, stdout=line)
+                if "ls-files" in command:
+                    line = f"100644 {staged_blob} 0\tpublic_gonol.py\n"
+                    return subprocess.CompletedProcess(command, 0, stdout=line)
+                raise AssertionError(command)
+
+            observed = _verify_witness(
+                PINNED_UCNS_COMMIT, directory, PINNED_UCNS_COMMIT,
+                sha256(b"index").hexdigest(),
+                (("public_gonol.py", str(path), "public_gonol_function",
+                  "loaded", sha256(source).hexdigest(), 0o100644),),
+                staged_runner,
+            )
+        self.assertEqual(observed, "hmmm")
+        self.assertTrue(any("ls-files" in call for call in calls))
+
+
+def _run_provenance_cases(*names: str) -> None:
+    suite = unittest.TestSuite(UcnsProvenanceTest(name) for name in names)
+    result = suite.run(unittest.TestResult())
+    if not result.wasSuccessful():
+        raise AssertionError(f"provenance checks failed: {result.failures!r} {result.errors!r}")
+
+
+def check_epac_ucns_pin_matches_loaded_code() -> None:
+    _run_provenance_cases(
+        "test_loaded_code_mismatch_returns_hmmm",
+        "test_effective_builtins_are_part_of_loaded_state",
+    )
+
+
+def check_epac_ucns_verification_reuses_only_identical_witness() -> None:
+    _run_provenance_cases("test_unchanged_witness_runs_git_once")
+
+
+def check_epac_ucns_pin_compares_pinned_blob_bytes() -> None:
+    _run_provenance_cases(
+        "test_pinned_blob_mismatch_returns_hmmm",
+        "test_staged_blob_mismatch_returns_hmmm",
+    )
 
 
 if __name__ == "__main__":
