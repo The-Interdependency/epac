@@ -58,7 +58,7 @@ import subprocess
 import sys
 from dataclasses import fields, is_dataclass
 from enum import Enum
-from types import CodeType, FunctionType, ModuleType
+from types import BuiltinFunctionType, CodeType, FunctionType, ModuleType
 from typing import Callable, Sequence
 
 
@@ -107,7 +107,7 @@ def _packed_ref(common_dir: Path, ref_name: str) -> str | None:
     return None
 
 
-def _head_and_index_witness(root: Path) -> tuple[str, int, int] | None:
+def _head_and_index_witness(root: Path) -> tuple[str, str] | None:
     directories = _git_directories(root)
     if directories is None:
         return None
@@ -132,8 +132,7 @@ def _head_and_index_witness(root: Path) -> tuple[str, int, int] | None:
     index = git_dir / "index"
     if not index.exists():
         index = common_dir / "index"
-    stat = index.stat()
-    return head, stat.st_mtime_ns, stat.st_size
+    return head, sha256(index.read_bytes()).hexdigest()
 
 
 def _normalized_code(code: CodeType) -> tuple[object, ...]:
@@ -173,6 +172,12 @@ def _freeze_loaded_state(
         return ("literal", type(value).__name__, value)
     if isinstance(value, float):
         return ("float", value.hex())
+    if isinstance(value, BuiltinFunctionType):
+        return (
+            "builtin-function",
+            getattr(value, "__module__", ""),
+            getattr(value, "__qualname__", getattr(value, "__name__", "")),
+        )
     identity = id(value)
     if identity in seen:
         return ("ref", seen[identity])
@@ -202,10 +207,18 @@ def _freeze_loaded_state(
         if module_name != owner_module:
             return ("external-function", module_name, value.__qualname__)
         global_state = []
+        builtin_state = []
+        effective_builtins = value.__builtins__
+        if isinstance(effective_builtins, ModuleType):
+            effective_builtins = vars(effective_builtins)
         for name in sorted(set(value.__code__.co_names)):
             if name in value.__globals__:
                 global_state.append(
                     (name, _freeze_loaded_state(value.__globals__[name], owner_module, seen))
+                )
+            elif isinstance(effective_builtins, dict) and name in effective_builtins:
+                builtin_state.append(
+                    (name, _freeze_loaded_state(effective_builtins[name], owner_module, seen))
                 )
         closure = tuple(
             _freeze_loaded_state(cell.cell_contents, owner_module, seen)
@@ -219,6 +232,7 @@ def _freeze_loaded_state(
             _freeze_loaded_state(value.__kwdefaults__, owner_module, seen),
             _freeze_loaded_state(value.__annotations__, owner_module, seen),
             tuple(global_state),
+            tuple(builtin_state),
             closure,
         )
     if isinstance(value, type):
@@ -349,12 +363,11 @@ def _verify_witness(
     pinned_commit: str,
     root_text: str,
     head: str,
-    index_mtime_ns: int,
-    index_size: int,
+    index_digest: str,
     records: tuple[tuple[object, ...], ...],
     runner: Runner,
 ) -> str:
-    del index_mtime_ns, index_size  # Their presence invalidates the cache key.
+    del index_digest  # Its presence binds cache reuse to the complete index bytes.
     if head != pinned_commit:
         return "hmmm"
     root = Path(root_text)
@@ -406,6 +419,21 @@ def _verify_witness(
             fields = getattr(tree_entry, "stdout", "").strip().split(None, 3)
             if len(fields) != 4 or fields[0] != disk_mode or fields[1] != "blob":
                 return "hmmm"
+            index_entry = runner(
+                ("git", "-C", str(root), "ls-files", "--stage", "--", relative_path),
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            index_fields = getattr(index_entry, "stdout", "").strip().split(None, 3)
+            if (
+                len(index_fields) != 4
+                or index_fields[0] != fields[0]
+                or index_fields[1] != fields[2]
+                or index_fields[2] != "0"
+                or index_fields[3] != relative_path
+            ):
+                return "hmmm"
             pinned_blob = runner(
                 ("git", "-C", str(root), "cat-file", "blob", fields[2]),
                 check=True,
@@ -451,13 +479,12 @@ def verify_loaded_ucns_commit(
         return "hmmm"
     if git_witness is None:
         return "hmmm"
-    head, index_mtime_ns, index_size = git_witness
+    head, index_digest = git_witness
     return _verify_witness(
         pinned_commit,
         str(root),
         head,
-        index_mtime_ns,
-        index_size,
+        index_digest,
         records,
         runner,
     )
