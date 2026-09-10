@@ -348,6 +348,46 @@ class EpacPublicGonolTest(unittest.TestCase):
                 forged = _reseal_retained_gonol(receipt.gonol, **changes)
                 self.assert_retained_rejected(forged, pattern)
 
+    def test_boolean_integer_aliases_are_rejected_at_every_retained_boundary(self) -> None:
+        carrier = construct_public_gonol(
+            source_id="epac.test:boolean-carrier",
+            relation="epac.atomic.element",
+            identity_glyph=public_gonol_function(1).glyph,
+        )
+        forged_carrier = _reseal_retained_gonol(
+            carrier.gonol, carrier_index=True
+        )
+        self.assert_retained_rejected(forged_carrier, "carrier identity")
+
+        outer_geometry = public_gonol_module._json_ready(carrier.geometry)
+        outer_geometry["mobius_epsilon_t0"] = True
+        with self.assertRaisesRegex(PublicGonolConstructionError, "geometries disagree"):
+            replay_public_gonol(replace(carrier, geometry=outer_geometry))
+
+        declared = space(
+            ["z", "x"], [["z", "x"]], charges={"z": 8, "x": 1}
+        )
+        geometry = geometry_from_declared_couplings(declared)
+        boolean_structure = copy.deepcopy(geometry["structure"])
+        boolean_structure["inferred_cartesian_embedding"] = 0
+        with self.assertRaisesRegex(PublicGonolConstructionError, "derived fields"):
+            construct_public_gonol(
+                source_id="epac.test:boolean-structure",
+                relation="epac.affixiation.unpaired-valence",
+                couplings=geometry["couplings"],
+                structure=boolean_structure,
+            )
+
+        boolean_charge = copy.deepcopy(geometry["couplings"])
+        boolean_charge[0]["charge_state"] = ((8, True), True)
+        with self.assertRaisesRegex(PublicGonolConstructionError, "charge_state"):
+            construct_public_gonol(
+                source_id="epac.test:boolean-charge",
+                relation="epac.affixiation.unpaired-valence",
+                couplings=boolean_charge,
+                structure=geometry["structure"],
+            )
+
     def test_charged_couplings_are_the_structure(self) -> None:
         declared = space(
             ["z", "x", "y"],
@@ -678,6 +718,7 @@ def check_epac_public_gonol_retained_constructor_boundary() -> None:
             "test_retained_geometry_requires_the_complete_constructor_schema",
             "test_retained_couplings_are_canonical_before_identity_checks",
             "test_retained_scalars_reuse_constructor_validation",
+            "test_boolean_integer_aliases_are_rejected_at_every_retained_boundary",
         )
     )
     result = suite.run(unittest.TestResult())
