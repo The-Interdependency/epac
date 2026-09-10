@@ -264,7 +264,10 @@ def _validate_retained_geometry(
     carrier_index: int | None,
 ) -> Mapping[str, Any]:
     ucns_commit = geometry.get("ucns_commit")
-    if ucns_commit not in {PINNED_UCNS_COMMIT, "hmmm"}:
+    if not isinstance(ucns_commit, str) or ucns_commit not in {
+        PINNED_UCNS_COMMIT,
+        "hmmm",
+    }:
         raise PublicGonolConstructionError("retained UCNS commit is not pinned or hmmm")
     expected = _geometry_record(identity_glyph, carrier_index, ucns_commit)
     if canonical_receipt_bytes({"geometry": geometry}) != canonical_receipt_bytes(
