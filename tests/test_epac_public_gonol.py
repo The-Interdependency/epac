@@ -289,6 +289,7 @@ class EpacPublicGonolTest(unittest.TestCase):
             ("authority", "caller.asserted"),
             ("authority_binding", "implicit"),
             ("ucns_commit", "forged-commit"),
+            ("ucns_commit", {"forged": "commit"}),
             ("carrier_digest", "0" * 64),
             ("mobius_epsilon_t0", -1),
             ("mobius_epsilon_t0", True),
