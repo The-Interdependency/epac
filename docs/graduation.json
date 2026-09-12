@@ -1,94 +1,149 @@
 {
-  "schema": "the-interdependency.project-graduation-record",
-  "version": "1.0.0",
-  "candidate": "EPAC",
-  "lifecycle_state": "stabilizing",
-  "physical_repository_state": "extracted",
-  "mode": "execution",
   "authorization": {
+    "authority_transfer": "authorized and completed for EPAC implementation/public-contract only",
     "external_mutation": "authorized",
-    "authority_transfer": "authorized; not-yet-complete",
     "license_instruction": "weak copyleft; resolved as MPL-2.0 using organization convention"
   },
-  "forge": {
-    "repository": "The-Interdependency/stack",
-    "source_commit": "ef51f2e8f32ccfd5394525dad72475a61a505bc1",
-    "source_path": "research/epac",
-    "handoff_source_commit": "0e8384bbb60e4c2189016a212bdd0030d04aed7d"
-  },
-  "future_authority": {
-    "repository": "The-Interdependency/epac"
+  "candidate": "EPAC",
+  "current_authority": {
+    "repository": "The-Interdependency/epac",
+    "scope": [
+      "implementation",
+      "public-contract"
+    ]
   },
   "distribution": {
-    "kind": "release-asset",
     "artifact": "interdependency-epac",
-    "version": "0.1.0",
-    "candidate_immutable_identity": "hmmm",
-    "published_immutable_identity": "hmmm",
-    "published_matches_verified_candidate": "hmmm"
+    "candidate_immutable_identity": {
+      "assets_sha256": {
+        "SHA256SUMS": "c432e50b60a861992d36a89b3ceb5e4720a0d79f5da8f04a65c0b88dcd61618a",
+        "interdependency_epac-0.1.0-py3-none-any.whl": "e871ce7940e963b73664a276cdd8ceea7ac1a5db568c26838cd57217e00adf45",
+        "interdependency_epac-0.1.0.tar.gz": "fb31e05b55f5cf3bae76e2bd70332507cca1051e71b58bb49f25bae136853460",
+        "release-manifest.json": "caa7ef6103651786efd7c092421a7a9fd7daf535bc839d3e8dcb20ffa806c89e"
+      },
+      "release_manifest_sha256": "caa7ef6103651786efd7c092421a7a9fd7daf535bc839d3e8dcb20ffa806c89e",
+      "source_commit": "949cb1cb304927942966c9fb396caf6227120e7f"
+    },
+    "kind": "release-asset",
+    "published_immutable_identity": {
+      "assets_sha256": {
+        "SHA256SUMS": "c432e50b60a861992d36a89b3ceb5e4720a0d79f5da8f04a65c0b88dcd61618a",
+        "interdependency_epac-0.1.0-py3-none-any.whl": "e871ce7940e963b73664a276cdd8ceea7ac1a5db568c26838cd57217e00adf45",
+        "interdependency_epac-0.1.0.tar.gz": "fb31e05b55f5cf3bae76e2bd70332507cca1051e71b58bb49f25bae136853460",
+        "release-manifest.json": "caa7ef6103651786efd7c092421a7a9fd7daf535bc839d3e8dcb20ffa806c89e"
+      },
+      "immutable": true,
+      "release_manifest_sha256": "caa7ef6103651786efd7c092421a7a9fd7daf535bc839d3e8dcb20ffa806c89e",
+      "release_url": "https://github.com/The-Interdependency/epac/releases/tag/v0.1.0",
+      "source_commit": "949cb1cb304927942966c9fb396caf6227120e7f"
+    },
+    "published_matches_verified_candidate": true,
+    "version": "0.1.0"
   },
-  "upstream": [
-    {
-      "repository": "The-Interdependency/ucns",
-      "commit": "6eea1828a34ed8ec99879f8090ea5d48352d8c2d",
-      "relation": "mathematical representation and Public Gonol dependency",
-      "authority_transfer": false
-    },
-    {
-      "repository": "The-Interdependency/metapat",
-      "commit": "d6699e21b11c8f8394998efc34a468e2d6efc8b0",
-      "relation": "semantic authority for affixiation/harmonic application language",
-      "authority_transfer": false
-    },
-    {
-      "repository": "The-Interdependency/skill-lib",
-      "commit": "c14ee9d500579a4b5d6821f62c9d82ca96e73608",
-      "relation": "organization build and evidence doctrine",
-      "authority_transfer": false
-    }
-  ],
+  "forge": {
+    "handoff_source_commit": "0e8384bbb60e4c2189016a212bdd0030d04aed7d",
+    "repository": "The-Interdependency/stack",
+    "source_commit": "ef51f2e8f32ccfd5394525dad72475a61a505bc1",
+    "source_path": "research/epac"
+  },
   "gates": {
-    "public_api": "pass",
+    "clean_build_install": "pass",
+    "clean_retired_source_verification": "pass",
+    "downstream_reconsumption": "pass",
+    "exact_candidate_forge_verification": "pass",
+    "forge_implementation_retired": "pass",
     "independent_tests": "pass",
-    "clean_build_install": "hmmm",
     "license_distribution_rights": "pass",
-    "release_ownership_authority": "pass",
     "provenance_preserved": "pass",
-    "exact_candidate_forge_verification": "hmmm",
-    "stable_release": "hmmm",
-    "downstream_reconsumption": "hmmm"
+    "public_api": "pass",
+    "release_ownership_authority": "pass",
+    "stable_release": "pass"
   },
-  "transition_receipt": "hmmm",
   "hmmm": [
-    "final exact candidate build/install matrix remains pending",
-    "stack has not reconsumed a released immutable EPAC artifact",
-    "final pinned package artifacts require a fresh clean installation matrix"
+    "All 14 comparison standings remain FALSIFIED.",
+    "Geometry ratification, canonicality/compositionality, PCEA application, and unmeasured operation effects remain unresolved.",
+    "No PostgreSQL fresh-making acceptance is asserted."
   ],
+  "license_selection": "docs/license-selection.json",
+  "lifecycle_state": "graduated",
+  "mode": "execution",
+  "physical_repository_state": "independent",
+  "qualification_history": "docs/graduation-qualification-history.json",
+  "schema": "the-interdependency.project-graduation-record",
   "source_test_evidence": {
-    "tests": 180,
-    "subtests": 23,
-    "skips": 0,
-    "handoff": "docs/forge-handoff-20260912.json",
-    "final_pinned_artifact_matrix": "hmmm",
-    "note": "Historical 180-test source suite; the subsequent 181-test wheel/sdist suite passed all three runtimes before the final UCNS dependency update.",
-    "preceding_private_artifact_matrix": {
-      "source_commit": "625e537701292179cdd8027c95ab87bf54aefa37",
-      "tests_per_artifact": 209,
+    "final_pinned_artifact_matrix": {
+      "acceptance_sha256": "b7c17232e5286227b0b027fa0e1337d9b04e12243cffa5a80467e166077581ca",
       "artifact_kinds": [
         "wheel",
         "sdist"
       ],
+      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34724129782",
       "python_versions": [
         "3.10",
         "3.11",
         "3.12"
       ],
+      "same_candidate_assets_sha256": {
+        "SHA256SUMS": "c432e50b60a861992d36a89b3ceb5e4720a0d79f5da8f04a65c0b88dcd61618a",
+        "interdependency_epac-0.1.0-py3-none-any.whl": "e871ce7940e963b73664a276cdd8ceea7ac1a5db568c26838cd57217e00adf45",
+        "interdependency_epac-0.1.0.tar.gz": "fb31e05b55f5cf3bae76e2bd70332507cca1051e71b58bb49f25bae136853460",
+        "release-manifest.json": "caa7ef6103651786efd7c092421a7a9fd7daf535bc839d3e8dcb20ffa806c89e"
+      },
       "skips": 0,
+      "source_commit": "949cb1cb304927942966c9fb396caf6227120e7f",
       "status": "passed",
-      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34706109670",
+      "tests_per_artifact": 209
+    },
+    "handoff": "docs/forge-handoff-20260912.json",
+    "note": "Historical 180-test source suite; the subsequent 181-test wheel/sdist suite passed all three runtimes before the final UCNS dependency update.",
+    "preceding_private_artifact_matrix": {
       "acceptance_sha256": "6e60f2bb969a331ba70f295fbd66c25146b0922ed9fe075629d48dae5f132b88",
-      "scope": "Preceding private matrix before MPL-2.0 license bytes and normalized release CI. Final licensed candidate qualification remains pending."
-    }
+      "artifact_kinds": [
+        "wheel",
+        "sdist"
+      ],
+      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34706109670",
+      "python_versions": [
+        "3.10",
+        "3.11",
+        "3.12"
+      ],
+      "scope": "Historical private matrix before MPL-2.0 license bytes and normalized release CI; the completed final_pinned_artifact_matrix supplies release qualification.",
+      "skips": 0,
+      "source_commit": "625e537701292179cdd8027c95ab87bf54aefa37",
+      "status": "passed",
+      "tests_per_artifact": 209
+    },
+    "skips": 0,
+    "subtests": 23,
+    "tests": 180
   },
-  "license_selection": "docs/license-selection.json"
+  "transition_receipt": {
+    "owning_repository": "The-Interdependency/stack",
+    "path": "docs/authority-transition.json",
+    "sha256": "be07a237af2b5c0fa3f263253958166624b9d3d62c73000424e24eb58894165e",
+    "source_commit": "c81d807142d3f0fe3968a6879888afa00352eaff",
+    "source_url": "https://github.com/The-Interdependency/stack/blob/c81d807142d3f0fe3968a6879888afa00352eaff/integration/epac/authority-transition.json"
+  },
+  "upstream": [
+    {
+      "authority_transfer": false,
+      "commit": "6eea1828a34ed8ec99879f8090ea5d48352d8c2d",
+      "relation": "mathematical representation and Public Gonol dependency",
+      "repository": "The-Interdependency/ucns"
+    },
+    {
+      "authority_transfer": false,
+      "commit": "d6699e21b11c8f8394998efc34a468e2d6efc8b0",
+      "relation": "semantic authority for affixiation/harmonic application language",
+      "repository": "The-Interdependency/metapat"
+    },
+    {
+      "authority_transfer": false,
+      "commit": "c14ee9d500579a4b5d6821f62c9d82ca96e73608",
+      "relation": "organization build and evidence doctrine",
+      "repository": "The-Interdependency/skill-lib"
+    }
+  ],
+  "version": "1.0.0"
 }

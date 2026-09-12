@@ -13,4 +13,4 @@ Before work:
 7. include runnable usage guidance in code and research artifacts;
 8. unknown authority, mapping, or evidence remains `hmmm`.
 
-Current graduation boundary: this repository is extracted and its package is being qualified. MPL-2.0 licensing is recorded from the owner’s weak-copyleft instruction. Exact licensed candidate qualification, stack verification, stable release, and reconsumption remain separate evidence requirements.
+Current graduation boundary: EPAC v0.1.0 is independently graduated under MPL-2.0. EPAC owns its implementation and public contracts; Stack consumes the hash-pinned public release and retains historical forge evidence. Read docs/graduation.json and docs/authority-transition.json for exact identities and gates. Scientific, upstream-license and freshness authority do not transfer.
