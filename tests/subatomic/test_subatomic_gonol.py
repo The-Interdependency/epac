@@ -154,3 +154,22 @@ def test_subatomic_gonol_lifted_spiral_preserved_under_replay():
         assert replayed == receipt.receipt_digest
         carried_after = dict(m.construct_subatomic_gonol(symbol).gonol.carried_options).get("lifted-spiral", "")
         assert carried_before == carried_after
+
+
+def test_carried_spiral_rejects_missing_and_contradictory_evidence():
+    from types import SimpleNamespace
+    import pytest
+    from epac_molecular import lifted_spiral_from_receipt
+    from epac_periodic import lifted_spiral_carried_on_element, boundary_capacity_from_element_receipt
+    invalid = (None, "", "broken", "a|b;axis;0", "a||b;axis;0", "a|b|a;;0",
+               "a|b|a;axis,;0", "a|b|a;axis,axis;0", "a|b|a;axis;1",
+               "a|b|a;axis;-1", "a|b|a;axis;00", "a|b|a;axis;invalid")
+    for value in invalid:
+        receipt = SimpleNamespace(gonol=SimpleNamespace(carried_options=() if value is None else (("lifted-spiral", value),)))
+        for extractor in (m.lifted_spiral_carried_on_subatomic, m.boundary_capacity_from_subatomic_receipt,
+                          lifted_spiral_carried_on_element, boundary_capacity_from_element_receipt):
+            with pytest.raises(ValueError, match="lifted-spiral"):
+                extractor(receipt)
+        if value != "a|b|a;axis;1":
+            with pytest.raises(ValueError, match="lifted-spiral"):
+                lifted_spiral_from_receipt(receipt)

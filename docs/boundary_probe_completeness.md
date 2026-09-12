@@ -35,13 +35,13 @@ construction/evidence modules. Each operation is classified as one of:
 
 | item | count |
 |---|---:|
-| declared operations classified | 105 |
+| declared operations classified | 109 |
 | boundary-relevant operations | 58 |
 | omitted boundary-relevant operations | 14 |
 | omitted operations that distinguish same-B frozen states | 13 |
-| ambiguous operations | 8 |
+| ambiguous operations | 12 |
 
-Eight exported operations, including the representation and probe-relativity audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
+Twelve exported operations, including the representation, probe-relativity, minimal-refinement and probe-completeness audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
 
 ## Partition Result
 

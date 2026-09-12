@@ -16,12 +16,12 @@ Full population of the declared experiment (all 9 molecules + representative
 elements) is available via extract_full_spiral_population.
 
 Usage:
-    from epac_viz.spiral_viz import render_molecule_spiral_svg, render_to_text
+    from epac_viz.spiral_viz import render_molecule_spiral_svg, render_to_text, extract_spiral_scene
     from epac_molecular import construct_molecule
 
     c = construct_molecule("H2O")
     svg = render_molecule_spiral_svg(c)
-    print(render_to_text(c))
+    print(render_to_text(extract_spiral_scene(c)))
 """
 
 from __future__ import annotations

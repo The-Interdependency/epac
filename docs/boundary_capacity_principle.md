@@ -170,12 +170,13 @@ availability, coupling structure, or boundary state.
 Aggregate statuses from `epac_boundary_probe_completeness.py`:
 
 - declared_operation_inventory: SURVIVED
-- ambiguous_boundary_semantics: SURVIVED
+- ambiguous_boundary_semantics: UNRESOLVED
 - omitted_boundary_relevant_operations: FALSIFIED
 - quotient_partition_stability_under_omitted_existing_observables: FALSIFIED
 - boundary_probe_completeness: FALSIFIED
 
-The audit classified 104 exported callable operations and found 14 omitted
+The audit classified 109 exported callable operations, retained 12 with unresolved
+boundary relevance, and found 14 omitted
 boundary-relevant operations. Existing dimensional-arity observers such as
 `topology_structure_readout`, `charged_structure_readout`, and
 `quaternion_structure_readout` refine the 16-class B quotient to 21 classes

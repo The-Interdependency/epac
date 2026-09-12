@@ -499,21 +499,11 @@ def lifted_spiral_from_receipt(receipt: PublicGonolReceipt) -> tuple:
     """Pure extraction of the lifted spiral (UCNS Möbius) canonical signature from a receipt.
 
     Carried value format: "f1|f2|...;a1,a2,...;attach_count"
-    Returns (frames_tuple, sorted_axes_tuple, attachment_count) or ((), (), 0).
+    Returns (frames_tuple, sorted_axes_tuple, attachment_count). Missing or malformed evidence raises ValueError.
     The receipt is the single source of truth for the carried fact.
     """
-    carried = dict(receipt.gonol.carried_options)
-    val = carried.get("lifted-spiral", "")
-    if not val:
-        return ((), (), 0)
-    try:
-        frames_part, axes_part, ac_part = val.split(";", 2)
-        frames = tuple(frames_part.split("|")) if frames_part else ()
-        axes = tuple(sorted(a for a in axes_part.split(",") if a)) if axes_part else ()
-        ac = int(ac_part) if ac_part else 0
-        return (frames, axes, ac)
-    except Exception:
-        return ((), (), 0)
+    from epac_public_gonol import _lifted_spiral_signature
+    return _lifted_spiral_signature(receipt, bare=False)
 
 
 def lifted_spiral_carried_on_molecule(construction: MolecularConstruction) -> tuple:

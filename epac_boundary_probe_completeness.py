@@ -119,6 +119,8 @@ OPERATION_SOURCE_FILES = (
     "epac_cross_scale_closure.py",
     "epac_boundary_nondegeneracy.py",
     "epac_boundary_quotient.py",
+    "epac_boundary_minimal_refinement.py",
+    "epac_boundary_probe_completeness.py",
     "epac_comparison.py",
     "subatomic/subatomic_gonol.py",
     "subatomic/element_affixiation_candidate.py",

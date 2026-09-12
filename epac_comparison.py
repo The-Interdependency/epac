@@ -651,6 +651,14 @@ def compare_after_construction(root: Path = EPAC_ROOT) -> dict[str, Any]:
 
     label_hits = construction_sources_omit_sealed_labels(root)
     constructions = construct_declared_molecules()
+    missing_constructions = ORIGINAL_PREREG.difference(constructions)
+    if missing_constructions:
+        raise ValueError(f"missing preregistered constructions: {sorted(missing_constructions)}")
+    sealed_path = SEALED_PATH if root == EPAC_ROOT else root / "data" / "sealed_known_molecular_geometry.json"
+    sealed = json.loads(sealed_path.read_text(encoding="utf-8"))
+    missing_sealed = ORIGINAL_PREREG.difference(sealed.get("molecules", {}))
+    if missing_sealed:
+        raise ValueError(f"missing preregistered sealed evidence: {sorted(missing_sealed)}")
     charged = {}
     topology = {}
     mobius = {}
@@ -761,15 +769,12 @@ def compare_after_construction(root: Path = EPAC_ROOT) -> dict[str, Any]:
         if c.invariants["harmonic_survival"] != c.invariants["subatomic_harmonic_survival"]:
             raise AssertionError(f"harmonic survival mismatch for {f}")
 
-    sealed_path = SEALED_PATH if root == EPAC_ROOT else root / "data" / "sealed_known_molecular_geometry.json"
-    sealed = json.loads(sealed_path.read_text(encoding="utf-8"))
     # known_shapes for standings and quantify_distinguishing_power is *always* restricted
     # to the frozen original preregistered set, even when the sealed file or constructed
     # set is enlarged for broader experiments. Policy is sealed on the original 5.
     known_shapes = {
         formula: sealed["molecules"][formula]["known_shape"]
         for formula in ORIGINAL_PREREG
-        if formula in constructions and formula in sealed.get("molecules", {})
     }
 
     # per_symbol already populated inside the loop (receipt-sourced single source of truth)

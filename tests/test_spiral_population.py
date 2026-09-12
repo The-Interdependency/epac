@@ -47,6 +47,7 @@ import unittest
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 
@@ -86,6 +87,51 @@ class SpiralPopulationTest(unittest.TestCase):
             receipt.gonol.carried_options = (("lifted-spiral", "left|left|right;axis;" + count),)
             with self.assertRaisesRegex(ValueError, "attachment count"):
                 extract_spiral_scene(receipt)
+
+    def test_direct_receipts_preserve_all_carried_spiral_scales(self) -> None:
+        for formula, construction in construct_declared_molecules().items():
+            direct = extract_spiral_scene(construction.receipt)
+            wrapped = extract_spiral_scene(construction)
+            self.assertEqual(direct.turns, wrapped.turns, formula)
+            self.assertEqual(direct.participant_axes, wrapped.participant_axes, formula)
+            self.assertEqual(len(direct.attachments), len(wrapped.attachments), formula)
+            self.assertTrue(all(slot.center is None and slot.site is None for slot in direct.attachments))
+        from types import MappingProxyType
+        from epac_molecular import construct_molecule
+        construction = construct_molecule("H2O")
+        invariants = dict(construction.invariants)
+        mobius = dict(invariants["mobius"])
+        mobius["attachment_slots"] = tuple(MappingProxyType(dict(slot)) for slot in mobius["attachment_slots"])
+        invariants["mobius"] = mobius
+        wrapped = SimpleNamespace(receipt=construction.receipt, invariants=invariants)
+        self.assertEqual(len(extract_spiral_scene(wrapped).attachments), 2)
+        mobius["attachment_slots"] = (None, None)
+        with self.assertRaisesRegex(ValueError, "attachment slot evidence"):
+            extract_spiral_scene(wrapped)
+        for relation, count in (("epac.atomic.element", 0), ("epac.molecular", 2)):
+            receipt = SimpleNamespace(source_id="fixture", relation=relation, structure={},
+                                      gonol=SimpleNamespace(carried_options=(("lifted-spiral", f"left|left|right;axis:b,axis:a;{count}"),)))
+            scene = extract_spiral_scene(receipt)
+            self.assertEqual(tuple(t.frame for t in scene.turns), ("left", "left", "right"))
+            self.assertEqual(scene.participant_axes, ("axis:a", "axis:b"))
+            self.assertEqual(len(scene.attachments), count)
+            self.assertFalse(scene.one_turn_flips_frame)
+            self.assertFalse(scene.complete_restored_at_t2)
+
+    def test_population_propagates_requested_entry_failures(self) -> None:
+        with patch("epac_molecular.construct_declared_molecules", return_value={}):
+            for options in ({"include_elements": ("unsupported",), "include_subatomic": ()},
+                            {"include_elements": (), "include_subatomic": ("unsupported",)}):
+                with self.assertRaises(ValueError):
+                    extract_full_spiral_population(**options)
+            for target, options in (("epac_periodic.construct_element_gonol", {"include_elements": ("H",), "include_subatomic": ()}),
+                                    ("epac_subatomic.subatomic_gonol.construct_subatomic_gonol", {"include_elements": (), "include_subatomic": ("H",)})):
+                with patch(target, side_effect=RuntimeError("construction failed")):
+                    with self.assertRaisesRegex(RuntimeError, "construction failed"):
+                        extract_full_spiral_population(**options)
+            with patch("epac_viz.spiral_viz.extract_spiral_scene", side_effect=RuntimeError("scene failed")):
+                with self.assertRaisesRegex(RuntimeError, "scene failed"):
+                    extract_full_spiral_population(include_elements=("H",), include_subatomic=())
 
     def test_svg_escapes_phase_and_fits_requested_width(self) -> None:
         scene = extract_spiral_scene(subatomic_gonol.construct_subatomic_gonol("H"))
@@ -168,7 +214,7 @@ class SpiralPopulationTest(unittest.TestCase):
         pop = extract_full_spiral_population()
         expected = set(spiral_population_keys())
         actual = set(pop.keys())
-        # We may have fewer element keys if the table is limited, but all molecule keys must be present
+        self.assertEqual(actual, expected)
         for formula in MOLECULE_COMPOSITIONS:
             self.assertIn(formula, actual)
         # The helper must list at least the molecules

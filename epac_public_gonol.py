@@ -135,6 +135,27 @@ class PublicGonolConstructionError(RuntimeError):
     """Fail-closed EPAC Public Gonol constructor error."""
 
 
+def _lifted_spiral_signature(receipt: Any, *, bare: bool = False) -> tuple:
+    """Read carried evidence without replacing malformed or absent values."""
+    try:
+        pairs = tuple(receipt.gonol.carried_options)
+        carried = dict(pairs)
+        if len(carried) != len(pairs):
+            raise ValueError("duplicate carried option")
+        value = carried["lifted-spiral"]
+        frame_text, axis_text, count_text = value.split(";", 2)
+    except (AttributeError, KeyError, TypeError, ValueError) as error:
+        raise ValueError("missing or malformed carried lifted-spiral evidence") from error
+    frames = tuple(frame_text.split("|"))
+    axes = tuple(axis_text.split(","))
+    if len(frames) != 3 or not all(frames) or not all(axes) or len(set(axes)) != len(axes):
+        raise ValueError("carried lifted-spiral evidence requires three frames and declared axes")
+    if (not count_text.isascii() or not count_text.isdecimal()
+            or str(int(count_text)) != count_text or (bare and count_text != "0")):
+        raise ValueError("carried lifted-spiral attachment count must be canonical nonnegative integer; bare count must be 0")
+    return frames, tuple(sorted(axes)), int(count_text)
+
+
 @dataclass(frozen=True, slots=True)
 class ClosedPublicGonol:
     """One closed EPAC gonol. Atomic at any later declared participation."""

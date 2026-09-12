@@ -265,21 +265,11 @@ def lifted_spiral_carried_on_subatomic(receipt: PublicGonolReceipt) -> tuple:
 
     Sources exclusively from the "lifted-spiral" carried_option (pure projection
     of the framed root-loop evidence witnessed at construction).
-    Returns (frames_tuple, sorted_axes_tuple, attachment_count) or ((), (), 0).
+    Returns (frames_tuple, sorted_axes_tuple, attachment_count). Missing or malformed evidence raises ValueError.
     Parallel to harmonic-surviving and to lifted_spiral_carried_on_element.
     """
-    carried = dict(receipt.gonol.carried_options)
-    val = carried.get("lifted-spiral", "")
-    if not val:
-        return ((), (), 0)
-    try:
-        frames_part, axes_part, ac_part = val.split(";", 2)
-        frames = tuple(frames_part.split("|")) if frames_part else ()
-        axes = tuple(sorted(a for a in axes_part.split(",") if a)) if axes_part else ()
-        ac = int(ac_part) if ac_part else 0
-        return (frames, axes, ac)
-    except Exception:
-        return ((), (), 0)
+    from epac_public_gonol import _lifted_spiral_signature
+    return _lifted_spiral_signature(receipt, bare=True)
 
 
 def boundary_capacity_from_subatomic_receipt(receipt: PublicGonolReceipt) -> tuple:

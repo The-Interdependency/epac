@@ -183,8 +183,8 @@ def _extract_attachments(mob: Mapping[str, Any]) -> tuple[Attachment, ...]:
     slots = mob.get("attachment_slots", ()) or ()
     out: list[Attachment] = []
     for s in slots:
-        if not isinstance(s, dict):
-            continue
+        if not isinstance(s, Mapping):
+            raise ValueError("attachment slot evidence must be a mapping")
         out.append(
             Attachment(
                 slot=int(s.get("slot", -1)),
@@ -274,87 +274,41 @@ def extract_spiral_scene(obj: Any) -> SpiralScene:
     # Direct receipt (element gonol or replay)
     elif hasattr(obj, "gonol") and hasattr(obj, "source_id"):
         receipt = obj
-        # element gonols do not carry the full "mobius" dict in invariants;
-        # we synthesize a minimal one from carried harmonic + basic structure.
+        # Direct receipts carry the spiral signature independently of invariants.
         invariants = {}
         source_id = getattr(obj, "source_id", "element")
         relation = getattr(obj, "relation", "epac.atomic.element")
 
-    mob = _get_mobius(invariants)
-    # Subatomic gonol receipt (PublicGonolReceipt); use the carried "lifted-spiral"
-    # (first-class on subatomic gonols, parallel to element/molecule).
-    if receipt is not None and ("subatomic" in str(getattr(receipt, "source_id", "")) or "subatomic" in str(getattr(receipt, "relation", ""))):
-        carried = {}
-        try:
-            gon = getattr(receipt, "gonol", receipt)
-            carried = dict(getattr(gon, "carried_options", ()))
-        except (TypeError, ValueError) as error:
-            raise ValueError("malformed subatomic carried options") from error
-        val = carried.get("lifted-spiral", "")
-        frames = ()
-        axes = ()
-        if val:
-            try:
-                fpart, apart, attachment_count = val.split(";", 2)
-                frames = tuple(fpart.split("|")) if fpart else ()
-                axes = tuple(sorted(a for a in apart.split(",") if a)) if apart else ()
-            except (AttributeError, ValueError) as error:
-                raise ValueError("malformed carried lifted-spiral evidence") from error
-            if len(frames) != 3 or not all(frames) or not axes:
-                raise ValueError("carried lifted-spiral evidence requires three frames and declared axes")
-            if attachment_count != "0":
-                raise ValueError("bare subatomic carried lifted-spiral attachment count must be 0")
-            mob = {
-                "law": "ucns.native-mobius-root-loop",
-                "participant_axes": axes,
-                "attachment_slots": (),
-                "t": [0, 1, 2],
-                "visible_phase": ["0", "0", "0"],
-                "frame": frames,
-                "one_turn_flips_frame": frames[0] != frames[1],
-                "complete_restored": frames[0] == frames[2],
-            }
-
-    # Fallback: try common attributes
     if receipt is None:
         receipt = getattr(obj, "receipt", obj)
         invariants = getattr(obj, "invariants", {}) or {}
         source_id = getattr(receipt, "source_id", str(type(obj)))
         relation = getattr(receipt, "relation", "unknown")
-        mob = _get_mobius(invariants)
-
-    # For pure element gonols we may have no "mobius" invariant.
-    # Build a minimal synthetic mobius from the structure so the visualizer
-    # can still show the participant axes and charges on the spiral.
-    if not mob and receipt is not None:
-        struct = getattr(receipt, "structure", None) or {}
-        axes = []
-        if struct:
-            # Collect unique dimensions from parts
-            seen = set()
-            for part in struct.get("parts", ()) or ():
-                for name in (part.get("coupling") or []):
-                    if name not in seen:
-                        seen.add(name)
-                        axes.append(name)
-            if not axes:
-                # fallback to degree dimensions
-                for d in struct.get("degree", ()) or ():
-                    dim = d.get("dimension") if isinstance(d, dict) else getattr(d, "dimension", None)
-                    if dim:
-                        axes.append(str(dim))
+    from epac_public_gonol import _lifted_spiral_signature
+    bare = "subatomic" in str(source_id) or "subatomic" in str(relation)
+    frames, axes, attachment_count = _lifted_spiral_signature(receipt, bare=bare)
+    mob = dict(_get_mobius(invariants))
+    if mob:
+        if (tuple(mob.get("frame", ())) != frames
+                or tuple(sorted(mob.get("participant_axes", ()))) != axes
+                or len(mob.get("attachment_slots", ())) != attachment_count):
+            raise ValueError("mobius invariants disagree with carried lifted-spiral evidence")
+    else:
+        # The carried receipt records a count, not attachment endpoints/sites.
+        # Preserve every recorded slot while leaving unrecorded details unknown.
         mob = {
-            "law": "ucns.native-mobius-root-loop",
-            "binding": "gonol-structure-declared-axes",
-            "parameter": "turn-index",
-            "participant_axes": tuple(axes) or ("nucleus",),
-            "attachment_slots": (),
-            "t": [0, 1, 2],
-            "visible_phase": ["0", "0", "0"],
-            "frame": ["positive-local-frame", "reversed-local-frame", "positive-local-frame"],
-            "one_turn_flips_frame": True,
-            "complete_restored": True,
+            "binding": "carried-lifted-spiral; attachment endpoints/sites unrecorded",
+            "attachment_slots": tuple({"slot": i} for i in range(attachment_count)),
         }
+    mob.update({
+        "law": "ucns.native-mobius-root-loop",
+        "participant_axes": axes,
+        "t": [0, 1, 2],
+        "visible_phase": ["0", "0", "0"],
+        "frame": frames,
+        "one_turn_flips_frame": frames[0] != frames[1],
+        "complete_restored": frames[0] == frames[2],
+    })
 
     participant_axes = tuple(mob.get("participant_axes", ()) or ())
     attachments = _extract_attachments(mob)
@@ -427,7 +381,8 @@ def render_to_text(scene: SpiralScene) -> str:
                     f"ligand {a.ligand}@{a.ligand_site}"
                 )
             else:
-                lines.append(f"    slot {a.slot}: {a.participant}@{a.site}")
+                detail = f"{a.participant}@{a.site}" if a.participant is not None else "endpoints/sites unrecorded"
+                lines.append(f"    slot {a.slot}: {detail}")
 
     lines.append("")
     lines.append(
@@ -691,34 +646,12 @@ def extract_full_spiral_population(
     for formula, construction in molecules.items():
         pop[formula] = extract_spiral_scene(construction)
 
-    # Representative elements via the primary EPAC periodic path
-    try:
-        from epac_periodic import construct_element_gonol as _construct_element_gonol
-    except Exception:
-        _construct_element_gonol = None  # type: ignore
-
-    if _construct_element_gonol is not None:
-        for sym in include_elements:
-            try:
-                receipt = _construct_element_gonol(sym)
-                pop[f"element:{sym}"] = extract_spiral_scene(receipt)
-            except Exception:
-                pass
-
-    # Subatomic gonols (now carry "lifted-spiral" first-class, parallel to element).
-    try:
-        from epac_subatomic import subatomic_gonol as _subatomic
-    except Exception:
-        _subatomic = None  # type: ignore
-
-    if _subatomic is not None:
-        for sym in include_subatomic:
-            try:
-                if sym in getattr(_subatomic, "SUPPORTED_SYMBOLS", ()):
-                    receipt = _subatomic.construct_subatomic_gonol(sym)
-                    pop[f"subatomic:{sym}"] = extract_spiral_scene(receipt)
-            except Exception:
-                pass
+    from epac_periodic import construct_element_gonol
+    from epac_subatomic.subatomic_gonol import construct_subatomic_gonol
+    for sym in include_elements:
+        pop[f"element:{sym}"] = extract_spiral_scene(construct_element_gonol(sym))
+    for sym in include_subatomic:
+        pop[f"subatomic:{sym}"] = extract_spiral_scene(construct_subatomic_gonol(sym))
 
     return pop
 

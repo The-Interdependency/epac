@@ -47,6 +47,24 @@ from epac_comparison import SEALED_PATH as SEALED
 
 
 class GeometryComparisonAfterConstructionTest(unittest.TestCase):
+    def test_comparison_requires_complete_frozen_preregistration(self) -> None:
+        from unittest.mock import patch
+        for omitted in ORIGINAL_PREREG:
+            with patch("epac_comparison.construction_sources_omit_sealed_labels", return_value=()), patch(
+                    "epac_comparison.construct_declared_molecules", return_value={formula: None for formula in ORIGINAL_PREREG - {omitted}}):
+                with self.assertRaisesRegex(ValueError, "missing preregistered constructions"):
+                    compare_after_construction.__wrapped__()
+            with TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                (root / "data").mkdir()
+                (root / "data" / "sealed_known_molecular_geometry.json").write_text(json.dumps({
+                    "molecules": {formula: {"known_shape": "fixture"} for formula in ORIGINAL_PREREG - {omitted}}
+                }))
+                with patch("epac_comparison.construction_sources_omit_sealed_labels", return_value=()), patch(
+                        "epac_comparison.construct_declared_molecules", return_value={formula: None for formula in ORIGINAL_PREREG}):
+                    with self.assertRaisesRegex(ValueError, "missing preregistered sealed evidence"):
+                        compare_after_construction.__wrapped__(root)
+
     def test_representation_overall_includes_every_required_stage(self) -> None:
         from contextlib import ExitStack
         from copy import deepcopy
