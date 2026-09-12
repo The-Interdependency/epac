@@ -7,7 +7,7 @@
   "mode": "execution",
   "authorization": {
     "external_mutation": "authorized",
-    "authority_transfer": "not-yet-complete"
+    "authority_transfer": "authorized; not-yet-complete"
   },
   "forge": {
     "repository": "The-Interdependency/stack",
@@ -18,9 +18,9 @@
     "repository": "The-Interdependency/epac"
   },
   "distribution": {
-    "kind": "hmmm",
-    "artifact": "hmmm",
-    "version": "hmmm",
+    "kind": "release-asset",
+    "artifact": "interdependency-epac",
+    "version": "0.1.0",
     "candidate_immutable_identity": "hmmm",
     "published_immutable_identity": "hmmm",
     "published_matches_verified_candidate": "hmmm"
@@ -28,7 +28,7 @@
   "upstream": [
     {
       "repository": "The-Interdependency/ucns",
-      "commit": "828c0b8bbcfc267efb5701da714191c1f73a81ff",
+      "commit": "be42dfc9c1b1e4ccfb820ae1fba7779958a6d1b8",
       "relation": "mathematical representation and Public Gonol dependency",
       "authority_transfer": false
     },
@@ -40,15 +40,15 @@
     },
     {
       "repository": "The-Interdependency/skill-lib",
-      "commit": "8dfb974ea0cee72e4412f9d2c8b597a8930a4d57",
+      "commit": "c14ee9d500579a4b5d6821f62c9d82ca96e73608",
       "relation": "organization build and evidence doctrine",
       "authority_transfer": false
     }
   ],
   "gates": {
-    "public_api": "hmmm",
+    "public_api": "pass",
     "independent_tests": "pass",
-    "clean_build_install": "fail",
+    "clean_build_install": "hmmm",
     "license_distribution_rights": "fail",
     "release_ownership_authority": "pass",
     "provenance_preserved": "pass",
@@ -58,9 +58,8 @@
   },
   "transition_receipt": "hmmm",
   "hmmm": [
-    "distribution surface not selected",
-    "repository license not selected",
-    "clean package/install contract not yet established",
+    "repository license not selected by owner",
+    "final exact candidate build/install matrix remains pending",
     "stack has not reconsumed a released immutable EPAC artifact"
   ]
 }

@@ -19,3 +19,17 @@ Historical receipts and preregistrations are retained. Stack-specific placeholde
 ## Usage guidance
 
 Reproduce the extraction baseline by checking out the exact stack commit above and comparing `research/epac/` with the migrated source files, allowing only documented migration repairs, repository records, skill installation, and CI wiring.
+
+## Package candidate provenance
+
+The installed dependency is bound separately in `data/ucns-source-lock.json` to
+a licensed maintained UCNS source archive and every installed Python source
+file. The extraction pin above remains historical evidence. Versioned receipts
+under `subatomic/receipts/ucns-828c0b8/` are retained; new-pin receipts occupy a
+separate directory. Changing provenance does not repair or promote a domain claim.
+
+The current repo-local operational skill files match canonical
+`c14ee9d500579a4b5d6821f62c9d82ca96e73608` (79 files checked). The extraction
+doctrine identity above records the earlier origin. Package qualification also
+uses the cross-repository closure's explicit `skill-lib@8de4f12d0f31ff94f41e4a0196c447c0cbe20faf`
+work-graph, test, and ratio discipline without replacing the local snapshot.

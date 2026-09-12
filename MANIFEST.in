@@ -1,0 +1,8 @@
+include AGENTS.md LICENSE LICENSE_STATUS.md uv.lock
+recursive-include tools *.py *.sh
+include requirements-build.txt
+recursive-include tests *.py
+recursive-include docs *.md *.json
+recursive-include data *.json
+recursive-include subatomic *.md *.json
+recursive-include .agents/skills *.md *.json *.py *.ts

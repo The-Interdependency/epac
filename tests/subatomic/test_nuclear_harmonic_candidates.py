@@ -32,7 +32,7 @@
 #   cleanup: none
 # === END CHECKS ===
 
-import nuclear_harmonic_candidates as m
+from epac_subatomic import nuclear_harmonic_candidates as m
 
 
 def test_every_candidate_declares_six_evidence_fields():

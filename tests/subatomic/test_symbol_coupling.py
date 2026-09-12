@@ -32,7 +32,7 @@
 #   cleanup: none
 # === END CHECKS ===
 
-import symbol_coupling as m
+from epac_subatomic import symbol_coupling as m
 
 
 def test_letters_are_not_physics_domain():

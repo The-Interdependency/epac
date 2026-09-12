@@ -1,7 +1,7 @@
 {
   "schema": "the-interdependency.stack-manifest",
   "version": "1.0.0",
-  "work_graph_sha256": "19f468b9773f71fc78ad58e15ebf3b36ed7fc001ade57846ba0bba9dc84e1631",
+  "work_graph_sha256": "9f7c5cbe0840d1748fd6b23e7ef7fc91b898f8c2cde60b77432c262126a57a61",
   "repositories": [
     {
       "repository": "The-Interdependency/stack",
@@ -11,9 +11,9 @@
     },
     {
       "repository": "The-Interdependency/skill-lib",
-      "commit": "8dfb974ea0cee72e4412f9d2c8b597a8930a4d57",
+      "commit": "c14ee9d500579a4b5d6821f62c9d82ca96e73608",
       "authority": "organization-wide build and evidence doctrine",
-      "relation": "repo-local skill snapshot source"
+      "relation": "current repo-local skill snapshot source; all 79 non-manifest files checked byte-for-byte"
     },
     {
       "repository": "The-Interdependency/metapat",
@@ -23,9 +23,9 @@
     },
     {
       "repository": "The-Interdependency/ucns",
-      "commit": "828c0b8bbcfc267efb5701da714191c1f73a81ff",
+      "commit": "be42dfc9c1b1e4ccfb820ae1fba7779958a6d1b8",
       "authority": "geometry and mathematical representation",
-      "relation": "Public Gonol and Möbius dependency consumed by EPAC"
+      "relation": "licensed source archive consumed by the package candidate; exact archive and runtime source hashes in data/ucns-source-lock.json"
     }
   ],
   "boundaries": {

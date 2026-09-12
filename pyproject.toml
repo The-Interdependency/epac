@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools==84.0.0", "wheel==0.48.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "interdependency-epac"
+version = "0.1.0"
+description = "EPAC construction and replay research with preserved falsification standing"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "The Interdependency"}]
+# The exact licensed UCNS source artifact is bound before release qualification.
+dependencies = ["ucns @ https://github.com/The-Interdependency/ucns/archive/be42dfc9c1b1e4ccfb820ae1fba7779958a6d1b8.tar.gz#sha256=2b8f6846eeb8fad8ef75dd81887742facca58f64e44ff8331f8b4534d72a34da"]
+
+[project.optional-dependencies]
+test = ["pytest==9.1.1"]
+build = ["build==1.5.0", "twine==7.0.0", "setuptools==84.0.0", "wheel==0.48.0"]
+
+[tool.setuptools]
+py-modules = ["epac_atomic", "epac_comparison", "epac_dimensional_arity", "epac_molecular", "epac_periodic", "epac_public_gonol", "epac_ucns_provenance"]
+packages = ["epac_data", "epac_subatomic"]
+package-dir = {epac_data = "data", epac_subatomic = "subatomic"}
+
+[tool.setuptools.package-data]
+epac_data = ["*.json"]
+epac_subatomic = ["receipts/*.json", "receipts/*/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

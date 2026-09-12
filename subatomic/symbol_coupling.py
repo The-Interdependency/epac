@@ -14,7 +14,7 @@ Status: CROSS-DOMAIN-HYPOTHESIS / implemented candidate. Not selected canon.
 
 Usage guidance:
 
-    from symbol_coupling import couple_symbol
+    from epac_subatomic.symbol_coupling import couple_symbol
 
     receipt = couple_symbol("Fe")
     assert receipt.gonol.structure is None
@@ -29,13 +29,14 @@ Usage guidance:
 #   owner: The Interdependency
 #   public_surface: SUPPORTED_SYMBOLS, construct_symbol_gonol, couple_symbol, replay_symbol_coupling
 #   internal_surface: none
-#   auth_boundary: letters/nomenclature are excluded from epac physics couplings
+#   auth_boundary: none
+#   domain_notes: letters/nomenclature are excluded from epac physics couplings
 #   storage_boundary: none
 #   network_boundary: none
 #   user_data_boundary: none
 #   admin_only: false
-#   tests: subatomic.test_symbol_coupling
-#   rollout: local candidate module under stack/research/epac/subatomic/
+#   tests: tests/subatomic/test_symbol_coupling.py
+#   rollout: extracted EPAC candidate; release and reconsumption gates pending
 #   rollback: remove module, tests, and generated receipts
 #   requires: epac_public_gonol, epac_subatomic_gonol
 #   since: 2026-08-22
@@ -71,21 +72,14 @@ Usage guidance:
 
 from __future__ import annotations
 
-import os
-import sys
-
-_PARENT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _PARENT not in sys.path:
-    sys.path.insert(0, _PARENT)
-
-from epac_public_gonol import (  # noqa: E402
+from epac_public_gonol import (
     ClosedPublicGonol,
     PublicGonolReceipt,
     construct_public_gonol,
     replay_public_gonol,
 )
 
-import subatomic_gonol  # noqa: E402
+from epac_subatomic import subatomic_gonol
 
 SUPPORTED_SYMBOLS: tuple[str, ...] = subatomic_gonol.SUPPORTED_SYMBOLS
 

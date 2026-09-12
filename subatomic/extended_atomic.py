@@ -16,7 +16,7 @@ Status: application-layer candidate data. Not physics canon.
 
 Usage guidance:
 
-    from extended_atomic import atomic_record, iter_table
+    from epac_subatomic.extended_atomic import atomic_record, iter_table
 
     iron = atomic_record(26)
     print(iron.symbol, iron.configuration)
@@ -35,8 +35,8 @@ Usage guidance:
 #   network_boundary: none
 #   user_data_boundary: none
 #   admin_only: false
-#   tests: subatomic.test_extended_atomic
-#   rollout: local candidate module under stack/research/epac/subatomic/
+#   tests: tests/subatomic/test_extended_atomic.py
+#   rollout: extracted EPAC candidate; release and reconsumption gates pending
 #   rollback: remove module; subatomic_gonol returns to Z<=18 epac_atomic delegation
 #   requires: epac_atomic
 #   since: 2026-08-22

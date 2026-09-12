@@ -15,6 +15,7 @@ Usage guidance
 from __future__ import annotations
 
 import json
+from importlib.resources import files
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Mapping
@@ -24,7 +25,7 @@ from epac_molecular import construct_declared_molecules, matched_information_con
 
 
 EPAC_ROOT = Path(__file__).resolve().parent
-SEALED_PATH = EPAC_ROOT / "data" / "sealed_known_molecular_geometry.json"
+SEALED_PATH = files("epac_data").joinpath("sealed_known_molecular_geometry.json")
 SEALED_SHAPE_LABELS = ("linear", "bent", "trigonal-pyramidal", "tetrahedral", "vsepr")
 CONSTRUCTION_FILES = (
     "epac_atomic.py",
@@ -107,7 +108,8 @@ def compare_after_construction(root: Path = EPAC_ROOT) -> dict[str, Any]:
         atomic[formula] = construction.invariants["atomic_coupling_signature"]
         control[formula] = matched_information_control(construction.invariants)
 
-    sealed = json.loads((root / "data" / "sealed_known_molecular_geometry.json").read_text(encoding="utf-8"))
+    sealed_path = SEALED_PATH if root == EPAC_ROOT else root / "data" / "sealed_known_molecular_geometry.json"
+    sealed = json.loads(sealed_path.read_text(encoding="utf-8"))
     known_shapes = {formula: sealed["molecules"][formula]["known_shape"] for formula in constructions}
 
     return {

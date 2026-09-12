@@ -14,10 +14,10 @@ It consumes exactly two UCNS public surfaces:
 No Public Gonol position operation is defined, inferred, or asserted here.
 Status: CROSS-DOMAIN-HYPOTHESIS / provisional. Not org canon.
 
-Usage guidance:
+Usage guidance (after installing EPAC and its pinned dependencies):
 
-    PYTHONPATH=<ucns-snapshot>/src python3 - <<'PY'
-    from element_affixiation_candidate import affixiate_element, replay_element
+    python3 - <<'PY'
+    from epac_subatomic.element_affixiation_candidate import affixiate_element, replay_element
 
     he = affixiate_element("He")
     print(he.receipt)
@@ -39,7 +39,7 @@ Usage guidance:
 #   network_boundary: none
 #   user_data_boundary: none
 #   admin_only: false
-#   tests: subatomic.test_element_affixiation_candidate
+#   tests: tests/subatomic/test_element_affixiation_candidate.py
 #   rollout: extracted EPAC candidate; no canon or empirical promotion
 #   rollback: remove module, tests, and generated receipts
 #   requires: ucns_public_gonol_geometry, ucns_native_mobius_geometry
@@ -88,7 +88,7 @@ from ucns import native_mobius_state, public_gonol_function
 from epac_ucns_provenance import verify_loaded_ucns_commit
 
 PINNED_METAPAT_COMMIT = "34d954aa1e2092e615b03a180500f6b6977f501e"
-PINNED_UCNS_COMMIT = "828c0b8bbcfc267efb5701da714191c1f73a81ff"
+PINNED_UCNS_COMMIT = "be42dfc9c1b1e4ccfb820ae1fba7779958a6d1b8"
 
 SOURCE_COMMITS = MappingProxyType(
     {

@@ -5,15 +5,15 @@ import sys
 import unittest
 from pathlib import Path
 
-EPAC_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(EPAC_ROOT))
+import epac_public_gonol as _installed_epac
+EPAC_ROOT = Path(_installed_epac.__file__).resolve().parent
 
 from epac_comparison import compare_after_construction, construction_sources_omit_sealed_labels
 from epac_dimensional_arity import charged_structure_readout, topology_structure_readout
 from epac_molecular import construct_declared_molecules, matched_information_control
 
 
-SEALED = EPAC_ROOT / "data" / "sealed_known_molecular_geometry.json"
+from epac_comparison import SEALED_PATH as SEALED
 
 
 class GeometryComparisonAfterConstructionTest(unittest.TestCase):

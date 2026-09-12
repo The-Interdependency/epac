@@ -21,7 +21,7 @@
 # === END CHECKS ===
 
 import epac_atomic
-import extended_atomic as m
+from epac_subatomic import extended_atomic as m
 
 
 def test_extended_atomic_preserves_z_le_18():

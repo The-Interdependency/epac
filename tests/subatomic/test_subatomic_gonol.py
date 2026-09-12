@@ -32,8 +32,8 @@
 #   cleanup: none
 # === END CHECKS ===
 
-import subatomic_gonol as m
-from extended_atomic import atomic_record
+from epac_subatomic import subatomic_gonol as m
+from epac_subatomic.extended_atomic import atomic_record
 
 
 def _receipts():

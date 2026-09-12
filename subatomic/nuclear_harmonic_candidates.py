@@ -20,7 +20,7 @@ the cited nuclear data and declared candidate mappings.
 Usage guidance:
 
     python3 - <<'PY'
-    from nuclear_harmonic_candidates import CANDIDATES, recurrence_test
+    from epac_subatomic.nuclear_harmonic_candidates import CANDIDATES, recurrence_test
 
     for candidate in CANDIDATES:
         print(candidate.candidate_id, candidate.receipt)
@@ -42,8 +42,8 @@ Usage guidance:
 #   network_boundary: none
 #   user_data_boundary: none
 #   admin_only: false
-#   tests: subatomic.test_nuclear_harmonic_candidates
-#   rollout: local candidate module under stack/research/epac/subatomic/
+#   tests: tests/subatomic/test_nuclear_harmonic_candidates.py
+#   rollout: extracted EPAC candidate; release and reconsumption gates pending
 #   rollback: remove module, tests, and generated receipts
 #   requires: none (pure stdlib; METAPAT semantics consumed as documented doctrine, not imported code)
 #   since: 2026-08-22

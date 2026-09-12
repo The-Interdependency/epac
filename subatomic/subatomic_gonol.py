@@ -18,10 +18,10 @@ No Public Gonol position operation and no Möbius coupling law is invented.
 
 Status: CROSS-DOMAIN-HYPOTHESIS / implemented candidate. Not selected canon.
 
-Usage guidance:
+Usage guidance (after installing EPAC and its pinned dependencies):
 
-    PYTHONPATH="<epac>:<epac>/subatomic:<ucns>/src" python3 - <<'PY'
-    from subatomic_gonol import construct_subatomic_gonol, replay_subatomic_gonol
+    python3 - <<'PY'
+    from epac_subatomic.subatomic_gonol import construct_subatomic_gonol, replay_subatomic_gonol
 
     receipt = construct_subatomic_gonol("He")
     print(receipt.receipt_digest)
@@ -29,7 +29,7 @@ Usage guidance:
     PY
 """
 
-from extended_atomic import (
+from epac_subatomic.extended_atomic import (
     EXTENDED_SYMBOLS,
     SYMBOL_TO_Z,
     AtomicRecord,
@@ -42,8 +42,8 @@ from epac_public_gonol import (
     replay_public_gonol,
 )
 
-import element_affixiation_candidate as identity
-import nuclear_harmonic_candidates as harmonics
+from epac_subatomic import element_affixiation_candidate as identity
+from epac_subatomic import nuclear_harmonic_candidates as harmonics
 
 # === MODULE_BUILD ===
 # id: epac_subatomic_gonol
@@ -58,8 +58,8 @@ import nuclear_harmonic_candidates as harmonics
 #   network_boundary: none
 #   user_data_boundary: none
 #   admin_only: false
-#   tests: subatomic.test_subatomic_gonol
-#   rollout: local candidate module under stack/research/epac/subatomic/
+#   tests: tests/subatomic/test_subatomic_gonol.py
+#   rollout: extracted EPAC candidate; release and reconsumption gates pending
 #   rollback: remove module, tests, and generated receipts
 #   requires: epac_public_gonol, epac_atomic, epac_subatomic_element_affixiation_candidate, epac_subatomic_nuclear_harmonic_candidates
 #   since: 2026-08-22

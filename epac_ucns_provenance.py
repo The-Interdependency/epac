@@ -1,10 +1,15 @@
 """Loaded-code-aware UCNS provenance verification shared by EPAC constructors.
 
 The verifier stamps a UCNS commit only when each executing function and its
-transitively referenced UCNS runtime state match the clean source at the
-declared commit. Verification is cached by a witness containing HEAD, index
-state, source bytes, file modes, and loaded state, so repeated nested
-construction avoids Git subprocesses without preserving a stale answer.
+transitively referenced UCNS runtime state match the declared source. A checkout
+uses its exact clean Git commit; an installed distribution uses the complete
+UCNS Python-source map shipped in epac_data/ucns-source-lock.json. The latter
+establishes source-byte equivalence to the pin; installation artifact hashes are
+verified separately by the clean-install and consumer receipts.
+
+Caches bind source bytes and loaded state. Git witnesses also bind HEAD, index,
+and modes. Runtime aliasing stays explicit; incidental bytecode string sharing
+does not change a witness. No Git checkout is required for a verified wheel.
 
 Usage guidance:
 
@@ -37,7 +42,7 @@ Usage guidance:
 # === CONTRACTS ===
 # id: epac_ucns_pin_matches_loaded_code
 #   given: EPAC is about to stamp a pinned UCNS dependency identity
-#   then: each executing dependency function and its transitively referenced UCNS helpers, classes, defaults, closures, and globals match the clean tracked source at that exact HEAD; otherwise the identity is hmmm
+#   then: each executing dependency function and its transitively referenced UCNS helpers, classes, defaults, closures, and globals match either clean tracked source at that exact HEAD or the complete installed source map owned by EPAC for that commit; otherwise the identity is hmmm
 #   class: provenance
 #
 # id: epac_ucns_verification_reuses_only_identical_witness
@@ -50,7 +55,9 @@ from __future__ import annotations
 
 from functools import lru_cache
 from hashlib import sha256
+from importlib import metadata, resources
 import inspect
+import json
 import marshal
 import os
 from pathlib import Path
@@ -144,13 +151,18 @@ def _head_and_index_witness(root: Path) -> tuple[str, str] | None:
 
 
 def _normalized_code(code: CodeType) -> tuple[object, ...]:
-    constants = tuple(
-        ("code", _normalized_code(item)) if isinstance(item, CodeType) else item
-        for item in code.co_consts
-    )
+    def constant(item):
+        if isinstance(item, CodeType):
+            return ("code", _normalized_code(item))
+        if isinstance(item, tuple):
+            return ("tuple", tuple(constant(value) for value in item))
+        if isinstance(item, frozenset):
+            return ("frozenset", tuple(sorted((constant(value) for value in item), key=repr)))
+        return item
+    constants = tuple(constant(item) for item in code.co_consts)
     return (
         code.co_name,
-        code.co_qualname,
+        getattr(code, "co_qualname", code.co_name),
         code.co_argcount,
         code.co_posonlyargcount,
         code.co_kwonlyargcount,
@@ -163,7 +175,7 @@ def _normalized_code(code: CodeType) -> tuple[object, ...]:
         code.co_varnames,
         code.co_freevars,
         code.co_cellvars,
-        code.co_exceptiontable,
+        getattr(code, "co_exceptiontable", b""),
     )
 
 
@@ -285,7 +297,10 @@ def _freeze_loaded_state(
 def _transitive_fingerprint(dependency: Callable[..., object]) -> str:
     owner_module = getattr(dependency, "__module__", "")
     frozen = _freeze_loaded_state(dependency, owner_module, {})
-    return sha256(marshal.dumps(frozen)).hexdigest()
+    # v3+ records incidental sharing of immutable serialization objects. Loaded
+    # bytecode and fresh compilation can share equal strings differently on 3.10.
+    # Runtime aliasing is already explicit in the frozen state's "ref" records.
+    return sha256(marshal.dumps(frozen, 2)).hexdigest()
 
 
 def _fresh_dependency_fingerprints(
@@ -323,7 +338,7 @@ def _fresh_dependency_fingerprints(
             sys.modules[module_name] = prior
 
 
-def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path, tuple[tuple[object, ...], ...]] | None:
+def _source_records(dependencies: Sequence[Callable[..., object]], *, installed_root: Path | None = None) -> tuple[Path, tuple[tuple[object, ...], ...]] | None:
     records: list[tuple[object, ...]] = []
     root: Path | None = None
     for dependency in dependencies:
@@ -337,7 +352,7 @@ def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path
             stat = path.stat()
         except (OSError, TypeError):
             return None
-        dependency_root = _git_root(path)
+        dependency_root = installed_root or _git_root(path)
         if dependency_root is None or (root is not None and dependency_root != root):
             return None
         root = dependency_root
@@ -358,6 +373,55 @@ def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path
     if root is None:
         return None
     return root, tuple(records)
+
+
+@lru_cache(maxsize=32)
+def _verify_installed_witness(
+    pinned_commit: str,
+    lock_bytes: bytes,
+    source_files: tuple[tuple[str, str], ...],
+    records: tuple[tuple[object, ...], ...],
+) -> str:
+    """Compare installed source to an EPAC-owned exact upstream source map."""
+    lock = json.loads(lock_bytes)
+    if lock.get("repository") != "The-Interdependency/ucns" or lock.get("commit") != pinned_commit:
+        return "hmmm"
+    if dict(source_files) != lock.get("installed_source_sha256") or not records:
+        return "hmmm"
+    for relative, absolute, qualname, loaded_digest, disk_digest, _mode in records:
+        if lock["installed_source_sha256"].get(relative) != disk_digest:
+            return "hmmm"
+        expected = _fresh_dependency_fingerprints(Path(absolute), disk_digest, (qualname,))
+        if expected is None or expected.get(qualname) != loaded_digest:
+            return "hmmm"
+    return pinned_commit
+
+
+def _installed_identity(pinned_commit: str, dependencies: Sequence[Callable[..., object]]) -> str | None:
+    """Return None for a checkout, hmmm for an unverified installed runtime."""
+    try:
+        distribution = metadata.distribution("ucns")
+        listed = {str(path) for path in distribution.files or ()}
+        if "ucns/__init__.py" not in listed:
+            return None  # Editable installations retain the existing Git witness.
+        root = Path(distribution.locate_file("")).resolve()
+        source = _source_records(dependencies, installed_root=root)
+        if source is None:
+            return None  # Functions from an independent checkout use Git.
+        _, records = source
+        # Enumerate disk files as well as RECORD entries, detecting added modules.
+        files = []
+        for path in sorted((root / "ucns").rglob("*.py")):
+            relative = path.relative_to(root).as_posix()
+            if relative not in listed or not path.resolve().is_relative_to(root / "ucns"):
+                return "hmmm"
+            files.append((relative, sha256(path.read_bytes()).hexdigest()))
+        lock_bytes = resources.files("epac_data").joinpath("ucns-source-lock.json").read_bytes()
+        return _verify_installed_witness(pinned_commit, lock_bytes, tuple(files), records)
+    except metadata.PackageNotFoundError:
+        return None
+    except (OSError, ValueError, TypeError, KeyError):
+        return "hmmm"
 
 
 def _git_blob_mode(filesystem_mode: int) -> str:
@@ -477,6 +541,9 @@ def verify_loaded_ucns_commit(
 
     if not HEX40.fullmatch(pinned_commit):
         return "hmmm"
+    installed = _installed_identity(pinned_commit, dependencies)
+    if installed is not None:
+        return installed
     source = _source_records(dependencies)
     if source is None:
         return "hmmm"
@@ -502,12 +569,16 @@ def clear_ucns_verification_cache() -> None:
     """Clear cached witnesses; intended for isolated tests and process repair."""
 
     _verify_witness.cache_clear()
+    _verify_installed_witness.cache_clear()
 
 
 def ucns_verification_cache_info():
     """Expose cache counters for provenance/performance regression tests."""
 
-    return _verify_witness.cache_info()
+    git = _verify_witness.cache_info()
+    installed = _verify_installed_witness.cache_info()
+    return type(git)(git.hits + installed.hits, git.misses + installed.misses,
+                     git.maxsize + installed.maxsize, git.currsize + installed.currsize)
 
 
 __all__ = [

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# === MODULE_BUILD ===
+# id: epac_distribution_replay
+#   module_name: replay_distributions
+#   module_kind: instrument
+#   summary: clean-installs both EPAC artifacts and verifies their installed payload and evidence
+#   owner: The Interdependency
+#   public_surface: bash tools/replay_distributions.sh ROOT DIST NEW_OUTPUT PYTHON
+#   internal_surface: none
+#   auth_boundary: none
+#   storage_boundary: write
+#   storage_notes: new output directory, temporary installations, dependency cache, and receipts
+#   network_boundary: external
+#   network_notes: exact locked dependencies
+#   user_data_boundary: none
+#   admin_only: false
+#   tests: full installed wheel and source suite plus archive hash preservation
+#   rollout: explicit candidate qualification and CI
+#   rollback: retain previously accepted immutable artifact
+# === END MODULE_BUILD ===
+# === CONTRACTS ===
+# id: epac_distribution_replay_preserves_artifact_identity
+#   given: one source archive and wheel plus the exact dependency lock
+#   then: both clean installations match the wheel payload and pass the full suite with verified import origins and unchanged artifact hashes
+#   class: evidence
+# === END CONTRACTS ===
+# Usage: bash tools/replay_distributions.sh ROOT DIST NEW_OUTPUT PYTHON
+# Installs both artifacts independently; writes local packaging evidence only.
+# License qualification and pre-publication stack acceptance remain separate.
+set -euo pipefail
+repo=$(realpath "$1")
+dist=$(realpath "$2")
+output=$(realpath -m "$3")
+runtime=${4:-python3}
+case "$output/" in "$repo/"*) echo 'OUTPUT must be outside source' >&2; exit 2;; esac
+test ! -e "$output"
+mkdir -p "$output"
+uv export --project "$repo" --locked --extra test --extra build --no-emit-project --no-dev --format requirements.txt --output-file "$output/dependencies.txt" >/dev/null
+sha256sum "$dist"/*.whl "$dist"/*.tar.gz > "$output/archives.sha256"
+mkdir "$output/source"
+python3 - "$dist" "$output/source" <<'PY'
+from pathlib import Path, PurePosixPath
+import sys, tarfile
+dist, output = map(Path, sys.argv[1:])
+archives = list(dist.glob('*.tar.gz'))
+assert len(archives) == 1 and len(list(dist.glob('*.whl'))) == 1
+with tarfile.open(archives[0]) as archive:
+    roots = set()
+    for member in archive:
+        parts = PurePosixPath(member.name).parts
+        assert parts and not member.name.startswith('/') and '..' not in parts and '\\' not in member.name
+        assert member.isfile() or member.isdir()
+        roots.add(parts[0])
+    assert len(roots) == 1
+    archive.extractall(output)
+PY
+source_root=$(find "$output/source" -mindepth 1 -maxdepth 1 -type d)
+for kind in wheel sdist; do
+  environment="$output/$kind-venv"
+  uv venv --python "$runtime" "$environment"
+  uv pip sync --python "$environment/bin/python" --require-hashes "$output/dependencies.txt"
+  if [ "$kind" = wheel ]; then artifact=("$dist"/*.whl); else artifact=("$dist"/*.tar.gz); fi
+  uv pip install --python "$environment/bin/python" --no-deps --no-build-isolation "${artifact[0]}"
+  (
+    cd "$output"
+    env -u PYTHONPATH -u PYTHONHOME -u PYTEST_ADDOPTS -u PYTEST_PLUGINS PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
+      "$environment/bin/python" "$repo/tools/verify_installed.py" "$source_root" "$dist"/*.whl "$output/$kind-receipt.json"
+  )
+done
+sha256sum -c "$output/archives.sha256"
