@@ -36,10 +36,10 @@ jobs:
           uv python install 3.11.15
           uv venv --python 3.11.15 /tmp/epac-release-builder
           uv pip install --python /tmp/epac-release-builder/bin/python -r requirements-build.txt
-          /tmp/epac-release-builder/bin/python tools/build_release.py "$PWD/dist"
-          .venv/bin/python -m twine check dist/*.whl dist/*.tar.gz
+          /tmp/epac-release-builder/bin/python tools/build_release.py /tmp/epac-release-candidate
+          .venv/bin/python -m twine check /tmp/epac-release-candidate/*.whl /tmp/epac-release-candidate/*.tar.gz
       - name: Replay installed wheel and source artifact
-        run: bash tools/replay_distributions.sh . dist /tmp/epac-replay python
+        run: bash tools/replay_distributions.sh . /tmp/epac-release-candidate /tmp/epac-replay python
       - name: Verify work-graph identity
         run: |
           python - <<'PY'
@@ -73,7 +73,7 @@ jobs:
               raise SystemExit('source identity changed during qualification')
           output = Path('/tmp/epac-ci-evidence')
           output.mkdir()
-          shutil.copytree('dist', output / 'artifacts')
+          shutil.copytree('/tmp/epac-release-candidate', output / 'artifacts')
           replay = output / 'replay'
           replay.mkdir()
           for path in Path('/tmp/epac-replay').iterdir():
