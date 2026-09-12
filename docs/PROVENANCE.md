@@ -49,7 +49,7 @@ subatomic coverage, and spiral visualization remain research with their original
 scoped standing. Existing immutable input checks and installed resource loading
 are retained. This source handoff does not complete graduation or transfer
 scientific, theorem, proof, measurement, or empirical validity. Final clean-package
-qualification and license selection remain pending.
+qualification remained pending at that checkpoint. The subsequent MPL-2.0 selection is recorded below.
 
 The carried binding-energy commensurability prose overstated its own recorded outcomes. Its current receipt now describes a tested hypothesis and explicitly retains the failures from O-16 through Ca-40; the prior prose-bound receipt is preserved under `subatomic/receipts/history/`. No numerical outcome or empirical standing was promoted. Standing partitions now compare the same frozen preregistered formulas on both sides; later experimental additions do not make the SURVIVED branch unreachable.
 
@@ -87,3 +87,13 @@ The private replay input gate permits only the declared pure-Python wheel metada
 Full core metadata is derived from the bound `pyproject.toml`, including dependency and extra declarations, Python requirements and description. Complete release manifests are checked against source, commit time, the pinned builder runtime/compressor/toolchain, license and UCNS lock bytes, artifact hashes and fixed candidate/non-transfer dispositions. The builder and replay gate execute the Git-bound release-contract helper bytes directly, avoiding cached helper bytecode. Final license qualification also removes the unresolved status and records an explicit SPDX expression and sole LICENSE file. Ten formerly proxied argument-dependent operation effects are now unknown; only the three actually called structural readouts contribute measured omitted-operation effects.
 
 Release manifests reject duplicate JSON keys at every object depth. Licensed replay requires exactly the wheel, sdist, manifest and canonical SHA256SUMS bytes; private replay accepts exactly the wheel and sdist. The checksum file is recomputed during both input and final checks. Known structural observers remain boundary-relevant omissions even when their individual quotient effects have no measured mapping. The minimal-refinement search uses only the three actually invoked readouts and finds two singleton refinements; full declared-surface coverage remains hmmm.
+
+The owner instructed “epac is weak copyleft”. This is resolved as MPL-2.0 using
+the organization’s existing skill-lib/metapat/edcm convention, with the
+interpretation disclosed before execution. `docs/license-selection.json` binds
+the unmodified official license text. EPAC grants no upstream license rights
+and no scientific standing through this selection. Licensed CI uses managed
+CPython 3.11.15 and the pinned release builder for all matrix jobs; each runtime
+replays the resulting normalized wheel/sdist and preserves all four release
+assets. Independent acceptance compares every matrix asset to the same locally
+reproduced candidate before publication.

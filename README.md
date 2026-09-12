@@ -83,15 +83,16 @@ receipt = construct_public_gonol(source_id="example:oxygen",
 assert replay_public_gonol(receipt).receipt_digest == receipt.receipt_digest
 ```
 
-GitHub release assets are the selected distribution surface. Once the owner
-records the license, install `requirements-build.txt` and run
+GitHub release assets are the selected distribution surface. EPAC is licensed
+under MPL-2.0. Install `requirements-build.txt` and run
 `python tools/build_release.py /tmp/epac-candidate` from a clean commit using
 uv-managed CPython 3.11.15 and `requirements-build.txt`. The builder enforces that Python implementation/version plus
 zlib 1.3.1 at compile time and runtime and records both identities. Test
 those exact hashes in both the clean installation and stack before publishing.
 Download the published assets and verify `SHA256SUMS` before reconsumption.
-`LICENSE_STATUS.md` retains the current license gate; package builds alone do
-not grant redistribution rights or complete graduation.
+The release includes the MPL-2.0 license and the complete source distribution.
+Source is also available from https://github.com/The-Interdependency/epac at the
+commit bound by the release manifest. Package tests do not complete graduation.
 
 Do not treat successful execution as empirical validation. Constructors establish reproducible declared structures; comparison tests determine the standing of the claims they actually test.
 
@@ -99,7 +100,6 @@ Do not treat successful execution as empirical validation. Constructors establis
 
 - exact candidate/forge verification receipt
 - distribution surface and first immutable release artifact
-- license/distribution-rights selection for this independent repository
 - clean package/install dependency contract for UCNS
 - downstream forge reconsumption and authority-transition receipt
 - whether standing-wave language earns a stronger domain claim after explicit external-physics comparison
@@ -128,3 +128,12 @@ python -m epac_viz --help
 ```
 
 Release qualification requires an owner-selected `LICENSE`, its explicit SPDX expression and `license-files = ["LICENSE"]` in `pyproject.toml`, and removal of the unresolved `LICENSE_STATUS.md` (its history remains in Git). Adding license text alongside a status that still prohibits publication does not pass the gate. The replay shell bootstraps the hash-pinned Python 3.10 TOML parser from `requirements-replay.txt`, then validates all source-derived core metadata and every optional release-manifest field before archived code runs. To call `tools/verify_replay_inputs.py` directly on Python 3.10, first install that requirements file with `uv pip install --python /path/to/python --no-deps --require-hashes -r requirements-replay.txt`.
+
+## License
+
+EPAC source code is subject to the Mozilla Public License, version 2.0
+(SPDX: `MPL-2.0`); see [LICENSE](LICENSE). Changes to MPL-covered files remain
+subject to that license when distributed. Dependencies retain their own rights
+and licensing status; this selection grants no rights to UCNS or other upstream
+projects. [License provenance](docs/license-selection.json) records the owner
+instruction and its resolution using the organization’s weak-copyleft convention.

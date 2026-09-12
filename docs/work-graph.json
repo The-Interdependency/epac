@@ -1,7 +1,7 @@
 {
   "schema": "the-interdependency.stack-manifest",
   "version": "1.0.0",
-  "work_graph_sha256": "d4ebcf8aecfb7ad6c2b51d8b91e4ef4ab573df582240e02ce684b909f8f3bd1c",
+  "work_graph_sha256": "e0da233c6a7f51bfc56a1ef8c2e02e3a1096a8518e2acd712eed82ce8004b049",
   "repositories": [
     {
       "repository": "The-Interdependency/stack",
@@ -36,7 +36,7 @@
     "agent_scope": "cross-repository-work-graph",
     "hmmm": [
       "EPAC stable release and stack reconsumption are not complete",
-      "license/distribution rights gate remains unresolved"
+      "EPAC MPL-2.0 recorded; immutable candidate, release and authority transition remain pending"
     ]
   }
 }

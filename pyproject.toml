@@ -9,7 +9,9 @@ description = "EPAC construction and replay research with preserved falsificatio
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{name = "The Interdependency"}]
-# The exact licensed UCNS source artifact is bound before release qualification.
+license = "MPL-2.0"
+license-files = ["LICENSE"]
+# The exact UCNS source artifact is bound before release qualification.
 dependencies = ["ucns @ https://github.com/The-Interdependency/ucns/archive/6eea1828a34ed8ec99879f8090ea5d48352d8c2d.tar.gz#sha256=1665ae06921a0a425ef1c99ce9d811cf8b52c20e4873edea53c4cdecaf2895d9"]
 
 [project.optional-dependencies]

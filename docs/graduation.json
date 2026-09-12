@@ -7,7 +7,8 @@
   "mode": "execution",
   "authorization": {
     "external_mutation": "authorized",
-    "authority_transfer": "authorized; not-yet-complete"
+    "authority_transfer": "authorized; not-yet-complete",
+    "license_instruction": "weak copyleft; resolved as MPL-2.0 using organization convention"
   },
   "forge": {
     "repository": "The-Interdependency/stack",
@@ -50,7 +51,7 @@
     "public_api": "pass",
     "independent_tests": "pass",
     "clean_build_install": "hmmm",
-    "license_distribution_rights": "fail",
+    "license_distribution_rights": "pass",
     "release_ownership_authority": "pass",
     "provenance_preserved": "pass",
     "exact_candidate_forge_verification": "hmmm",
@@ -59,7 +60,6 @@
   },
   "transition_receipt": "hmmm",
   "hmmm": [
-    "repository license not selected by owner",
     "final exact candidate build/install matrix remains pending",
     "stack has not reconsumed a released immutable EPAC artifact",
     "final pinned package artifacts require a fresh clean installation matrix"
@@ -72,21 +72,23 @@
     "final_pinned_artifact_matrix": "hmmm",
     "note": "Historical 180-test source suite; the subsequent 181-test wheel/sdist suite passed all three runtimes before the final UCNS dependency update.",
     "preceding_private_artifact_matrix": {
+      "source_commit": "625e537701292179cdd8027c95ab87bf54aefa37",
+      "tests_per_artifact": 209,
       "artifact_kinds": [
         "wheel",
         "sdist"
       ],
-      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34689026423",
       "python_versions": [
         "3.10",
         "3.11",
         "3.12"
       ],
-      "scope": "Preceding source before final accepted UCNS dependency update; not release qualification.",
       "skips": 0,
-      "source_commit": "57b2bd3396e1b1bc19445701a762ec8cd33d198b",
       "status": "passed",
-      "tests_per_artifact": 181
+      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34706109670",
+      "acceptance_sha256": "6e60f2bb969a331ba70f295fbd66c25146b0922ed9fe075629d48dae5f132b88",
+      "scope": "Preceding private matrix before MPL-2.0 license bytes and normalized release CI. Final licensed candidate qualification remains pending."
     }
-  }
+  },
+  "license_selection": "docs/license-selection.json"
 }

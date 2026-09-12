@@ -27,18 +27,19 @@ jobs:
         run: |
           python -m pip install uv==0.11.18
           uv sync --locked --python python --extra test --extra build
-      - name: Build package candidates
+      - name: Build normalized licensed release candidate
         env:
           EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           test -z "$(git status --porcelain --untracked-files=all)"
           test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_COMMIT"
-          mkdir /tmp/epac-build-source
-          git archive "$EXPECTED_SOURCE_COMMIT" | tar -x -C /tmp/epac-build-source
-          .venv/bin/python -m build --outdir "$PWD/dist" /tmp/epac-build-source
-          .venv/bin/python -m twine check dist/*
+          uv python install 3.11.15
+          uv venv --python 3.11.15 /tmp/epac-release-builder
+          uv pip install --python /tmp/epac-release-builder/bin/python -r requirements-build.txt
+          /tmp/epac-release-builder/bin/python tools/build_release.py /tmp/epac-release-candidate
+          .venv/bin/python -m twine check /tmp/epac-release-candidate/*.whl /tmp/epac-release-candidate/*.tar.gz
       - name: Replay installed wheel and source artifact
-        run: bash tools/replay_distributions.sh . dist /tmp/epac-replay python
+        run: bash tools/replay_distributions.sh . /tmp/epac-release-candidate /tmp/epac-replay python
       - name: Verify work-graph identity
         run: |
           python - <<'PY'
@@ -72,7 +73,7 @@ jobs:
               raise SystemExit('source identity changed during qualification')
           output = Path('/tmp/epac-ci-evidence')
           output.mkdir()
-          shutil.copytree('dist', output / 'artifacts')
+          shutil.copytree('/tmp/epac-release-candidate', output / 'artifacts')
           replay = output / 'replay'
           replay.mkdir()
           for path in Path('/tmp/epac-replay').iterdir():
