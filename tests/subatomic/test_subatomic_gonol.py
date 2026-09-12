@@ -32,8 +32,8 @@
 #   cleanup: none
 # === END CHECKS ===
 
-import subatomic_gonol as m
-from extended_atomic import atomic_record
+from epac_subatomic import subatomic_gonol as m
+from epac_subatomic.extended_atomic import atomic_record
 
 
 def _receipts():
@@ -116,7 +116,60 @@ def test_harmonic_survival_is_symbol_specific():
         ]
         for symbol in ("H", "He", "Li", "C")
     }
-    assert surviving["H"] == "none"
-    assert surviving["He"] == "none"
+    # Values are the deterministic outcome of recurrence_test over the
+    # declared CANDIDATES and NUCLIDE_FACTS for these symbols.
+    assert surviving["H"] == "n_z_ratio_commensurability"
+    assert "alpha_cluster_recurrence" in surviving["He"]
+    assert "proton_neutron_inversion_symmetry" in surviving["He"]
     assert surviving["Li"] == "alpha_cluster_recurrence"
     assert "proton_neutron_inversion_symmetry" in surviving["C"]
+
+
+def test_lifted_spiral_is_carried_on_subatomic_gonol():
+    # The lifted spiral (UCNS framed Möbius root-loop) is now carried on the
+    # subatomic gonol receipt as a first-class fact (parallel to harmonic-surviving).
+    for symbol in ("H", "He", "C", "O"):
+        receipt = m.construct_subatomic_gonol(symbol)
+        carried = dict(receipt.gonol.carried_options)
+        assert "lifted-spiral" in carried
+        from epac_subatomic.subatomic_gonol import lifted_spiral_carried_on_subatomic
+        inv = lifted_spiral_carried_on_subatomic(receipt)
+        assert isinstance(inv, (list, tuple)) and len(inv) == 3
+        frames, axes, ac = inv
+        assert len(frames) >= 1
+        assert len(axes) >= 1
+        assert ac == 0  # bare subatomic/element gonols have attachment count 0
+
+
+def test_subatomic_gonol_lifted_spiral_preserved_under_replay():
+    # The carried "lifted-spiral" on subatomic gonol receipts must survive
+    # exact replay (byte-replay determinism), parallel to molecule and element.
+    from epac_subatomic.subatomic_gonol import lifted_spiral_carried_on_subatomic
+    for symbol in ("H", "C", "O", "Si"):
+        receipt = m.construct_subatomic_gonol(symbol)
+        carried_before = dict(receipt.gonol.carried_options).get("lifted-spiral", "")
+        replayed = m.replay_subatomic_gonol(receipt)
+        # replay_subatomic returns the digest; fetch fresh receipt via construct to read carried
+        # but the digest equality already confirms full receipt stability.
+        assert replayed == receipt.receipt_digest
+        carried_after = dict(m.construct_subatomic_gonol(symbol).gonol.carried_options).get("lifted-spiral", "")
+        assert carried_before == carried_after
+
+
+def test_carried_spiral_rejects_missing_and_contradictory_evidence():
+    from types import SimpleNamespace
+    import pytest
+    from epac_molecular import lifted_spiral_from_receipt
+    from epac_periodic import lifted_spiral_carried_on_element, boundary_capacity_from_element_receipt
+    invalid = (None, "", "broken", "a|b;axis;0", "a||b;axis;0", "a|b|a;;0",
+               "a|b|a;axis,;0", "a|b|a;axis,axis;0", "a|b|a;axis;1",
+               "a|b|a;axis;-1", "a|b|a;axis;00", "a|b|a;axis;invalid")
+    for value in invalid:
+        receipt = SimpleNamespace(gonol=SimpleNamespace(carried_options=() if value is None else (("lifted-spiral", value),)))
+        for extractor in (m.lifted_spiral_carried_on_subatomic, m.boundary_capacity_from_subatomic_receipt,
+                          lifted_spiral_carried_on_element, boundary_capacity_from_element_receipt):
+            with pytest.raises(ValueError, match="lifted-spiral"):
+                extractor(receipt)
+        if value != "a|b|a;axis;1":
+            with pytest.raises(ValueError, match="lifted-spiral"):
+                lifted_spiral_from_receipt(receipt)

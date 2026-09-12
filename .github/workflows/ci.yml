@@ -11,64 +11,34 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-python@v7
         with:
-          python-version: '3.12'
-
-      - name: Resolve pinned UCNS
+          python-version: ${{ matrix.python-version }}
+      - name: Install exact verification environment
+        run: |
+          python -m pip install uv==0.11.18
+          uv sync --locked --python python --extra test --extra build
+      - name: Build package candidates
         env:
-          UCNS_SHA: 828c0b8bbcfc267efb5701da714191c1f73a81ff
+          EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          set -euo pipefail
-          git clone --quiet https://github.com/The-Interdependency/ucns.git _deps/ucns
-          git -C _deps/ucns checkout --quiet "$UCNS_SHA"
-          test "$(git -C _deps/ucns rev-parse HEAD)" = "$UCNS_SHA"
-
-      - name: Repository regression suite
-        run: |
-          set -euo pipefail
-          PYTHONPATH=".:_deps/ucns/src" python -m unittest discover -s tests -q
-
-      - name: Subatomic executable witnesses
-        run: |
-          set -euo pipefail
-          PYTHONPATH=".:subatomic:_deps/ucns/src" python - <<'PY'
-          from pathlib import Path
-          import importlib.util
-          import inspect
-
-          total = 0
-          for path in sorted(Path("subatomic").glob("test_*.py")):
-              spec = importlib.util.spec_from_file_location(f"epac_subatomic_{path.stem}", path)
-              if spec is None or spec.loader is None:
-                  raise RuntimeError(f"cannot load {path}")
-              module = importlib.util.module_from_spec(spec)
-              spec.loader.exec_module(module)
-              for name, fn in sorted(vars(module).items()):
-                  if not name.startswith("test_") or not callable(fn):
-                      continue
-                  if inspect.signature(fn).parameters:
-                      raise RuntimeError(f"unsupported fixture-bearing witness: {path}:{name}")
-                  fn()
-                  total += 1
-          if total == 0:
-              raise RuntimeError("no subatomic witnesses executed")
-          print(f"{total} subatomic witnesses passed")
-          PY
-
-      - name: Preserve molecular falsification standing
-        run: |
-          set -euo pipefail
-          PYTHONPATH=".:_deps/ucns/src" python - <<'PY'
-          from epac_comparison import compare_after_construction
-          standings = compare_after_construction()["standings"]
-          assert standings
-          assert set(standings.values()) == {"FALSIFIED"}, standings
-          print(standings)
-          PY
-
+          test -z "$(git status --porcelain --untracked-files=all)"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_COMMIT"
+          mkdir /tmp/epac-build-source
+          git archive "$EXPECTED_SOURCE_COMMIT" | tar -x -C /tmp/epac-build-source
+          .venv/bin/python -m build --outdir "$PWD/dist" /tmp/epac-build-source
+          .venv/bin/python -m twine check dist/*
+      - name: Replay installed wheel and source artifact
+        run: bash tools/replay_distributions.sh . dist /tmp/epac-replay python
       - name: Verify work-graph identity
         run: |
           python - <<'PY'
@@ -84,3 +54,40 @@ jobs:
           assert actual == doc["work_graph_sha256"], (actual, doc["work_graph_sha256"])
           print(actual)
           PY
+      - name: Retain private artifact replay evidence
+        env:
+          EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import shutil
+          import subprocess
+          import sys
+
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True).strip()
+          if git('status', '--porcelain', '--untracked-files=all') or git('rev-parse', 'HEAD') != os.environ['EXPECTED_SOURCE_COMMIT']:
+              raise SystemExit('source identity changed during qualification')
+          output = Path('/tmp/epac-ci-evidence')
+          output.mkdir()
+          shutil.copytree('dist', output / 'artifacts')
+          replay = output / 'replay'
+          replay.mkdir()
+          for path in Path('/tmp/epac-replay').iterdir():
+              if path.is_file():
+                  shutil.copy2(path, replay / path.name)
+          (output / 'source.json').write_text(json.dumps({
+              'source_commit': git('rev-parse', 'HEAD'),
+              'source_tree': git('rev-parse', 'HEAD^{tree}'),
+              'python': sys.version,
+              'license_qualification': 'recorded; release qualification separate' if Path('LICENSE').is_file() else 'pending owner choice',
+              'publication_or_authority_transfer': False
+          }, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: epac-private-replay-${{ matrix.python-version }}
+          path: /tmp/epac-ci-evidence
+          if-no-files-found: error

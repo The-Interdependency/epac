@@ -13,4 +13,4 @@ Before work:
 7. include runnable usage guidance in code and research artifacts;
 8. unknown authority, mapping, or evidence remains `hmmm`.
 
-Current graduation boundary: this repository is being physically extracted and independently verified. Stable release/reconsumption, clean packaging, and license/distribution gates remain separate evidence requirements.
+Current graduation boundary: this repository is extracted and its package is being qualified. Clean packaging, owner-selected licensing, exact candidate stack verification, stable release, and reconsumption remain separate evidence requirements.

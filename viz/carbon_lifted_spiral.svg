@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="520" viewBox="0 0 920 520">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#334155"/></marker><marker id="arrowRev" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#b45309"/></marker></defs>
+<rect x="0" y="0" width="920" height="520" fill="#0f172a"/>
+<text x="460" y="28" text-anchor="middle" fill="#e2e8f0" font-family="monospace" font-size="16" font-weight="600">Lifted Spiral — element epac.periodic:C#0</text>
+<rect x="40" y="90" width="840" height="110" rx="8" fill="#1e2937" stroke="#475569" stroke-width="1"/>
+<line x1="40" y1="145" x2="880" y2="145" stroke="#475569" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="150" y="74" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="12">t = 0</text>
+<rect x="102" y="108" width="96" height="22" rx="11" fill="#334155" stroke="#64748b"/>
+<text x="150" y="124" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="11">visible: 0</text>
+<text x="150" y="148" text-anchor="middle" fill="#22c7b1" font-family="monospace" font-size="18" font-weight="700">→</text>
+<text x="150" y="166" text-anchor="middle" fill="#22c7b1" font-family="monospace" font-size="10">positive-local-frame</text>
+<text x="150" y="218" text-anchor="middle" fill="#64748b" font-family="monospace" font-size="10">turn 0</text>
+<text x="410" y="74" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="12">t = 1</text>
+<rect x="362" y="108" width="96" height="22" rx="11" fill="#334155" stroke="#64748b"/>
+<text x="410" y="124" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="11">visible: 0</text>
+<text x="410" y="148" text-anchor="middle" fill="#f59e0b" font-family="monospace" font-size="18" font-weight="700">←</text>
+<text x="410" y="166" text-anchor="middle" fill="#f59e0b" font-family="monospace" font-size="10">reversed-local-frame</text>
+<text x="410" y="218" text-anchor="middle" fill="#64748b" font-family="monospace" font-size="10">turn 1</text>
+<text x="670" y="74" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="12">t = 2</text>
+<rect x="622" y="108" width="96" height="22" rx="11" fill="#334155" stroke="#64748b"/>
+<text x="670" y="124" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="11">visible: 0</text>
+<text x="670" y="148" text-anchor="middle" fill="#22c7b1" font-family="monospace" font-size="18" font-weight="700">→</text>
+<text x="670" y="166" text-anchor="middle" fill="#22c7b1" font-family="monospace" font-size="10">positive-local-frame</text>
+<text x="670" y="218" text-anchor="middle" fill="#64748b" font-family="monospace" font-size="10">turn 2</text>
+<text x="52" y="241" fill="#94a3b8" font-family="monospace" font-size="11">participant axes</text>
+<text x="52" y="261" fill="#cbd5e1" font-family="monospace" font-size="10">epac.nucleus:C#0</text>
+<text x="52" y="275" fill="#cbd5e1" font-family="monospace" font-size="10">epac.electron:C#0:0</text>
+<text x="52" y="289" fill="#cbd5e1" font-family="monospace" font-size="10">epac.electron:C#0:1</text>
+<text x="52" y="303" fill="#cbd5e1" font-family="monospace" font-size="10">epac.electron:C#0:2</text>
+<text x="52" y="317" fill="#cbd5e1" font-family="monospace" font-size="10">epac.electron:C#0:3</text>
+<text x="52" y="331" fill="#cbd5e1" font-family="monospace" font-size="10">epac.electron:C#0:4</text>
+<text x="52" y="345" fill="#cbd5e1" font-family="monospace" font-size="10">epac.electron:C#0:5</text>
+<rect x="620" y="410" width="240" height="78" rx="6" fill="#1e2937" stroke="#475569" stroke-width="1"/>
+<text x="632" y="426" fill="#94a3b8" font-family="monospace" font-size="10">UCNS native-möbius-root-loop</text>
+<text x="632" y="440" fill="#64748b" font-family="monospace" font-size="9">visible phase unchanged after integer turns</text>
+<text x="632" y="454" fill="#64748b" font-family="monospace" font-size="9">frame flips at t=1, restored at t=2</text>
+<text x="632" y="468" fill="#64748b" font-family="monospace" font-size="9">one_turn_flips=True  complete@2=True</text>
+<text x="632" y="482" fill="#64748b" font-family="monospace" font-size="9">attachments=0</text>
+</svg>

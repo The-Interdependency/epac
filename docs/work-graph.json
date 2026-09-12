@@ -1,19 +1,19 @@
 {
   "schema": "the-interdependency.stack-manifest",
   "version": "1.0.0",
-  "work_graph_sha256": "19f468b9773f71fc78ad58e15ebf3b36ed7fc001ade57846ba0bba9dc84e1631",
+  "work_graph_sha256": "d4ebcf8aecfb7ad6c2b51d8b91e4ef4ab573df582240e02ce684b909f8f3bd1c",
   "repositories": [
     {
       "repository": "The-Interdependency/stack",
-      "commit": "ef51f2e8f32ccfd5394525dad72475a61a505bc1",
+      "commit": "0e8384bbb60e4c2189016a212bdd0030d04aed7d",
       "authority": "forge/provenance authority for the extracted candidate state",
       "relation": "extraction source"
     },
     {
       "repository": "The-Interdependency/skill-lib",
-      "commit": "8dfb974ea0cee72e4412f9d2c8b597a8930a4d57",
+      "commit": "c14ee9d500579a4b5d6821f62c9d82ca96e73608",
       "authority": "organization-wide build and evidence doctrine",
-      "relation": "repo-local skill snapshot source"
+      "relation": "current repo-local skill snapshot source; all 79 non-manifest files checked byte-for-byte"
     },
     {
       "repository": "The-Interdependency/metapat",
@@ -23,9 +23,9 @@
     },
     {
       "repository": "The-Interdependency/ucns",
-      "commit": "828c0b8bbcfc267efb5701da714191c1f73a81ff",
+      "commit": "6eea1828a34ed8ec99879f8090ea5d48352d8c2d",
       "authority": "geometry and mathematical representation",
-      "relation": "Public Gonol and Möbius dependency consumed by EPAC"
+      "relation": "licensed source archive consumed by the package candidate; exact archive and runtime source hashes in data/ucns-source-lock.json"
     }
   ],
   "boundaries": {

@@ -4,8 +4,8 @@ import sys
 import unittest
 from pathlib import Path
 
-EPAC_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(EPAC_ROOT))
+import epac_public_gonol as _installed_epac
+EPAC_ROOT = Path(_installed_epac.__file__).resolve().parent
 
 from epac_dimensional_arity import (
     CouplingProof,

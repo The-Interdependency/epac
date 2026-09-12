@@ -23,12 +23,15 @@
 from __future__ import annotations
 
 import inspect
+from contextlib import contextmanager
 from hashlib import sha256
+import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
-from types import FunctionType
+from types import FunctionType, ModuleType, SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -45,9 +48,61 @@ from epac_public_gonol import PINNED_UCNS_COMMIT
 from ucns import native_mobius_state, public_gonol_function
 
 
+@contextmanager
+def _git_fixture():
+    """Exercise Git verification independently of the UCNS installation mode."""
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        path = root / "src/ucns/fixture.py"
+        path.parent.mkdir(parents=True)
+        path.write_text("def public_gonol_function(value): return value\n")
+        for args in (("init", "-q"), ("add", "."), ("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "fixture")):
+            subprocess.run(("git", "-C", directory, *args), check=True, capture_output=True)
+        pin = subprocess.check_output(("git", "-C", directory, "rev-parse", "HEAD"), text=True).strip()
+        module = ModuleType("ucns_fixture")
+        exec(compile(path.read_bytes(), str(path), "exec", dont_inherit=True), module.__dict__)
+        yield pin, module.public_gonol_function
+
+
 class UcnsProvenanceTest(unittest.TestCase):
     def tearDown(self) -> None:
         clear_ucns_verification_cache()
+
+    def test_installed_cross_module_helpers_and_classes_are_verified(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "ucns"
+            package.mkdir()
+            sources = {
+                "ucns/__init__.py": "",
+                "ucns/_epac_fixture_helper.py": "def helper(value): return value\nclass Carrier:\n    factor = 2\n",
+                "ucns/_epac_fixture_entry.py": "from ucns._epac_fixture_helper import helper, Carrier\nfrom ucns import _epac_fixture_helper as helpers\ndef public(value): return sum(helper(item) for item in (value,)) + helpers.helper(value) + Carrier.factor\n",
+            }
+            for name, source in sources.items():
+                (root / name).write_text(source)
+            helper = ModuleType("ucns._epac_fixture_helper")
+            entry = ModuleType("ucns._epac_fixture_entry")
+            helper.__file__ = str(root / "ucns/_epac_fixture_helper.py")
+            entry.__file__ = str(root / "ucns/_epac_fixture_entry.py")
+            distribution = SimpleNamespace(files=list(sources), locate_file=lambda name: root / name)
+            lock = {"repository": "The-Interdependency/ucns", "commit": PINNED_UCNS_COMMIT,
+                    "installed_source_sha256": {name: sha256((root / name).read_bytes()).hexdigest() for name in sources}}
+            (root / "ucns-source-lock.json").write_text(json.dumps(lock))
+            with patch.dict(sys.modules, {helper.__name__: helper, entry.__name__: entry}), patch("epac_ucns_provenance.metadata.distribution", return_value=distribution), patch("epac_ucns_provenance.resources.files", return_value=root):
+                exec(compile(sources["ucns/_epac_fixture_helper.py"], helper.__file__, "exec", dont_inherit=True), helper.__dict__)
+                exec(compile(sources["ucns/_epac_fixture_entry.py"], entry.__file__, "exec", dont_inherit=True), entry.__dict__)
+                def verify():
+                    return verify_loaded_ucns_commit(pinned_commit=PINNED_UCNS_COMMIT, dependencies=(entry.public,))
+                self.assertEqual(verify(), PINNED_UCNS_COMMIT)
+                forged = {"__name__": helper.__name__}
+                exec(compile("def helper(value): return 7\n", helper.__file__, "exec", dont_inherit=True), forged)
+                with patch.dict(entry.public.__globals__, helper=forged["helper"]):
+                    self.assertEqual(verify(), "hmmm")
+                with patch.object(helper, "helper", forged["helper"]):
+                    self.assertEqual(verify(), "hmmm")
+                with patch.object(helper.Carrier, "factor", 9):
+                    self.assertEqual(verify(), "hmmm")
+                self.assertEqual(verify(), PINNED_UCNS_COMMIT)
 
     def test_filesystem_permissions_normalize_to_git_blob_modes(self) -> None:
         self.assertEqual(_git_blob_mode(0o100600), "100644")
@@ -131,20 +186,13 @@ class UcnsProvenanceTest(unittest.TestCase):
             return subprocess.run(command, **kwargs)
 
         clear_ucns_verification_cache()
-        first = verify_loaded_ucns_commit(
-            pinned_commit=PINNED_UCNS_COMMIT,
-            dependencies=(public_gonol_function, native_mobius_state),
-            runner=counting_runner,
-        )
-        first_call_count = len(calls)
-        second = verify_loaded_ucns_commit(
-            pinned_commit=PINNED_UCNS_COMMIT,
-            dependencies=(public_gonol_function, native_mobius_state),
-            runner=counting_runner,
-        )
+        with _git_fixture() as (pin, dependency):
+            first = verify_loaded_ucns_commit(pinned_commit=pin, dependencies=(dependency,), runner=counting_runner)
+            first_call_count = len(calls)
+            second = verify_loaded_ucns_commit(pinned_commit=pin, dependencies=(dependency,), runner=counting_runner)
 
-        self.assertEqual(first, PINNED_UCNS_COMMIT)
-        self.assertEqual(second, PINNED_UCNS_COMMIT)
+        self.assertEqual(first, pin)
+        self.assertEqual(second, pin)
         self.assertGreater(first_call_count, 0)
         self.assertEqual(len(calls), first_call_count)
         self.assertEqual(ucns_verification_cache_info().hits, 1)
@@ -155,11 +203,8 @@ class UcnsProvenanceTest(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0, stdout=b"not-the-pinned-source")
             return subprocess.run(command, **kwargs)
 
-        observed = verify_loaded_ucns_commit(
-            pinned_commit=PINNED_UCNS_COMMIT,
-            dependencies=(public_gonol_function, native_mobius_state),
-            runner=mismatched_blob_runner,
-        )
+        with _git_fixture() as (pin, dependency):
+            observed = verify_loaded_ucns_commit(pinned_commit=pin, dependencies=(dependency,), runner=mismatched_blob_runner)
 
         self.assertEqual(observed, "hmmm")
 
@@ -208,6 +253,37 @@ class UcnsProvenanceTest(unittest.TestCase):
         self.assertEqual(observed, "hmmm")
         self.assertTrue(any("ls-files" in call for call in calls))
 
+    def test_installed_source_and_loaded_state_changes_invalidate_witness(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "ucns"
+            package.mkdir()
+            (package / "__init__.py").write_text("")
+            path = package / "fixture.py"
+            original = b"def public_gonol_function(value): return value\n"
+            path.write_bytes(original)
+            module = ModuleType("ucns_fixture")
+            exec(compile(original, str(path), "exec", dont_inherit=True), module.__dict__)
+            files = ["ucns/__init__.py", "ucns/fixture.py"]
+            distribution = SimpleNamespace(files=files, locate_file=lambda name: root / name)
+            lock = {"repository": "The-Interdependency/ucns", "commit": PINNED_UCNS_COMMIT,
+                    "installed_source_sha256": {name: sha256((root / name).read_bytes()).hexdigest() for name in files}}
+            (root / "ucns-source-lock.json").write_text(json.dumps(lock))
+            with patch("epac_ucns_provenance.metadata.distribution", return_value=distribution), patch("epac_ucns_provenance.resources.files", return_value=root):
+                def verify():
+                    return verify_loaded_ucns_commit(pinned_commit=PINNED_UCNS_COMMIT, dependencies=(module.public_gonol_function,))
+                self.assertEqual(verify(), PINNED_UCNS_COMMIT)
+                self.assertEqual(verify(), PINNED_UCNS_COMMIT)
+                self.assertEqual(ucns_verification_cache_info().hits, 1)
+                path.write_bytes(original + b"# drift\n")
+                self.assertEqual(verify(), "hmmm")
+                path.write_bytes(original)
+                exec(compile("def public_gonol_function(value): return 2\n", str(path), "exec", dont_inherit=True), module.__dict__)
+                self.assertEqual(verify(), "hmmm")
+                exec(compile(original, str(path), "exec", dont_inherit=True), module.__dict__)
+                (package / "extra.py").write_text("unexpected = True\n")
+                self.assertEqual(verify(), "hmmm")
+
 
 def _run_provenance_cases(*names: str) -> None:
     suite = unittest.TestSuite(UcnsProvenanceTest(name) for name in names)
@@ -220,6 +296,7 @@ def check_epac_ucns_pin_matches_loaded_code() -> None:
     _run_provenance_cases(
         "test_loaded_code_mismatch_returns_hmmm",
         "test_effective_builtins_are_part_of_loaded_state",
+        "test_installed_source_and_loaded_state_changes_invalidate_witness",
     )
 
 

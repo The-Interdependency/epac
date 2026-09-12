@@ -1,12 +1,17 @@
 {
   "schema": "epac.sealed-known-molecular-geometry",
-  "version": "v1",
+  "version": "v2",
   "opened_only_after_construction": true,
+  "note": "Original v1 set (H2,H2O,NH3,CH4,CO2) remains the frozen preregistration policy baseline. v2 adds the next maximal enlarged experiment set using Z=1..36 subatomic coverage.",
   "molecules": {
     "H2": {"atom_count": 2, "known_shape": "linear"},
     "H2O": {"atom_count": 3, "known_shape": "bent"},
     "NH3": {"atom_count": 4, "known_shape": "trigonal-pyramidal"},
     "CH4": {"atom_count": 5, "known_shape": "tetrahedral"},
-    "CO2": {"atom_count": 3, "known_shape": "linear"}
+    "CO2": {"atom_count": 3, "known_shape": "linear"},
+    "H2S": {"atom_count": 3, "known_shape": "bent"},
+    "BF3": {"atom_count": 4, "known_shape": "trigonal-planar"},
+    "PH3": {"atom_count": 4, "known_shape": "trigonal-pyramidal"},
+    "SiH4": {"atom_count": 5, "known_shape": "tetrahedral"}
   }
 }

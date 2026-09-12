@@ -35,18 +35,63 @@ The extraction preserves the stack research artifacts and their epistemic status
 
 ## Verification
 
-The current extraction gate executes:
+The package gate executes:
 
-- 60 repository regression tests;
-- 30 subatomic executable witnesses;
-- the preregistered molecular comparison, requiring all four current standings to remain `FALSIFIED`;
+- exact Git comparisons for both artifact payloads and the complete archived
+  source before running any archived verifier or tests; release-manifest hashes
+  are checked when present, and the input binding is checked again at the end;
+- all repository and subatomic tests against separate clean wheel and source installs;
+- complete installed-distribution byte maps, import origins, exact UCNS source maps,
+  and complete source snapshots before and after each replay;
+- the preregistered molecular comparison, requiring all 14 current standings (including the original four) to remain `FALSIFIED`;
 - deterministic work-graph digest verification.
 
-CI resolves the pinned UCNS source before running those gates. Passing those checks establishes reproducibility of the extracted research tree; it does **not** satisfy `exact_candidate_forge_verification`, stable release, or reconsumption by itself.
+CI resolves UCNS through the source URL and SHA-256 in `pyproject.toml` and `uv.lock`. Python 3.10, 3.11, and 3.12 are the declared verification matrix. Package tests establish the checked construction and replay behavior; reproducible immutable candidate qualification, exact candidate stack verification, licensing, stable release, and reconsumption remain separate gates.
 
 ## Usage guidance
 
-Until packaging is independently qualified, run the research suite from a checkout with the pinned UCNS source available on `PYTHONPATH`; `.github/workflows/ci.yml` is the executable reference invocation.
+The candidate distribution is `interdependency-epac` version `0.1.0`. Its public
+modules remain `epac_atomic`, `epac_periodic`, `epac_public_gonol`,
+`epac_dimensional_arity`, `epac_molecular`, and `epac_comparison`. Subatomic
+candidate modules are imported through `epac_subatomic`. Names beginning with
+`_` are implementation details. The only runtime project dependency is the
+exact UCNS archive; METAPAT supplies recorded semantic provenance, and stack
+supplies extraction provenance. Neither is a hidden runtime import.
+
+The verification commands require Git and a clean committed checkout. Use new
+output directories. The replay gate records the exact source and artifact binding
+in `candidate-source.json`; a stale or incomplete sdist is rejected before its
+code can run. Source distributions include every tracked repository file,
+including CI definitions and the complete local operational skill snapshot.
+
+```bash
+python -m pip install uv==0.11.18
+uv sync --locked --extra test --extra build
+.venv/bin/python -m pytest
+.venv/bin/python -m build --outdir /tmp/epac-dist
+.venv/bin/python -m twine check /tmp/epac-dist/*
+bash tools/replay_distributions.sh . /tmp/epac-dist /tmp/epac-replay python3.12
+```
+
+After installation, construction and replay require no checkout paths:
+
+```python
+from epac_public_gonol import construct_public_gonol, replay_public_gonol
+
+receipt = construct_public_gonol(source_id="example:oxygen",
+    relation="epac.atomic.element", identity_glyph="O")
+assert replay_public_gonol(receipt).receipt_digest == receipt.receipt_digest
+```
+
+GitHub release assets are the selected distribution surface. Once the owner
+records the license, install `requirements-build.txt` and run
+`python tools/build_release.py /tmp/epac-candidate` from a clean commit using
+uv-managed CPython 3.11.15 and `requirements-build.txt`. The builder enforces that Python implementation/version plus
+zlib 1.3.1 at compile time and runtime and records both identities. Test
+those exact hashes in both the clean installation and stack before publishing.
+Download the published assets and verify `SHA256SUMS` before reconsumption.
+`LICENSE_STATUS.md` retains the current license gate; package builds alone do
+not grant redistribution rights or complete graduation.
 
 Do not treat successful execution as empirical validation. Constructors establish reproducible declared structures; comparison tests determine the standing of the claims they actually test.
 
@@ -58,3 +103,28 @@ Do not treat successful execution as empirical validation. Constructors establis
 - clean package/install dependency contract for UCNS
 - downstream forge reconsumption and authority-transition receipt
 - whether standing-wave language earns a stronger domain claim after explicit external-physics comparison
+
+## Continued forge research
+
+The handoff also preserves the EPAC research present in stack commit
+`0e8384bbb60e4c2189016a212bdd0030d04aed7d`: nine declared molecular
+formulas, subatomic coverage through krypton, boundary-capacity and refinement
+audits, and carried spiral visualization. These remain research constructions
+and scoped internal evidence; packaging does not promote their empirical status.
+
+- [Cross-scale closure](docs/cross_scale_compositional_closure.md)
+- [Boundary capacity](docs/boundary_capacity_principle.md)
+- [Descriptor non-degeneracy](docs/boundary_descriptor_nondegeneracy.md)
+- [Capacity quotient](docs/boundary_capacity_quotient.md)
+- [Probe completeness](docs/boundary_probe_completeness.md)
+- [Minimal refinement](docs/boundary_minimal_refinement.md)
+- [Spiral visualization](viz/README.md)
+
+After installing the package, run a scoped audit through its public module:
+
+```bash
+python -c "from epac_cross_scale_closure import cross_scale_compositional_closure; print(cross_scale_compositional_closure()['statuses'])"
+python -m epac_viz --help
+```
+
+Release qualification requires an owner-selected `LICENSE`, its explicit SPDX expression and `license-files = ["LICENSE"]` in `pyproject.toml`, and removal of the unresolved `LICENSE_STATUS.md` (its history remains in Git). Adding license text alongside a status that still prohibits publication does not pass the gate. The replay shell bootstraps the hash-pinned Python 3.10 TOML parser from `requirements-replay.txt`, then validates all source-derived core metadata and every optional release-manifest field before archived code runs. To call `tools/verify_replay_inputs.py` directly on Python 3.10, first install that requirements file with `uv pip install --python /path/to/python --no-deps --require-hashes -r requirements-replay.txt`.

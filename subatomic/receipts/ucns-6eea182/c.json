@@ -1,0 +1,88 @@
+{
+  "element_id": "epac.subatomic_affixiation.c",
+  "symbol": "C",
+  "Z": 6,
+  "A": 12,
+  "proton_positions": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "proton_glyphs": [
+    "A",
+    "!",
+    "\"",
+    "B",
+    "#",
+    "$"
+  ],
+  "neutron_positions": [
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "neutron_glyphs": [
+    "C",
+    "%",
+    "(",
+    "D",
+    "&",
+    "'"
+  ],
+  "t_states": [
+    {
+      "t": 0,
+      "visible_key": [
+        "ucns.native-mobius-root-loop",
+        "0"
+      ],
+      "complete_key": [
+        "ucns.native-mobius-root-loop",
+        "0",
+        "positive-local-frame"
+      ],
+      "frame": "positive-local-frame"
+    },
+    {
+      "t": 1,
+      "visible_key": [
+        "ucns.native-mobius-root-loop",
+        "0"
+      ],
+      "complete_key": [
+        "ucns.native-mobius-root-loop",
+        "0",
+        "reversed-local-frame"
+      ],
+      "frame": "reversed-local-frame"
+    },
+    {
+      "t": 2,
+      "visible_key": [
+        "ucns.native-mobius-root-loop",
+        "0"
+      ],
+      "complete_key": [
+        "ucns.native-mobius-root-loop",
+        "0",
+        "positive-local-frame"
+      ],
+      "frame": "positive-local-frame"
+    }
+  ],
+  "relation_id": "metapat.affixiation_harmonics.affixiation",
+  "ordered_parameter_id": "ucns.native-mobius-turn-index",
+  "closure_scale": "epac.subatomic.atomic",
+  "source_commits": {
+    "metapat": "34d954aa1e2092e615b03a180500f6b6977f501e",
+    "ucns": "6eea1828a34ed8ec99879f8090ea5d48352d8c2d"
+  },
+  "status": "CROSS-DOMAIN-HYPOTHESIS",
+  "receipt": "1158d99be25002733e94daa94d3da42ac3a12bd622997b4c17c74068c720859a"
+}

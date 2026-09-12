@@ -14,10 +14,10 @@ It consumes exactly two UCNS public surfaces:
 No Public Gonol position operation is defined, inferred, or asserted here.
 Status: CROSS-DOMAIN-HYPOTHESIS / provisional. Not org canon.
 
-Usage guidance:
+Usage guidance (after installing EPAC and its pinned dependencies):
 
-    PYTHONPATH=<ucns-snapshot>/src python3 - <<'PY'
-    from element_affixiation_candidate import affixiate_element, replay_element
+    python3 - <<'PY'
+    from epac_subatomic.element_affixiation_candidate import affixiate_element, replay_element
 
     he = affixiate_element("He")
     print(he.receipt)
@@ -39,7 +39,7 @@ Usage guidance:
 #   network_boundary: none
 #   user_data_boundary: none
 #   admin_only: false
-#   tests: subatomic.test_element_affixiation_candidate
+#   tests: tests/subatomic/test_element_affixiation_candidate.py
 #   rollout: extracted EPAC candidate; no canon or empirical promotion
 #   rollback: remove module, tests, and generated receipts
 #   requires: ucns_public_gonol_geometry, ucns_native_mobius_geometry
@@ -88,7 +88,7 @@ from ucns import native_mobius_state, public_gonol_function
 from epac_ucns_provenance import verify_loaded_ucns_commit
 
 PINNED_METAPAT_COMMIT = "34d954aa1e2092e615b03a180500f6b6977f501e"
-PINNED_UCNS_COMMIT = "828c0b8bbcfc267efb5701da714191c1f73a81ff"
+PINNED_UCNS_COMMIT = "6eea1828a34ed8ec99879f8090ea5d48352d8c2d"
 
 SOURCE_COMMITS = MappingProxyType(
     {
@@ -107,18 +107,19 @@ CONSTRUCTION_IDS = MappingProxyType(
 )
 
 # Default isotope instances are instance-resolved, not canonical admission law.
-# Extended to Z=1..26 (through iron) for the subatomic gonol program.
-ISOTOPE_DEFAULTS = MappingProxyType(
-    {
-        "H": (1, 1), "He": (2, 4), "Li": (3, 7), "Be": (4, 9),
-        "B": (5, 11), "C": (6, 12), "N": (7, 14), "O": (8, 16),
-        "F": (9, 19), "Ne": (10, 20), "Na": (11, 23), "Mg": (12, 24),
-        "Al": (13, 27), "Si": (14, 28), "P": (15, 31), "S": (16, 32),
-        "Cl": (17, 35), "Ar": (18, 40), "K": (19, 39), "Ca": (20, 40),
-        "Sc": (21, 45), "Ti": (22, 48), "V": (23, 51), "Cr": (24, 52),
-        "Mn": (25, 55), "Fe": (26, 56),
-    }
-)
+# Broadened subatomic coverage: Z=1..36 (K through Kr) for the subatomic gonol program.
+ISOTOPE_DEFAULTS = MappingProxyType({
+    "H": (1, 1), "He": (2, 4), "Li": (3, 7), "Be": (4, 9),
+    "B": (5, 11), "C": (6, 12), "N": (7, 14), "O": (8, 16),
+    "F": (9, 19), "Ne": (10, 20), "Na": (11, 23), "Mg": (12, 24),
+    "Al": (13, 27), "Si": (14, 28), "P": (15, 31), "S": (16, 32),
+    "Cl": (17, 35), "Ar": (18, 40), "K": (19, 39), "Ca": (20, 40),
+    "Sc": (21, 45), "Ti": (22, 48), "V": (23, 51), "Cr": (24, 52),
+    "Mn": (25, 55), "Fe": (26, 56),
+    "Co": (27, 59), "Ni": (28, 58), "Cu": (29, 63), "Zn": (30, 64),
+    "Ga": (31, 69), "Ge": (32, 74), "As": (33, 75), "Se": (34, 80),
+    "Br": (35, 79), "Kr": (36, 84),
+})
 
 
 @dataclass(frozen=True, slots=True)

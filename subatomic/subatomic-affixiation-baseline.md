@@ -60,7 +60,7 @@ hydrogen/helium/lithium claims exist in current metapat or ucns checkouts. Resol
 ## 3. UCNS established baseline (implemented surfaces only)
 
 Cited from the historical UCNS baseline at `1975fe70`; the extracted EPAC
-constructor currently pins UCNS `828c0b8bbcfc267efb5701da714191c1f73a81ff` and
+constructor currently pins UCNS `6eea1828a34ed8ec99879f8090ea5d48352d8c2d` and
 retains the historical receipts as prior-version evidence:
 
 - **Public Gonol carrier** (`implemented`): exactly 157 one-scalar glyph positions in fixed order;
@@ -152,8 +152,8 @@ projection; any canon promotion in METAPAT, UCNS, or elsewhere.
 
 To replay by hand:
 
-1. Pin sources: METAPAT `34d954a`, UCNS `828c0b8` for the current extracted constructor; the
-   `1975fe7` receipt set is historical.
+1. Pin sources: METAPAT `34d954a`, UCNS `6eea1828a34ed8ec99879f8090ea5d48352d8c2d` for the current constructor;
+   the `1975fe7` and `828c0b8` receipt sets are historical.
 2. Read `metapat/docs/applications/affixiation-harmonics.md` for the semantic definitions used.
 3. Read `ucns/src/ucns/public_gonol.py` and `ucns/src/ucns/direct_mobius.py` for the carrier and
    Möbius surfaces used.
@@ -202,7 +202,7 @@ The frozen minimal decisive action from §7 is now implemented locally (not push
   `CONTRACTS` blocks; no position operation is defined or inferred.
 - `test_element_affixiation_candidate.py` — executable witnesses with a `CHECKS` block.
   Current result: source-synchronized witnesses pass against the extracted EPAC UCNS pin
-  `828c0b8`.
+  `6eea1828`.
 - `receipts/{h,he,li,c}.json` — historical sealed construction receipts at UCNS `1975fe7`,
   retained as prior-version evidence:
 
@@ -215,8 +215,8 @@ The frozen minimal decisive action from §7 is now implemented locally (not push
 
 - These historical records were byte-identical under their original UCNS pin; they are not the
   current extracted-constructor receipts.
-- `receipts/ucns-828c0b8/` — current sealed construction receipts at the extracted EPAC UCNS
-  pin, valid only when runtime source verification reproduces that clean checkout:
+- `receipts/ucns-828c0b8/` — historical sealed construction receipts at the initial
+  extraction pin, retained only for replay with that historical runtime:
 
   | Element | Receipt (SHA-256) |
   |---|---|
@@ -302,7 +302,100 @@ law, and no scale interchange is introduced. Standing is `implemented-candidate`
   atom instances only.
 - Historical evidence at this section's original 2026-08-22 stop: **26/26 subatomic tests
   pass**; sibling epac suite **29 tests OK**; CONTRACTS↔CHECKS audit **closed**
-  (26 contracts / 26 checks). Current extracted-repo gate records **30 subatomic witnesses**
+  (26 contracts / 26 checks). The prior extracted-repo gate recorded **30 subatomic witnesses**
   and **60 repository tests**.
 - The dimensional-arity doctrine is implemented by the sibling `epac_dimensional_arity.py`
   (committed); no duplicate is maintained here. Status remains `CROSS-DOMAIN-HYPOTHESIS`.
+
+The following subsequent forge record is preserved from stack commit `0e8384bbb60e4c2189016a212bdd0030d04aed7d`; its historical test counts do not qualify the new package.
+
+## 14. Broader subatomic coverage (subsequent work)
+
+- **Extended atomic + subatomic gonol broadened to Z=1..36** (K through Kr).
+  - `element_affixiation_candidate.py`: ISOTOPE_DEFAULTS now includes Co..Kr.
+  - `extended_atomic.py`: CONFIGURATIONS_19_36, PERIOD_GROUP_19_36, ISOTOPE_DEFAULTS_19_36;
+    atomic_record and iter_table now support Z<=36 (standard Aufbau + known exceptions for Cr/Cu).
+  - `subatomic_gonol.py`: SUPPORTED_SYMBOLS = 36.
+- All 36 symbols produce deterministic, byte-identical-replayable subatomic gonols.
+- Unique receipt digests across the full table (36 distinct).
+- Full test suite (primary + mirrors) remains green.
+- Historical Z=1..26 artifacts and receipts are preserved; new elements add new receipts.
+- Status remains `CROSS-DOMAIN-HYPOTHESIS`. No change to unresolved items (UCNS position operations, harmonic notation, no canonical epac repo).
+
+## 15. Nuclear harmonic layer extension (next maximal after Z=1..36 identity/quantum)
+
+To match the breadth of the nucleus identity and quantum shell layers, the physically sourced harmonic candidates were extended to the alpha-conjugate (even-even N=Z) chain through the current table limit.
+
+- Added nuclide facts for O-16, Ne-20, Mg-24, Si-28, S-32, Ar-36, Ca-40 (compiled data, web-pinned).
+- Updated `CANDIDATES` participants and recurrence mappings for the five existing candidate kinds to include the new alpha-conjugates where the declared relation applies (alpha-cluster recurrence, N/Z=1, 0+ spin-parity, binding-per-nucleon commensurability within tolerance, p<->n self-mirror).
+- `recurrence_test` now returns a dict whose keys are exactly the `participants` declared on that candidate (contractual).
+- All new alpha-conjugates satisfy the alpha-cluster recurrence by the declared rule.
+- For N/Z, spin-parity, and inversion, the new even-even N=Z nuclei satisfy the "recurs" condition; Li-7 continues to not satisfy the even-even symmetries (preserved behavior).
+- Test updated to assert the per-candidate key contract + receipt determinism + preservation of original H/He/Li/C outcomes.
+- Full suite restored to green.
+- This is the direct counterpart on the harmonic side to the earlier identity/quantum broadening.
+
+Status for the extended set remains `CROSS-DOMAIN-HYPOTHESIS / hmmm`. No physics claim, no canon, no UCNS position operation or harmonic notation invented.
+
+Unresolved items unchanged.
+
+## 16. Harmonic survival integrated into the (enlarged) molecular geometry experiment (next maximal)
+
+The nuclear harmonic candidates layer (alpha-conjugate broadened through Ca-40, Z=1..36 coverage) is now consumed inside the preregistered molecular geometry experiment.
+
+- Added `_harmonic_survival_signature(formula)`: molecule-level union of surviving candidate ids. For each constituent symbol, include every candidate for which at least one of its isotope participants for that symbol satisfies the declared recurrence (identical rule to the one used inside `subatomic_gonol._harmonic_survives_symbol`).
+- `compare_after_construction` now computes the signature for every constructed formula and exposes it as:
+  - `readouts["harmonic_survival"]`
+  - `partitions["harmonic_survival"]`
+  - `standings["harmonic_survival_as_sealed_shape_prediction"]`
+- `quantify_distinguishing_power` includes `harmonic_survival` class counts, splits/collapses (vs frozen known), and pairwise contingency (original 5 formulas only).
+- All known-side metrics and standings continue to respect the frozen `ORIGINAL_PREREG` policy exactly; new formulas participate only in construction-side counts and broader quantification.
+- Observed on frozen known 5: 3 distinct harmonic signatures, splits_known=1, collapses=2, pairwise fp=1/fn=2 (total_pairs=10), standing FALSIFIED.
+- Observed on full constructed set (9 formulas): 4 distinct harmonic signatures.
+- New test witness added; full discover now 39 tests OK.
+- Receipts and behavior remain deterministic (participant-driven recurrence_test contract).
+
+The integration is a direct, minimal use of the just-broadened harmonic layer inside the existing molecular experiment. No sealed labels are used in construction; no VSEPR or cartesian geometry is imported; no UCNS position operations are invented.
+
+Status remains `CROSS-DOMAIN-HYPOTHESIS / hmmm`. No change to prior unresolved items.
+
+## 17. Nuclear harmonic survival carried on molecule PublicGonol receipts (next maximal)
+
+The molecule-level nuclear harmonic survival (union of surviving candidates across constituents) is now a carried fact on every closed molecule PublicGonol receipt, exactly parallel to the "harmonic-surviving" carried option on subatomic/element gonols.
+
+- `epac_molecular.construct_molecule` computes the value from the subatomic layer and passes it as `carried_options` to `construct_public_gonol` under the key `"harmonic-surviving"`.
+- The `MolecularConstruction` invariants store both `"harmonic_survival"` and `"subatomic_harmonic_survival"` (identical value).
+- `compare_after_construction` sources the `harmonic_survival` family from the receipt's carried_options (authoritative carried fact), while `subatomic_harmonic_survival` remains the per-atom view.
+- Top-level distinguishing facts for the harmonic family are exposed:
+  - `harmonic_collapses_h2o_with_co2`
+  - `harmonic_distinguishes_h2o_from_co2`
+  - `linear_class_split_by_harmonic_survival`
+- These feed the same `_standing` and `_quantify_distinguishing_power` paths (frozen `ORIGINAL_PREREG` policy on the known 5; full constructed set for class counts).
+- Replay determinism: `replay_public_gonol` on a molecule receipt reproduces the identical `"harmonic-surviving"` carried value and the same receipt digest.
+- Observed: same 3 signatures on the frozen known 5, 4 on the full 9; FALSIFIED standing; splits/collapses/pairwise as previously quantified.
+- New test witnesses: carried presence + consistency with invariants, and exact preservation under replay.
+- Full discover: 42 tests OK. All receipts remain byte-replay deterministic.
+
+This completes the lift of the nuclear harmonic layer (alpha-conjugate broadened) as a carried, addressable, replayable fact through the entire EPAC Public Gonol construction pipeline: subatomic nucleus/electrons → element gonol → molecule gonol.
+
+No sealed labels used in construction; no VSEPR or cartesian geometry; no UCNS position operations invented.
+
+Status remains `CROSS-DOMAIN-HYPOTHESIS / hmmm`. Unresolved items unchanged.
+
+
+## Current accepted UCNS replay inputs
+
+The current constructor uses accepted UCNS
+`6eea1828a34ed8ec99879f8090ea5d48352d8c2d`, bound by
+`data/ucns-source-lock.json` and the package dependency. Current H/He/Li/C receipts
+are in `subatomic/receipts/ucns-6eea182/`; the `1975fe7` and `828c0b8` records
+above remain historical evidence and must not be checked as current-pin receipts.
+
+From the repository root after `uv sync --locked --extra test`, run:
+
+```bash
+uv run --locked python -m pytest tests/subatomic/test_element_affixiation_candidate.py
+```
+
+That suite checks the pin-specific receipts against the installed constructor
+and public replay. Successful replay does not promote the research standing.

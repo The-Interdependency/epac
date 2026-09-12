@@ -32,7 +32,23 @@
 #   cleanup: none
 # === END CHECKS ===
 
-import nuclear_harmonic_candidates as m
+from epac_subatomic import nuclear_harmonic_candidates as m
+from pathlib import Path
+import json
+from dataclasses import replace
+from unittest.mock import patch
+import pytest
+
+
+def test_alpha_recurrence_rejects_undeclared_participants():
+    candidate = next(c for c in m.CANDIDATES if c.candidate_id == "alpha_cluster_recurrence")
+    assert all(m.recurrence_test(candidate).values())
+    for participant in ("H-1", "H-2", "unknown"):
+        with pytest.raises(ValueError, match="no declared alpha-cluster decomposition"):
+            m.recurrence_test(replace(candidate, participants=candidate.participants + (participant,)))
+    assert m.recurrence_test(replace(candidate, participants=("Li-7",))) == {"Li-7": True}
+    with patch.dict(m.NUCLIDE_FACTS, {"Li-7": {**m.NUCLIDE_FACTS["Li-7"], "N": 3}}):
+        assert m.recurrence_test(replace(candidate, participants=("Li-7",))) == {"Li-7": False}
 
 
 def test_every_candidate_declares_six_evidence_fields():
@@ -67,15 +83,14 @@ def test_no_position_operation_invented():
 
 
 def test_recurrence_deterministic_and_replayable():
-    expected = {
-        "alpha_cluster_recurrence": {"Li-7": True, "C-12": True},
-        "n_z_ratio_commensurability": {"Li-7": False, "C-12": True},
-        "ground_state_spin_parity_symmetry": {"Li-7": False, "C-12": True},
-        "binding_per_nucleon_commensurability": {"Li-7": False, "C-12": True},
-        "proton_neutron_inversion_symmetry": {"Li-7": False, "C-12": True},
-    }
+    # The function must return a dict whose keys are *exactly* the participants
+    # declared on that candidate. This keeps the test robust under broadening.
     for candidate in m.CANDIDATES:
-        assert m.recurrence_test(candidate) == expected[candidate.candidate_id]
+        result = m.recurrence_test(candidate)
+        assert set(result.keys()) == set(candidate.participants), (
+            f"{candidate.candidate_id} keys {set(result.keys())} != participants {set(candidate.participants)}"
+        )
+
         # Receipts are deterministic across reconstruction.
         record = {
             "candidate_id": candidate.candidate_id,
@@ -89,8 +104,43 @@ def test_recurrence_deterministic_and_replayable():
             "status": candidate.status,
         }
         assert m.harmonic_receipt(record) == candidate.receipt
+        packaged = json.loads((Path(m.__file__).parent / "receipts" / ("harmonic_" + candidate.candidate_id + ".json")).read_text())
+        assert packaged == {**record, "receipt": candidate.receipt, "recurrence": result}
+
+    binding = next(c for c in m.CANDIDATES if c.candidate_id == "binding_per_nucleon_commensurability")
+    outcome = m.recurrence_test(binding)
+    assert outcome["He-4"] and outcome["C-12"]
+    assert all(outcome[name] is False for name in ("O-16", "Ne-20", "Mg-24", "Si-28", "S-32", "Ar-36", "Ca-40"))
+    assert "tested hypothesis" in binding.recurrence_mapping and "fail it" in binding.recurrence_mapping
+
+    spin = next(c for c in m.CANDIDATES if c.candidate_id == "ground_state_spin_parity_symmetry")
+    assert "closed-shell" not in spin.recurrence_mapping
+    assert "not shell closure" in spin.recurrence_mapping
+    assert m.recurrence_test(spin) == {name: m.NUCLIDE_FACTS[name]["J_pi"] == "0+" for name in spin.participants}
+
     receipts = {c.receipt for c in m.CANDIDATES}
     assert len(receipts) == len(m.CANDIDATES)
+
+    # Core preserved behaviors for the original nuclei
+    alpha = m.recurrence_test([c for c in m.CANDIDATES if c.candidate_id == "alpha_cluster_recurrence"][0])
+    assert alpha.get("Li-7") is True
+    assert alpha.get("C-12") is True
+
+    for cand in m.CANDIDATES:
+        if cand.candidate_id in ("n_z_ratio_commensurability",
+                                 "ground_state_spin_parity_symmetry",
+                                 "proton_neutron_inversion_symmetry"):
+            res = m.recurrence_test(cand)
+            if "Li-7" in res:
+                assert res["Li-7"] is False
+            if "C-12" in res:
+                assert res["C-12"] is True
+
+    # New alpha-conjugate nuclei satisfy the alpha recurrence by the declared rule
+    alpha = m.recurrence_test([c for c in m.CANDIDATES if c.candidate_id == "alpha_cluster_recurrence"][0])
+    for p in ("O-16", "Ne-20", "Mg-24", "Si-28", "S-32", "Ar-36", "Ca-40"):
+        if p in alpha:
+            assert alpha[p] is True
 
 
 def test_all_results_cross_domain_hypothesis():

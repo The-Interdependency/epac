@@ -1,10 +1,15 @@
 """Loaded-code-aware UCNS provenance verification shared by EPAC constructors.
 
 The verifier stamps a UCNS commit only when each executing function and its
-transitively referenced UCNS runtime state match the clean source at the
-declared commit. Verification is cached by a witness containing HEAD, index
-state, source bytes, file modes, and loaded state, so repeated nested
-construction avoids Git subprocesses without preserving a stale answer.
+transitively referenced UCNS runtime state match the declared source. A checkout
+uses its exact clean Git commit; an installed distribution uses the complete
+UCNS Python-source map shipped in epac_data/ucns-source-lock.json. The latter
+establishes source-byte equivalence to the pin; installation artifact hashes are
+verified separately by the clean-install and consumer receipts.
+
+Caches bind source bytes and loaded state. Git witnesses also bind HEAD, index,
+and modes. Runtime aliasing stays explicit; incidental bytecode string sharing
+does not change a witness. No Git checkout is required for a verified wheel.
 
 Usage guidance:
 
@@ -37,7 +42,7 @@ Usage guidance:
 # === CONTRACTS ===
 # id: epac_ucns_pin_matches_loaded_code
 #   given: EPAC is about to stamp a pinned UCNS dependency identity
-#   then: each executing dependency function and its transitively referenced UCNS helpers, classes, defaults, closures, and globals match the clean tracked source at that exact HEAD; otherwise the identity is hmmm
+#   then: each executing dependency function and its transitively referenced UCNS helpers, classes, defaults, closures, and globals match either clean tracked source at that exact HEAD or the complete installed source map owned by EPAC for that commit; otherwise the identity is hmmm
 #   class: provenance
 #
 # id: epac_ucns_verification_reuses_only_identical_witness
@@ -50,7 +55,9 @@ from __future__ import annotations
 
 from functools import lru_cache
 from hashlib import sha256
+from importlib import metadata, resources
 import inspect
+import json
 import marshal
 import os
 from pathlib import Path
@@ -144,13 +151,18 @@ def _head_and_index_witness(root: Path) -> tuple[str, str] | None:
 
 
 def _normalized_code(code: CodeType) -> tuple[object, ...]:
-    constants = tuple(
-        ("code", _normalized_code(item)) if isinstance(item, CodeType) else item
-        for item in code.co_consts
-    )
+    def constant(item):
+        if isinstance(item, CodeType):
+            return ("code", _normalized_code(item))
+        if isinstance(item, tuple):
+            return ("tuple", tuple(constant(value) for value in item))
+        if isinstance(item, frozenset):
+            return ("frozenset", tuple(sorted((constant(value) for value in item), key=repr)))
+        return item
+    constants = tuple(constant(item) for item in code.co_consts)
     return (
         code.co_name,
-        code.co_qualname,
+        getattr(code, "co_qualname", code.co_name),
         code.co_argcount,
         code.co_posonlyargcount,
         code.co_kwonlyargcount,
@@ -163,8 +175,16 @@ def _normalized_code(code: CodeType) -> tuple[object, ...]:
         code.co_varnames,
         code.co_freevars,
         code.co_cellvars,
-        code.co_exceptiontable,
+        getattr(code, "co_exceptiontable", b""),
     )
+
+
+def _referenced_names(code: CodeType) -> set[str]:
+    names = set(code.co_names)
+    for constant in code.co_consts:
+        if isinstance(constant, CodeType):
+            names.update(_referenced_names(constant))
+    return names
 
 
 def _freeze_loaded_state(
@@ -219,7 +239,7 @@ def _freeze_loaded_state(
         effective_builtins = value.__builtins__
         if isinstance(effective_builtins, ModuleType):
             effective_builtins = vars(effective_builtins)
-        for name in sorted(set(value.__code__.co_names)):
+        for name in sorted(_referenced_names(value.__code__)):
             if name in value.__globals__:
                 global_state.append(
                     (name, _freeze_loaded_state(value.__globals__[name], owner_module, seen))
@@ -266,7 +286,8 @@ def _freeze_loaded_state(
             (name, _freeze_loaded_state(item.value, owner_module, seen))
             for name, item in getattr(value, "__members__", {}).items()
         )
-        return ("class", value.__qualname__, tuple(attributes), members)
+        bases = tuple(_freeze_loaded_state(base, owner_module, seen) for base in value.__bases__)
+        return ("class", value.__qualname__, tuple(attributes), members, bases)
     value_type = type(value)
     if value_type.__module__ == owner_module and is_dataclass(value):
         return (
@@ -285,7 +306,10 @@ def _freeze_loaded_state(
 def _transitive_fingerprint(dependency: Callable[..., object]) -> str:
     owner_module = getattr(dependency, "__module__", "")
     frozen = _freeze_loaded_state(dependency, owner_module, {})
-    return sha256(marshal.dumps(frozen)).hexdigest()
+    # v3+ records incidental sharing of immutable serialization objects. Loaded
+    # bytecode and fresh compilation can share equal strings differently on 3.10.
+    # Runtime aliasing is already explicit in the frozen state's "ref" records.
+    return sha256(marshal.dumps(frozen, 2)).hexdigest()
 
 
 def _fresh_dependency_fingerprints(
@@ -310,7 +334,9 @@ def _fresh_dependency_fingerprints(
             item: object = module
             for part in qualname.split("."):
                 item = getattr(item, part)
-            if not isinstance(item, FunctionType):
+            if inspect.ismethod(item):
+                item = item.__func__
+            if not isinstance(item, (FunctionType, type)):
                 return None
             result[qualname] = _transitive_fingerprint(item)
         return result
@@ -323,13 +349,82 @@ def _fresh_dependency_fingerprints(
             sys.modules[module_name] = prior
 
 
-def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path, tuple[tuple[object, ...], ...]] | None:
+def _dependency_closure(dependencies: Sequence[Callable[..., object]]) -> tuple[Callable[..., object], ...]:
+    """Give UCNS-owned cross-module state its own fresh-source comparison.
+
+    A freshly compiled entry module still imports from the live interpreter.
+    Separate records prevent a patched imported helper from validating itself.
+    Module-valued references conservatively include that UCNS module's exports.
+    """
+    records = {id(value): value for value in dependencies}
+    seen: set[int] = set()
+
+    def owned(name: str) -> bool:
+        return name == "ucns" or name.startswith("ucns.")
+
+    def visit(value: object, owner: str) -> None:
+        module_name = getattr(value, "__module__", "")
+        if isinstance(value, (FunctionType, type)) and module_name != owner:
+            if not owned(module_name):
+                return
+            records[id(value)] = value
+            owner = module_name
+        if id(value) in seen:
+            return
+        seen.add(id(value))
+        if isinstance(value, FunctionType):
+            builtins = value.__builtins__
+            if isinstance(builtins, ModuleType):
+                builtins = vars(builtins)
+            for name in sorted(_referenced_names(value.__code__)):
+                if name in value.__globals__:
+                    visit(value.__globals__[name], owner)
+                elif isinstance(builtins, dict) and name in builtins:
+                    visit(builtins[name], owner)
+            for item in (value.__defaults__, value.__kwdefaults__, value.__annotations__):
+                visit(item, owner)
+            for cell in value.__closure__ or ():
+                visit(cell.cell_contents, owner)
+        elif isinstance(value, type):
+            for item in vars(value).values():
+                if isinstance(item, (staticmethod, classmethod)):
+                    item = item.__func__
+                if isinstance(item, property):
+                    item = (item.fget, item.fset, item.fdel)
+                visit(item, owner)
+            for base in value.__bases__:
+                visit(base, owner)
+        elif isinstance(value, ModuleType):
+            if owned(value.__name__):
+                for item in vars(value).values():
+                    visit(item, "")
+        elif isinstance(value, dict):
+            for key, item in value.items():
+                visit(key, owner)
+                visit(item, owner)
+        elif isinstance(value, (tuple, list, set, frozenset)):
+            for item in value:
+                visit(item, owner)
+        elif isinstance(value, Enum) and owned(type(value).__module__):
+            visit(type(value), owner)
+            visit(value.value, owner)
+        elif is_dataclass(value) and owned(type(value).__module__):
+            visit(type(value), owner)
+            for field in fields(value):
+                visit(getattr(value, field.name), owner)
+
+    for dependency in dependencies:
+        visit(dependency, getattr(dependency, "__module__", ""))
+    return tuple(records.values())
+
+
+def _source_records(dependencies: Sequence[Callable[..., object]], *, installed_root: Path | None = None) -> tuple[Path, tuple[tuple[object, ...], ...]] | None:
     records: list[tuple[object, ...]] = []
     root: Path | None = None
-    for dependency in dependencies:
+    for dependency in _dependency_closure(dependencies):
         code = getattr(dependency, "__code__", None)
         qualname = getattr(dependency, "__qualname__", None)
-        if not isinstance(code, CodeType) or not isinstance(qualname, str):
+        if not (isinstance(code, CodeType) or isinstance(dependency, type)) or not isinstance(qualname, str):
             return None
         try:
             path = Path(inspect.getfile(dependency)).resolve()
@@ -337,7 +432,7 @@ def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path
             stat = path.stat()
         except (OSError, TypeError):
             return None
-        dependency_root = _git_root(path)
+        dependency_root = installed_root or _git_root(path)
         if dependency_root is None or (root is not None and dependency_root != root):
             return None
         root = dependency_root
@@ -358,6 +453,55 @@ def _source_records(dependencies: Sequence[Callable[..., object]]) -> tuple[Path
     if root is None:
         return None
     return root, tuple(records)
+
+
+@lru_cache(maxsize=32)
+def _verify_installed_witness(
+    pinned_commit: str,
+    lock_bytes: bytes,
+    source_files: tuple[tuple[str, str], ...],
+    records: tuple[tuple[object, ...], ...],
+) -> str:
+    """Compare installed source to an EPAC-owned exact upstream source map."""
+    lock = json.loads(lock_bytes)
+    if lock.get("repository") != "The-Interdependency/ucns" or lock.get("commit") != pinned_commit:
+        return "hmmm"
+    if dict(source_files) != lock.get("installed_source_sha256") or not records:
+        return "hmmm"
+    for relative, absolute, qualname, loaded_digest, disk_digest, _mode in records:
+        if lock["installed_source_sha256"].get(relative) != disk_digest:
+            return "hmmm"
+        expected = _fresh_dependency_fingerprints(Path(absolute), disk_digest, (qualname,))
+        if expected is None or expected.get(qualname) != loaded_digest:
+            return "hmmm"
+    return pinned_commit
+
+
+def _installed_identity(pinned_commit: str, dependencies: Sequence[Callable[..., object]]) -> str | None:
+    """Return None for a checkout, hmmm for an unverified installed runtime."""
+    try:
+        distribution = metadata.distribution("ucns")
+        listed = {str(path) for path in distribution.files or ()}
+        if "ucns/__init__.py" not in listed:
+            return None  # Editable installations retain the existing Git witness.
+        root = Path(distribution.locate_file("")).resolve()
+        source = _source_records(dependencies, installed_root=root)
+        if source is None:
+            return None  # Functions from an independent checkout use Git.
+        _, records = source
+        # Enumerate disk files as well as RECORD entries, detecting added modules.
+        files = []
+        for path in sorted((root / "ucns").rglob("*.py")):
+            relative = path.relative_to(root).as_posix()
+            if relative not in listed or not path.resolve().is_relative_to(root / "ucns"):
+                return "hmmm"
+            files.append((relative, sha256(path.read_bytes()).hexdigest()))
+        lock_bytes = resources.files("epac_data").joinpath("ucns-source-lock.json").read_bytes()
+        return _verify_installed_witness(pinned_commit, lock_bytes, tuple(files), records)
+    except metadata.PackageNotFoundError:
+        return None
+    except (OSError, ValueError, TypeError, KeyError):
+        return "hmmm"
 
 
 def _git_blob_mode(filesystem_mode: int) -> str:
@@ -477,6 +621,9 @@ def verify_loaded_ucns_commit(
 
     if not HEX40.fullmatch(pinned_commit):
         return "hmmm"
+    installed = _installed_identity(pinned_commit, dependencies)
+    if installed is not None:
+        return installed
     source = _source_records(dependencies)
     if source is None:
         return "hmmm"
@@ -502,12 +649,16 @@ def clear_ucns_verification_cache() -> None:
     """Clear cached witnesses; intended for isolated tests and process repair."""
 
     _verify_witness.cache_clear()
+    _verify_installed_witness.cache_clear()
 
 
 def ucns_verification_cache_info():
     """Expose cache counters for provenance/performance regression tests."""
 
-    return _verify_witness.cache_info()
+    git = _verify_witness.cache_info()
+    installed = _verify_installed_witness.cache_info()
+    return type(git)(git.hits + installed.hits, git.misses + installed.misses,
+                     git.maxsize + installed.maxsize, git.currsize + installed.currsize)
 
 
 __all__ = [

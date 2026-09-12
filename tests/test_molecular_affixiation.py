@@ -4,8 +4,8 @@ import sys
 import unittest
 from pathlib import Path
 
-EPAC_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(EPAC_ROOT))
+import epac_public_gonol as _installed_epac
+EPAC_ROOT = Path(_installed_epac.__file__).resolve().parent
 
 from epac_dimensional_arity import quaternion_structure_readout
 from epac_molecular import construct_declared_molecules, replay_molecule
@@ -14,7 +14,13 @@ from epac_molecular import construct_declared_molecules, replay_molecule
 class MolecularAffixiationTest(unittest.TestCase):
     def test_declared_formulas_close_and_replay(self) -> None:
         molecules = construct_declared_molecules()
-        self.assertEqual(set(molecules), {"H2", "H2O", "NH3", "CH4", "CO2"})
+        # After deliberate enlargement of the preregistered molecular experiment
+        # (next maximal step after broadening subatomic coverage to Z=1..36),
+        # more formulas are constructed. The original preregistered set must still work.
+        original_prereg = {"H2", "H2O", "NH3", "CH4", "CO2"}
+        self.assertTrue(original_prereg.issubset(set(molecules)))
+        self.assertGreaterEqual(len(molecules), 5)
+
         for formula, construction in molecules.items():
             replayed = replay_molecule(construction)
             self.assertEqual(construction.receipt.receipt_digest, replayed.receipt_digest, formula)
@@ -103,6 +109,15 @@ class MolecularAffixiationTest(unittest.TestCase):
         self.assertEqual(len(quaternion_structure_readout(molecules["CH4"].receipt.structure)), 6)
 
     def test_ucns_coupling_binds_declared_attachments(self) -> None:
+        from unittest.mock import patch
+        from epac_molecular import declared_valence_attachment_count
+        expected = {"H2": 2, "H2O": 2, "NH3": 3, "CH4": 4, "CO2": 4,
+                    "H2S": 2, "BF3": 3, "PH3": 3, "SiH4": 4}
+        with patch("epac_molecular._instantiate", side_effect=AssertionError("count must not construct gonols")):
+            self.assertEqual({formula: declared_valence_attachment_count(formula)
+                              for formula in expected}, expected)
+            with self.assertRaisesRegex(ValueError, "outside the declared run"):
+                declared_valence_attachment_count("not-declared")
         molecules = construct_declared_molecules()
         signatures = {formula: item.invariants["ucns_coupling_signature"] for formula, item in molecules.items()}
         self.assertEqual(len(set(signatures.values())), len(molecules))

@@ -62,7 +62,7 @@ import json
 from pathlib import Path
 from types import MappingProxyType
 
-import element_affixiation_candidate as candidate
+from epac_subatomic import element_affixiation_candidate as candidate
 from ucns import (
     PUBLIC_GONOL_157,
     PUBLIC_GONOL_SHA256,
@@ -72,8 +72,8 @@ from ucns import (
 )
 
 
-RECEIPT_ROOT = Path(__file__).resolve().parent / "receipts"
-CURRENT_RECEIPT_ROOT = RECEIPT_ROOT / "ucns-828c0b8"
+RECEIPT_ROOT = Path(candidate.__file__).resolve().parent / "receipts"
+CURRENT_RECEIPT_ROOT = RECEIPT_ROOT / ("ucns-" + candidate.PINNED_UCNS_COMMIT[:7])
 
 
 def test_imports_consume_only_established_ucns_surfaces():
@@ -199,6 +199,8 @@ def test_historical_receipts_remain_versioned_evidence():
         historical = json.loads((RECEIPT_ROOT / f"{name}.json").read_text())
         assert historical["source_commits"]["ucns"] == "1975fe70cf4e0826a8020c2da3047569e277af64"
         assert historical["source_commits"]["ucns"] != candidate.SOURCE_COMMITS["ucns"]
+        previous = json.loads((RECEIPT_ROOT / "ucns-828c0b8" / f"{name}.json").read_text())
+        assert previous["source_commits"]["ucns"] == "828c0b8bbcfc267efb5701da714191c1f73a81ff"
 
 
 def test_no_physics_or_canon_claim():
@@ -207,5 +209,5 @@ def test_no_physics_or_canon_claim():
         assert element.status == "CROSS-DOMAIN-HYPOTHESIS"
         assert element.closure_scale == "epac.subatomic.atomic"
     assert candidate.SOURCE_COMMITS["metapat"] == "34d954aa1e2092e615b03a180500f6b6977f501e"
-    assert candidate.SOURCE_COMMITS["ucns"] == "828c0b8bbcfc267efb5701da714191c1f73a81ff"
+    assert candidate.SOURCE_COMMITS["ucns"] == candidate.PINNED_UCNS_COMMIT
     assert PUBLIC_GONOL_SHA256 == "55d10c84529a4d7bc7714786357e977b68d9df2ac3f73d20e229580b552c2ef5"
