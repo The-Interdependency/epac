@@ -4,7 +4,7 @@
   "files": [
     {
       "forge_sha256": "f1a4639327828f6bc5ca39a3a1c441d5fc3f3b60823e646d149920e225554c11",
-      "handoff_sha256": "a2e8393466d9330166422492eab20f91d6dd7cb9b0deddd35b7544d23704a359",
+      "handoff_sha256": "3f383f6edca1a8fce5033e4165405122a2c17b2110d37e4a2999f900904ccbdc",
       "source_path": "research/epac/README.md",
       "target_path": "README.md"
     },
@@ -329,7 +329,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "The four caadc review findings are repaired. Known structural observers remain boundary-relevant omissions; only their unmapped quotient effects are unknown. The inventory has 136 callable addresses, 39 ambiguous, 58 known boundary-relevant, 14 known omissions and 3 measured distinguishing readouts. Eleven unmeasured effects are excluded from the three-candidate minimal-refinement search, which finds two singleton refinements of the 21-class partition. Dependent tests, capstone prose and result documents now agree. Duplicate manifest keys reject recursively. Release replay requires exactly four assets and byte-exact canonical SHA256SUMS for wheel, sdist and manifest; private replay requires exactly two package assets. Twenty-one targeted tests pass in 77.51 seconds, including 17 mismatched-input scenarios and 23 invalid manifest/license/checksum cases. Four gate tests also pass on Python 3.10.20 in 37.77 seconds. Real private build/Twine/source and independent gates pass at 5e29ccbf6f483fb6029219edbda8ead8b7c8fd36 (189 Git/196 archived/64 wheel files). Synthetic license fixture builds byte-identically across umasks022/077; it grants no actual license or release qualification. The complete 209-test matrix and exact-head review remain pending. Owner license choice is unanswered; stable publication and authority transfer remain incomplete.",
+    "final_dependency_pin_and_clean_package_matrix": "MPL-2.0 is recorded from the owner\u2019s instruction that EPAC is weak copyleft, resolved using the existing organization convention and disclosed before execution. The unmodified official license, explicit project SPDX/license-files metadata, and source-selection provenance replace the unresolved license status. CI now builds normalized four-asset candidates with managed CPython3.11.15 and the exact release toolchain before wheel/sdist replay on Python3.10/3.11/3.12. Every matrix asset must match the independently reproduced local candidate before publication. Preceding625e537 passed exact review, six private209-test installs with no skips and private Stack consumption of all nine molecules and14 FALSIFIED standings; acceptance SHA2566e60f2bb969a331ba70f295fbd66c25146b0922ed9fe075629d48dae5f132b88. That evidence is historical after license/build-pipeline changes. Licensed exact-head review, reproducibility, all six same-candidate installs, prepublication Stack verification, immutable publication, public reconsumption and the authority transition remain pending. No upstream license or scientific authority transfers.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
