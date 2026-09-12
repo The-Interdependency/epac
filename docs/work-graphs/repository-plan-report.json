@@ -10,9 +10,9 @@
   },
   "source": {
     "branch": "graduate/package-release-20260912",
-    "commit": "7b55cbaaf3c87cb54fd53d31ad5ea5698f56e6a0",
+    "commit": "e81120d2efcc306b7f658dc6848a4feee761fe85",
     "generated_at": "2026-09-12",
-    "note": "Describes the preceding implementation commit. The accepted UCNS evidence source is bound and pin-specific checks pass. The preceding 181-test private artifact matrix passed all six installs; the final-pin matrix is pending. Owner-selected licensing and all subsequent stable publication/authority gates remain open."
+    "note": "Describes the preceding implementation commit. The accepted UCNS pin is bound. The previous 181-test private matrix passed all six installs; latest review repairs pass 42 affected tests and 23 subtests. The expanded 186-test matrix is pending; owner-selected licensing and stable publication/authority gates remain open."
   },
   "authority": {
     "owns": [
@@ -41,7 +41,7 @@
   },
   "status": {
     "state": "extracted candidate; package preparation implemented; graduation incomplete",
-    "current_claim": "The independent package preserves the 45-file continued forge handoff at stack 0e8384bbb60e4c2189016a212bdd0030d04aed7d. All 14 comparison standings remain FALSIFIED. The preceding private wheel/sdist matrix passed 181 tests and 23 subtests per installation on Python 3.10, 3.11, and 3.12. The package now binds accepted UCNS source 6eea1828a34ed8ec99879f8090ea5d48352d8c2d by archive and complete installed-source hashes; 29 dependency-facing tests and 23 subtests pass, and new H/He/Li/C receipts replay exactly. Final-pin private artifact checks are pending. Owner-selected licensing, immutable release qualification, same-candidate stack verification, publication, and scoped authority transition remain open."
+    "current_claim": "The package preserves the 45-file forge continuation at stack 0e8384bbb60e4c2189016a212bdd0030d04aed7d and binds accepted UCNS 6eea1828a34ed8ec99879f8090ea5d48352d8c2d by source archive and complete installed-source hashes. The previous six clean wheel/sdist installs passed 181 tests and 23 subtests each. Latest review repairs preserve failed probes as UNRESOLVED, verify transitive cross-module runtime dependencies against fresh source, use the archived dependency lock, and preserve/escape carried visualization evidence. All 42 affected tests and 23 subtests pass; the expanded 186-test artifact matrix is pending. Historical receipts and 14 FALSIFIED comparison standings are retained. Owner-selected licensing, immutable candidate qualification, same-candidate stack verification, publication, and scoped authority transition remain open."
   },
   "delivered": [
     {
