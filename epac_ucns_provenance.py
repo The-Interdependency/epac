@@ -179,6 +179,14 @@ def _normalized_code(code: CodeType) -> tuple[object, ...]:
     )
 
 
+def _referenced_names(code: CodeType) -> set[str]:
+    names = set(code.co_names)
+    for constant in code.co_consts:
+        if isinstance(constant, CodeType):
+            names.update(_referenced_names(constant))
+    return names
+
+
 def _freeze_loaded_state(
     value: object,
     owner_module: str,
@@ -231,7 +239,7 @@ def _freeze_loaded_state(
         effective_builtins = value.__builtins__
         if isinstance(effective_builtins, ModuleType):
             effective_builtins = vars(effective_builtins)
-        for name in sorted(set(value.__code__.co_names)):
+        for name in sorted(_referenced_names(value.__code__)):
             if name in value.__globals__:
                 global_state.append(
                     (name, _freeze_loaded_state(value.__globals__[name], owner_module, seen))
@@ -278,7 +286,8 @@ def _freeze_loaded_state(
             (name, _freeze_loaded_state(item.value, owner_module, seen))
             for name, item in getattr(value, "__members__", {}).items()
         )
-        return ("class", value.__qualname__, tuple(attributes), members)
+        bases = tuple(_freeze_loaded_state(base, owner_module, seen) for base in value.__bases__)
+        return ("class", value.__qualname__, tuple(attributes), members, bases)
     value_type = type(value)
     if value_type.__module__ == owner_module and is_dataclass(value):
         return (
@@ -325,7 +334,9 @@ def _fresh_dependency_fingerprints(
             item: object = module
             for part in qualname.split("."):
                 item = getattr(item, part)
-            if not isinstance(item, FunctionType):
+            if inspect.ismethod(item):
+                item = item.__func__
+            if not isinstance(item, (FunctionType, type)):
                 return None
             result[qualname] = _transitive_fingerprint(item)
         return result
@@ -338,13 +349,82 @@ def _fresh_dependency_fingerprints(
             sys.modules[module_name] = prior
 
 
+def _dependency_closure(dependencies: Sequence[Callable[..., object]]) -> tuple[Callable[..., object], ...]:
+    """Give UCNS-owned cross-module state its own fresh-source comparison.
+
+    A freshly compiled entry module still imports from the live interpreter.
+    Separate records prevent a patched imported helper from validating itself.
+    Module-valued references conservatively include that UCNS module's exports.
+    """
+    records = {id(value): value for value in dependencies}
+    seen: set[int] = set()
+
+    def owned(name: str) -> bool:
+        return name == "ucns" or name.startswith("ucns.")
+
+    def visit(value: object, owner: str) -> None:
+        module_name = getattr(value, "__module__", "")
+        if isinstance(value, (FunctionType, type)) and module_name != owner:
+            if not owned(module_name):
+                return
+            records[id(value)] = value
+            owner = module_name
+        if id(value) in seen:
+            return
+        seen.add(id(value))
+        if isinstance(value, FunctionType):
+            builtins = value.__builtins__
+            if isinstance(builtins, ModuleType):
+                builtins = vars(builtins)
+            for name in sorted(_referenced_names(value.__code__)):
+                if name in value.__globals__:
+                    visit(value.__globals__[name], owner)
+                elif isinstance(builtins, dict) and name in builtins:
+                    visit(builtins[name], owner)
+            for item in (value.__defaults__, value.__kwdefaults__, value.__annotations__):
+                visit(item, owner)
+            for cell in value.__closure__ or ():
+                visit(cell.cell_contents, owner)
+        elif isinstance(value, type):
+            for item in vars(value).values():
+                if isinstance(item, (staticmethod, classmethod)):
+                    item = item.__func__
+                if isinstance(item, property):
+                    item = (item.fget, item.fset, item.fdel)
+                visit(item, owner)
+            for base in value.__bases__:
+                visit(base, owner)
+        elif isinstance(value, ModuleType):
+            if owned(value.__name__):
+                for item in vars(value).values():
+                    visit(item, "")
+        elif isinstance(value, dict):
+            for key, item in value.items():
+                visit(key, owner)
+                visit(item, owner)
+        elif isinstance(value, (tuple, list, set, frozenset)):
+            for item in value:
+                visit(item, owner)
+        elif isinstance(value, Enum) and owned(type(value).__module__):
+            visit(type(value), owner)
+            visit(value.value, owner)
+        elif is_dataclass(value) and owned(type(value).__module__):
+            visit(type(value), owner)
+            for field in fields(value):
+                visit(getattr(value, field.name), owner)
+
+    for dependency in dependencies:
+        visit(dependency, getattr(dependency, "__module__", ""))
+    return tuple(records.values())
+
+
 def _source_records(dependencies: Sequence[Callable[..., object]], *, installed_root: Path | None = None) -> tuple[Path, tuple[tuple[object, ...], ...]] | None:
     records: list[tuple[object, ...]] = []
     root: Path | None = None
-    for dependency in dependencies:
+    for dependency in _dependency_closure(dependencies):
         code = getattr(dependency, "__code__", None)
         qualname = getattr(dependency, "__qualname__", None)
-        if not isinstance(code, CodeType) or not isinstance(qualname, str):
+        if not (isinstance(code, CodeType) or isinstance(dependency, type)) or not isinstance(qualname, str):
             return None
         try:
             path = Path(inspect.getfile(dependency)).resolve()

@@ -47,6 +47,28 @@ from epac_comparison import SEALED_PATH as SEALED
 
 
 class GeometryComparisonAfterConstructionTest(unittest.TestCase):
+    def test_failed_structural_probe_is_unresolved(self) -> None:
+        from unittest.mock import patch
+        from epac_boundary_probe_completeness import OMITTED_OBSERVABLES
+        states = [{"state_id": str(index), "b": (3, 1, 1), "behavior": {}} for index in range(27)]
+        reference = {"outputs": {"partitions": {"full_admissible_identity_free": [[state["state_id"] for state in states]]}}}
+        with patch("epac_molecular._build_frozen_27_states", return_value=states), patch("epac_molecular.epac_representation_audit", return_value=reference):
+            scenarios = (
+                patch("epac_boundary_probe_completeness._state_contexts", side_effect=RuntimeError("probe unavailable")),
+                patch("epac_boundary_probe_completeness._state_contexts", return_value={}),
+            )
+            for scenario in scenarios:
+                with scenario:
+                    record = epac_probe_relativity_formalization()
+                    self.assertEqual(record["status"], "UNRESOLVED")
+                    self.assertEqual(record["outputs"]["overall"], "UNRESOLVED")
+            def failing_probe(_context):
+                raise RuntimeError("omitted observable failed")
+            with patch("epac_boundary_probe_completeness._state_contexts", return_value={state["state_id"]: object() for state in states}), patch.dict(OMITTED_OBSERVABLES, {next(iter(OMITTED_OBSERVABLES)): failing_probe}, clear=True):
+                record = epac_probe_relativity_formalization()
+                self.assertEqual(record["status"], "UNRESOLVED")
+                self.assertIn("omitted observable failed", record["error"])
+
     def test_construction_omits_sealed_shape_labels(self) -> None:
         self.assertEqual(construction_sources_omit_sealed_labels(), ())
         labels = {row["known_shape"] for row in json.loads(SEALED.read_text())["molecules"].values()}
@@ -1069,6 +1091,7 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
         pr = record["epac_probe_relativity_formalization"]
         self.assertTrue(pr.get("sealed"))
         self.assertTrue(pr.get("no_new_coordinate"))
+        self.assertEqual(record["probe_relativity_overall"], pr.get("outputs", {}).get("overall", "UNRESOLVED"))
         self.assertIn(record["probe_relativity_overall"], ("SURVIVED", "FALSIFIED", "UNRESOLVED", "BLOCKED"))
 
 

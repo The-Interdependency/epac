@@ -76,7 +76,7 @@
     },
     {
       "forge_sha256": "f96f81e37127ada9c93008440929d499466ae2c28024575ba58f59dd31f8e10f",
-      "handoff_sha256": "32933b3e0d881f44ff16ca83d06bca59016365a1c4d0d8e8035fa6c344c0db05",
+      "handoff_sha256": "1b30b8ee684dac4b16a791cfd34e75556a52c73b3dc8695f3652bb9095902edc",
       "source_path": "research/epac/epac_comparison.py",
       "target_path": "epac_comparison.py"
     },
@@ -88,7 +88,7 @@
     },
     {
       "forge_sha256": "df121c18b37b4c2f1acf58a879b5f4f02974408cc91a5747a74b2e6cf42d726a",
-      "handoff_sha256": "94c7fad74eaaf647a9d9fb6ba0e8960113a8bb310ea196a9e9b6f8ef22db5db5",
+      "handoff_sha256": "093f5cfa22fed8337677f6bfe57232aee2a84048a647142451719dcd184a4c81",
       "source_path": "research/epac/epac_molecular.py",
       "target_path": "epac_molecular.py"
     },
@@ -208,7 +208,7 @@
     },
     {
       "forge_sha256": "7b433384035f726626a0a40799537604c4b32aa677232d2bcee88d0bfa9bfbc5",
-      "handoff_sha256": "cf40ad5b53529c757b48a04c759c6cab33b14f3ae39df5f702c980c070e6e3ea",
+      "handoff_sha256": "6326319aaab3d6df671d9172e9fd3f6ce5c5f9d4bd3f3b41c07ce648484a576f",
       "source_path": "research/epac/tests/test_geometry_comparison_after_construction.py",
       "target_path": "tests/test_geometry_comparison_after_construction.py"
     },
@@ -226,7 +226,7 @@
     },
     {
       "forge_sha256": "14c3563267d21e41f04e20e8dbdd8c88a071841b77b9a4ba0936835950a6d826",
-      "handoff_sha256": "e0680cd4e2ddc364475cf8aa88ee88998eae05f56fb57062713dbac0de779536",
+      "handoff_sha256": "bdbc86edf33f8ec597298fdf2b04f6f357ee51b4b5bae2216173a90895f2bce5",
       "source_path": "research/epac/tests/test_spiral_population.py",
       "target_path": "tests/test_spiral_population.py"
     },
@@ -268,7 +268,7 @@
     },
     {
       "forge_sha256": "4a888dd253665518cca48e764262e2ec1b3be53a713d15ca17d5cd48af18361e",
-      "handoff_sha256": "df9182f31d87df38a7e05421b171b4637049b19156a5ad732364555d5f888fe4",
+      "handoff_sha256": "c9fd2831f8f6d69e04f33b3fd038a6dc50f5b366e55de914bcbb47b2dd9d0220",
       "source_path": "research/epac/viz/spiral_viz.py",
       "target_path": "viz/spiral_viz.py"
     }
@@ -282,7 +282,11 @@
     "Visualizer usage uses the installed epac_viz namespace.",
     "All sealed classes enter the construction leakage detector.",
     "Standing partitions are restricted to the frozen preregistered formula population; a positive-control test reaches SURVIVED.",
-    "Each installed replay receipt identifies its own consumed artifact."
+    "Each installed replay receipt identifies its own consumed artifact.",
+    "Failed or missing structural probe evidence remains UNRESOLVED; the comparison reuses one probe-relativity result.",
+    "Candidate dependency export uses the archived lock and verifier, regardless of caller checkout.",
+    "Loaded UCNS cross-module functions, classes, module exports and nested-code references receive independent source witnesses.",
+    "Visualizer retains carried subatomic frames/axes, escapes phase text, and scales stations within supported SVG widths."
   ],
   "schema": "epac.forge-continuation-handoff",
   "scope": "Preserve continued EPAC research and adapt imports for independent packaging; no completed authority transfer or domain ratification.",
@@ -315,7 +319,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea1828a34ed8ec99879f8090ea5d48352d8c2d is bound; the new private artifact matrix is pending. Licensed release qualification remains separate.",
+    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 is bound. All 42 affected tests and 23 subtests passed after review repairs; the expanded 186-test artifact matrix is pending. Licensed qualification remains separate.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
@@ -344,15 +348,15 @@
         "wheel",
         "sdist"
       ],
-      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34689026423",
+      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34690063986",
       "python_versions": [
         "3.10",
         "3.11",
         "3.12"
       ],
-      "scope": "Preceding source before final accepted UCNS dependency update; not release qualification.",
+      "scope": "Preceding final-pin source before latest review repairs; private checks only, not release qualification.",
       "skips": 0,
-      "source_commit": "57b2bd3396e1b1bc19445701a762ec8cd33d198b",
+      "source_commit": "6443982707425f1dd3fa0ae74caa1d0070ab3a05",
       "status": "passed",
       "tests_per_artifact": 181
     },

@@ -29,6 +29,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 from types import FunctionType, ModuleType, SimpleNamespace
 import unittest
@@ -66,6 +67,42 @@ def _git_fixture():
 class UcnsProvenanceTest(unittest.TestCase):
     def tearDown(self) -> None:
         clear_ucns_verification_cache()
+
+    def test_installed_cross_module_helpers_and_classes_are_verified(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "ucns"
+            package.mkdir()
+            sources = {
+                "ucns/__init__.py": "",
+                "ucns/_epac_fixture_helper.py": "def helper(value): return value\nclass Carrier:\n    factor = 2\n",
+                "ucns/_epac_fixture_entry.py": "from ucns._epac_fixture_helper import helper, Carrier\nfrom ucns import _epac_fixture_helper as helpers\ndef public(value): return sum(helper(item) for item in (value,)) + helpers.helper(value) + Carrier.factor\n",
+            }
+            for name, source in sources.items():
+                (root / name).write_text(source)
+            helper = ModuleType("ucns._epac_fixture_helper")
+            entry = ModuleType("ucns._epac_fixture_entry")
+            helper.__file__ = str(root / "ucns/_epac_fixture_helper.py")
+            entry.__file__ = str(root / "ucns/_epac_fixture_entry.py")
+            distribution = SimpleNamespace(files=list(sources), locate_file=lambda name: root / name)
+            lock = {"repository": "The-Interdependency/ucns", "commit": PINNED_UCNS_COMMIT,
+                    "installed_source_sha256": {name: sha256((root / name).read_bytes()).hexdigest() for name in sources}}
+            (root / "ucns-source-lock.json").write_text(json.dumps(lock))
+            with patch.dict(sys.modules, {helper.__name__: helper, entry.__name__: entry}), patch("epac_ucns_provenance.metadata.distribution", return_value=distribution), patch("epac_ucns_provenance.resources.files", return_value=root):
+                exec(compile(sources["ucns/_epac_fixture_helper.py"], helper.__file__, "exec", dont_inherit=True), helper.__dict__)
+                exec(compile(sources["ucns/_epac_fixture_entry.py"], entry.__file__, "exec", dont_inherit=True), entry.__dict__)
+                def verify():
+                    return verify_loaded_ucns_commit(pinned_commit=PINNED_UCNS_COMMIT, dependencies=(entry.public,))
+                self.assertEqual(verify(), PINNED_UCNS_COMMIT)
+                forged = {"__name__": helper.__name__}
+                exec(compile("def helper(value): return 7\n", helper.__file__, "exec", dont_inherit=True), forged)
+                with patch.dict(entry.public.__globals__, helper=forged["helper"]):
+                    self.assertEqual(verify(), "hmmm")
+                with patch.object(helper, "helper", forged["helper"]):
+                    self.assertEqual(verify(), "hmmm")
+                with patch.object(helper.Carrier, "factor", 9):
+                    self.assertEqual(verify(), "hmmm")
+                self.assertEqual(verify(), PINNED_UCNS_COMMIT)
 
     def test_filesystem_permissions_normalize_to_git_blob_modes(self) -> None:
         self.assertEqual(_git_blob_mode(0o100600), "100644")

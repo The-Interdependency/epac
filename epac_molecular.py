@@ -2306,21 +2306,24 @@ def epac_probe_relativity_formalization() -> dict[str, Any]:
     except Exception:
         _state_contexts_fn = None
 
-    # Precompute structural outputs per state_id for the 13 (if contexts available)
+    def unresolved_structural(reason: str, error: Exception | None = None) -> dict[str, Any]:
+        return {"status": "UNRESOLVED", "reason": reason,
+                "error": str(error) if error is not None else None,
+                "sealed": True, "no_new_coordinate": True,
+                "outputs": {"overall": "UNRESOLVED", "hmmm": reason}}
+
+    # Every declared structural probe must be observed for every frozen state.
     structural_outputs: dict[str, dict[str, Any]] = {}
-    if _structural_fns is not None and _state_contexts_fn is not None:
-        try:
-            contexts = _state_contexts_fn()
-            for sid in state_ids:
-                if sid in contexts:
-                    ctx = contexts[sid]
-                    structural_outputs[sid] = {
-                        name: fn(ctx) for name, fn in _structural_fns.items()
-                    }
-                else:
-                    structural_outputs[sid] = {}
-        except Exception:
-            structural_outputs = {}
+    if _structural_fns is None or _state_contexts_fn is None:
+        return unresolved_structural("sealed structural probe evaluation is unavailable")
+    try:
+        contexts = _state_contexts_fn()
+        if not set(state_ids).issubset(contexts):
+            return unresolved_structural("sealed structural contexts omit frozen states")
+        for sid in state_ids:
+            structural_outputs[sid] = {name: fn(contexts[sid]) for name, fn in _structural_fns.items()}
+    except Exception as error:
+        return unresolved_structural("sealed structural probe evaluation failed", error)
 
     def _observable_value(st: dict[str, Any], name: str) -> Any:
         beh = st.get("behavior", {})

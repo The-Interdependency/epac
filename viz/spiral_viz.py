@@ -276,6 +276,7 @@ def extract_spiral_scene(obj: Any) -> SpiralScene:
         source_id = getattr(obj, "source_id", "element")
         relation = getattr(obj, "relation", "epac.atomic.element")
 
+    mob = _get_mobius(invariants)
     # Subatomic gonol receipt (PublicGonolReceipt); use the carried "lifted-spiral"
     # (first-class on subatomic gonols, parallel to element/molecule).
     if receipt is not None and ("subatomic" in str(getattr(receipt, "source_id", "")) or "subatomic" in str(getattr(receipt, "relation", ""))):
@@ -293,18 +294,20 @@ def extract_spiral_scene(obj: Any) -> SpiralScene:
                 fpart, apart, _ac = val.split(";", 2)
                 frames = tuple(fpart.split("|")) if fpart else ()
                 axes = tuple(sorted(a for a in apart.split(",") if a)) if apart else ()
-            except Exception:
-                pass
-        mob = {
-            "law": "ucns.native-mobius-root-loop",
-            "participant_axes": axes or ("nucleus",),
-            "attachment_slots": (),
-            "t": [0, 1, 2],
-            "visible_phase": ["0", "0", "0"],
-            "frame": frames or ["positive-local-frame", "reversed-local-frame", "positive-local-frame"],
-            "one_turn_flips_frame": True,
-            "complete_restored": True,
-        }
+            except (AttributeError, ValueError) as error:
+                raise ValueError("malformed carried lifted-spiral evidence") from error
+            if len(frames) != 3 or not all(frames) or not axes:
+                raise ValueError("carried lifted-spiral evidence requires three frames and declared axes")
+            mob = {
+                "law": "ucns.native-mobius-root-loop",
+                "participant_axes": axes,
+                "attachment_slots": (),
+                "t": [0, 1, 2],
+                "visible_phase": ["0", "0", "0"],
+                "frame": frames,
+                "one_turn_flips_frame": frames[0] != frames[1],
+                "complete_restored": frames[0] == frames[2],
+            }
 
     # Fallback: try common attributes
     if receipt is None:
@@ -312,8 +315,8 @@ def extract_spiral_scene(obj: Any) -> SpiralScene:
         invariants = getattr(obj, "invariants", {}) or {}
         source_id = getattr(receipt, "source_id", str(type(obj)))
         relation = getattr(receipt, "relation", "unknown")
+        mob = _get_mobius(invariants)
 
-    mob = _get_mobius(invariants)
     # For pure element gonols we may have no "mobius" invariant.
     # Build a minimal synthetic mobius from the structure so the visualizer
     # can still show the participant axes and charges on the spiral.
@@ -460,19 +463,16 @@ def render_scene_svg(
     - Participant axes listed under each station with their charges
     - Attachment arcs drawn between participants (center-ligand or symmetric)
     """
+    if width < 640:
+        raise ValueError("SVG width must be at least 640 pixels")
     title = title or f"Lifted Spiral — {scene.source_id}"
     margin = 40
-    station_w = 220
-    station_gap = 40
     top = 80
     ribbon_h = 110
     bottom = height - 60
 
-    stations_x = [
-        margin + station_w // 2,
-        margin + station_w + station_gap + station_w // 2,
-        margin + 2 * (station_w + station_gap) + station_w // 2,
-    ]
+    station_width = (width - 2 * margin) / 3
+    stations_x = [margin + station_width * (index + 0.5) for index in range(3)]
 
     parts: list[str] = []
     parts.append(
@@ -530,7 +530,7 @@ def render_scene_svg(
         )
         parts.append(
             f'<text x="{x}" y="{pill_y + 16}" text-anchor="middle" fill="#cbd5e1" '
-            f'font-family="monospace" font-size="11">visible: {ts.visible_phase}</text>'
+            f'font-family="monospace" font-size="11">visible: {_svg_escape(ts.visible_phase)}</text>'
         )
 
         # Frame indicator (arrow direction + label)

@@ -842,6 +842,7 @@ def compare_after_construction(root: Path = EPAC_ROOT) -> dict[str, Any]:
     # reproduces the sealed full admissible boundary behavior partition over the
     # frozen states (identifiers withheld).
     representation = epac_representation_audit()
+    probe_relativity = epac_probe_relativity_formalization()
 
     return {
         "opened_after_construction": True,
@@ -1002,8 +1003,8 @@ def compare_after_construction(root: Path = EPAC_ROOT) -> dict[str, Any]:
         # Probe-relativity formalization (O ↦ Q_O ↦ D_min(O)).
         # Uses the locked 27-state representation audit as immutable baseline.
         # Only already-declared admissible observable surfaces; no new observables.
-        "epac_probe_relativity_formalization": epac_probe_relativity_formalization(),
-        "probe_relativity_overall": epac_probe_relativity_formalization().get("outputs", {}).get("overall", "UNRESOLVED"),
+        "epac_probe_relativity_formalization": probe_relativity,
+        "probe_relativity_overall": probe_relativity.get("outputs", {}).get("overall", "UNRESOLVED"),
         "standings": {
             "charged_3_structure_as_sealed_shape_prediction": _standing(charged, known_shapes, control),
             "topology_3_structure_as_sealed_shape_prediction": _standing(topology, known_shapes, control),

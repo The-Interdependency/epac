@@ -21,7 +21,7 @@
 # === CONTRACTS ===
 # id: epac_distribution_replay_preserves_artifact_identity
 #   given: one source archive and wheel plus the exact dependency lock
-#   then: both clean installations match the wheel payload and pass the full suite with verified import origins and unchanged artifact hashes
+#   then: dependencies come from the archived candidate lock, and both clean installations match the wheel payload and pass the full suite with verified import origins and unchanged artifact hashes
 #   class: evidence
 # === END CONTRACTS ===
 # Usage: bash tools/replay_distributions.sh ROOT DIST NEW_OUTPUT PYTHON
@@ -36,7 +36,6 @@ runtime=${4:-python3}
 case "$output/" in "$repo/"*) echo 'OUTPUT must be outside source' >&2; exit 2;; esac
 test ! -e "$output"
 mkdir -p "$output"
-uv export --project "$repo" --locked --extra test --extra build --no-emit-project --no-dev --format requirements.txt --output-file "$output/dependencies.txt" >/dev/null
 (cd "$dist"; sha256sum ./*.whl ./*.tar.gz) > "$output/archives.sha256"
 mkdir "$output/source"
 uv venv --python "$runtime" "$output/verification-venv"
@@ -57,9 +56,10 @@ with tarfile.open(archives[0]) as archive:
     archive.extractall(output, filter="data")
 PY
 source_root=$(find "$output/source" -mindepth 1 -maxdepth 1 -type d)
-"$output/verification-venv/bin/python" "$repo/tools/verify_installed.py" snapshot "$source_root" "$output/source-snapshot.json"
+"$output/verification-venv/bin/python" "$source_root/tools/verify_installed.py" snapshot "$source_root" "$output/source-snapshot.json"
+uv export --project "$source_root" --locked --extra test --extra build --no-emit-project --no-dev --format requirements.txt --output-file "$output/dependencies.txt" >/dev/null
 for kind in wheel sdist; do
-  "$output/verification-venv/bin/python" "$repo/tools/verify_installed.py" verify-snapshot "$source_root" "$output/source-snapshot.json"
+  "$output/verification-venv/bin/python" "$source_root/tools/verify_installed.py" verify-snapshot "$source_root" "$output/source-snapshot.json"
   environment="$output/$kind-venv"
   uv venv --python "$runtime" "$environment"
   uv pip sync --python "$environment/bin/python" --require-hashes "$output/dependencies.txt"
@@ -68,8 +68,8 @@ for kind in wheel sdist; do
   (
     cd "$output"
     env -u PYTHONPATH -u PYTHONHOME -u PYTEST_ADDOPTS -u PYTEST_PLUGINS PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
-      "$environment/bin/python" "$repo/tools/verify_installed.py" "$source_root" "$dist"/*.whl "$output/$kind-receipt.json" "${artifact[0]}"
+      "$environment/bin/python" "$source_root/tools/verify_installed.py" "$source_root" "$dist"/*.whl "$output/$kind-receipt.json" "${artifact[0]}"
   )
-  "$output/verification-venv/bin/python" "$repo/tools/verify_installed.py" verify-snapshot "$source_root" "$output/source-snapshot.json"
+  "$output/verification-venv/bin/python" "$source_root/tools/verify_installed.py" verify-snapshot "$source_root" "$output/source-snapshot.json"
 done
 (cd "$dist"; sha256sum -c "$output/archives.sha256")
