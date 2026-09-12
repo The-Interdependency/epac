@@ -16,7 +16,7 @@
     },
     {
       "forge_sha256": "d82623ef38378fbff856a9a4a4fd75e7ca50a4ea59959158a867f4a1fbe3326d",
-      "handoff_sha256": "beb69acb91080a1987bb47912300dc395ca1aa79e2cc38b458d5945f6158db8c",
+      "handoff_sha256": "1551375cd897aa880f9ecdbab0b3e0cd40e14fe6bef05157452dea81f649a9c7",
       "source_path": "research/epac/docs/boundary_capacity_principle.md",
       "target_path": "docs/boundary_capacity_principle.md"
     },
@@ -88,7 +88,7 @@
     },
     {
       "forge_sha256": "df121c18b37b4c2f1acf58a879b5f4f02974408cc91a5747a74b2e6cf42d726a",
-      "handoff_sha256": "1bcf2cd48206da34ff60649592ee52359c7652b00cdbb509e34779a0b4c90b32",
+      "handoff_sha256": "3d2fe07480cdc7cab634644ac6a820958aff6cd1aa3722c83b43ae945d1a2838",
       "source_path": "research/epac/epac_molecular.py",
       "target_path": "epac_molecular.py"
     },
@@ -130,7 +130,7 @@
     },
     {
       "forge_sha256": "7cc2c97c60ed00decaf389c7592d0fb03367066086dcc3a0135140fe6ecba71f",
-      "handoff_sha256": "7cc2c97c60ed00decaf389c7592d0fb03367066086dcc3a0135140fe6ecba71f",
+      "handoff_sha256": "9095ff2a16d1ccfb0b6bbc79eb46702abdafa08113b62a709c878ec3a2a4fe8f",
       "source_path": "research/epac/subatomic/receipts/harmonic_ground_state_spin_parity_symmetry.json",
       "target_path": "subatomic/receipts/harmonic_ground_state_spin_parity_symmetry.json"
     },
@@ -166,7 +166,7 @@
     },
     {
       "forge_sha256": "e17db29cbb1474e33075a0ffd1d00a0ced796a603f75bed5625ba89451cefc71",
-      "handoff_sha256": "bb6fdd64a0f3807a84c2e93501fadfc1f71804125bbc26e977d1d896a8f096ad",
+      "handoff_sha256": "a414993d8274bb0a7ae1e5ceef9975f115ab50e5801da65971ae6e212523c00e",
       "source_path": "research/epac/subatomic/test_nuclear_harmonic_candidates.py",
       "target_path": "tests/subatomic/test_nuclear_harmonic_candidates.py"
     },
@@ -208,7 +208,7 @@
     },
     {
       "forge_sha256": "7b433384035f726626a0a40799537604c4b32aa677232d2bcee88d0bfa9bfbc5",
-      "handoff_sha256": "801629d40600df5d00173e53c6db63d43aa272b8e75d331355b7308617b77d3b",
+      "handoff_sha256": "0721a13ed61ce210417075af0dfb6fef0d3a03fad29a60cc2ce584b1107d10e8",
       "source_path": "research/epac/tests/test_geometry_comparison_after_construction.py",
       "target_path": "tests/test_geometry_comparison_after_construction.py"
     },
@@ -329,7 +329,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "Five review findings repaired: unknown local formulas reject; every quantified partition uses the frozen preregistered population; source replay binds the complete Git snapshot and wheel before archived execution and checks it again afterward; ground-spin prose claims only the tested 0+ predicate; SVGs retain all participant axes. Nine simple and three input-binding tests pass, including eight stale/mismatched-input rejection cases. Real canonical wheel/sdist build, Twine, complete source binding and independent static verification pass at f20a478abcff953e2bf872903dadc4dca5396248. The suite collects 208 tests. The full affected run passed 39 tests before an obsolete boundary/control assertion failed; that assertion is corrected and its rerun plus exact-head six-install CI and review remain pending. Owner-selected licensing and stable graduation remain open.",
+    "final_dependency_pin_and_clean_package_matrix": "Four further review findings repaired: frozen boundary/control prose now reports five matching singleton classes and FALSIFIED shape prediction; introduced symbols require declared atomic records; all current packaged harmonic receipts match executable records and recurrence outputs, with old spin-parity bytes retained as history; replay rejects undeclared wheel metadata and checks pinned generator, portable tag, pure-library placement, source package names, license coverage and README bytes before archived execution. All 10 targeted tests pass in 5.19 seconds, including 13 mismatched-input scenarios. Real canonical build, Twine, initial/final source binding and independent source-derived core metadata verification pass at fabbbb66751c5aea9b31337d3b90abd51b597774 (187 Git, 194 archived, 64 wheel files). The suite remains 208 tests. The next exact-head artifact matrix and review remain pending. Owner-selected licensing and final release/authority transition remain open.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
