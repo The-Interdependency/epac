@@ -16,7 +16,7 @@
     },
     {
       "forge_sha256": "d82623ef38378fbff856a9a4a4fd75e7ca50a4ea59959158a867f4a1fbe3326d",
-      "handoff_sha256": "c2c5584b7f08b8c4a7e58b0407cee01fbd34a9953fab96cbc080a475c0225cf7",
+      "handoff_sha256": "f9dd69ffa546cd821938e9829dbf5398849fb710fc9edb412fa75d0a395ba520",
       "source_path": "research/epac/docs/boundary_capacity_principle.md",
       "target_path": "docs/boundary_capacity_principle.md"
     },
@@ -76,19 +76,19 @@
     },
     {
       "forge_sha256": "f96f81e37127ada9c93008440929d499466ae2c28024575ba58f59dd31f8e10f",
-      "handoff_sha256": "f18f8724dd5c01574bf5d3e081340f27f8cc6ade4719f273fb8a9ff340df532b",
+      "handoff_sha256": "4dcbd1a4fa9e33faa910b38d399a471d9ca660a1db71e2a3ef16f1a759b16e2d",
       "source_path": "research/epac/epac_comparison.py",
       "target_path": "epac_comparison.py"
     },
     {
       "forge_sha256": "f633a75755884f0b2ba7860b54e3943058891e7711775b9b3a3efefc1ab81d3a",
-      "handoff_sha256": "b72cceb7bbc194bb53c887f4e8292cbb4d1141b8a2ac2a33f204b36e5a4bd0ca",
+      "handoff_sha256": "6b9d34304c5f6bacf2a30cbeb23278995a3fa086cfdeb34bf663e82f0e390b87",
       "source_path": "research/epac/epac_cross_scale_closure.py",
       "target_path": "epac_cross_scale_closure.py"
     },
     {
       "forge_sha256": "df121c18b37b4c2f1acf58a879b5f4f02974408cc91a5747a74b2e6cf42d726a",
-      "handoff_sha256": "f67b952531b886e50f41944b403ac341810742b782c99353dece183ff7cc9e57",
+      "handoff_sha256": "9588bb300bd90e443543043d39d6ac751cf5b1b4bb0c793806e366a9078a8b1c",
       "source_path": "research/epac/epac_molecular.py",
       "target_path": "epac_molecular.py"
     },
@@ -208,7 +208,7 @@
     },
     {
       "forge_sha256": "7b433384035f726626a0a40799537604c4b32aa677232d2bcee88d0bfa9bfbc5",
-      "handoff_sha256": "03601ecd4b8801da6e32a9e75adf206b8121b85e90e18044b439298b90bcc2e7",
+      "handoff_sha256": "9adc73dd2101e6db4c3811fd22855d898f2520697e6cb291cccdd791a455ecfb",
       "source_path": "research/epac/tests/test_geometry_comparison_after_construction.py",
       "target_path": "tests/test_geometry_comparison_after_construction.py"
     },
@@ -226,7 +226,7 @@
     },
     {
       "forge_sha256": "14c3563267d21e41f04e20e8dbdd8c88a071841b77b9a4ba0936835950a6d826",
-      "handoff_sha256": "576a1996945517f50f4b682fa70f615f1f0095510a0fd889f20cc12de5285f82",
+      "handoff_sha256": "38bce3684896fb96e2b5f50fe65e6b87410c831d2b8a1e03f29c86a1b4c182c5",
       "source_path": "research/epac/tests/test_spiral_population.py",
       "target_path": "tests/test_spiral_population.py"
     },
@@ -268,7 +268,7 @@
     },
     {
       "forge_sha256": "4a888dd253665518cca48e764262e2ec1b3be53a713d15ca17d5cd48af18361e",
-      "handoff_sha256": "4246a48bc027d86814f1f08ede89a5490b4e693a80f04c8584cdec06912b6675",
+      "handoff_sha256": "24accb32ffef04d41589e7d29260eb8bf2679a7d13c90247ef795dc9673d6170",
       "source_path": "research/epac/viz/spiral_viz.py",
       "target_path": "viz/spiral_viz.py"
     }
@@ -292,7 +292,8 @@
     "Verification examples use the installed repository environment; stable builds enforce CPython 3.11.15.",
     "SVG dimensions and bare-subatomic attachment counts are validated; every dynamic SVG text value is escaped.",
     "All receipt scales use strict carried spiral parsing; bare core projections reject nonzero counts. Direct receipt visualization retains frames, axes and attachment counts with unrecorded endpoint details left unknown. Population errors propagate; all five frozen preregistered cases are required before scoring. The inventory includes minimal-refinement and probe-completeness modules: 109 operations, 12 explicitly ambiguous. Both result documents and the executable visualization example agree.",
-    "Descriptor sufficiency no longer overwrites compositionality; actual cross-scale closure statuses are carried separately. Inventory covers all packaged executable modules (128 operations,31 ambiguous), including atomic records, provenance, visualization and the CLI entry point, with installed-file coverage checked. Real receipt relations come from the closed gonol, bare element counts are rejected by core and visualization, frozen charge mappings are preserved when present, and unknown local transition kinds raise."
+    "Descriptor sufficiency no longer overwrites compositionality; actual cross-scale closure statuses are carried separately. Inventory covers all packaged executable modules (128 operations,31 ambiguous), including atomic records, provenance, visualization and the CLI entry point, with installed-file coverage checked. Real receipt relations come from the closed gonol, bare element counts are rejected by core and visualization, frozen charge mappings are preserved when present, and unknown local transition kinds raise.",
+    "Transition predictions are independent of target invariants and reject empty/wrong source summaries, noncanonical operation counts, wrong-formula targets and relabeled mismatching constituents. Bare comparison/control families preserve every stoichiometric instance with global occurrence numbering. The capstone closure stage propagates all required cross-scale statuses. Minimality/capstone witnesses select deterministic pairs that actually cross the partitions. Unsupported D_min monotonicity wording is removed; symmetric and unrecorded attachment slots render without fabricating endpoints."
   ],
   "schema": "epac.forge-continuation-handoff",
   "scope": "Preserve continued EPAC research and adapt imports for independent packaging; no completed authority transfer or domain ratification.",
@@ -325,7 +326,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 remains bound. The latest repairs pass 14 visualization tests and 12 inventory/closure tests, with 195 tests collected. Descriptor sufficiency remains FALSIFIED while independently checked compositionality remains SURVIVED. Missing/invalid closure status stays unresolved or blocked. The full private artifact matrix and exact review of the repaired head are pending; owner-selected licensing and stable graduation remain open.",
+    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 remains bound. Six focused regression tests and the extended transition validation pass; 199 tests collect. Predictions use validated source summaries and declared local operation rules before reading target observations. The full repaired-head private matrix and exact review remain pending. Owner-selected licensing and stable graduation remain open.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
@@ -354,17 +355,17 @@
         "wheel",
         "sdist"
       ],
-      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34691147281",
+      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34694471259",
       "python_versions": [
         "3.10",
         "3.11",
         "3.12"
       ],
-      "scope": "Preceding source before aggregate, classification, renderer, and runtime review repairs. All downloaded private artifacts and receipts independently match Git; this is not licensed release qualification.",
+      "scope": "Preceding source before transition independence, stoichiometric projection, capstone and witness repairs. All downloaded private artifacts and receipts independently match Git; this is not licensed release qualification.",
       "skips": 0,
-      "source_commit": "f311eb3d5b2aaeccd9b569d7ce0d5b86919ecf15",
+      "source_commit": "82ab9e5ae1d713b89c993d243b9f7b68bad4d071",
       "status": "passed",
-      "tests_per_artifact": 186
+      "tests_per_artifact": 195
     },
     "source_suite": {
       "log_sha256": "d9406628e06fdfa27b555c536cb339420c1133117ab8cfa8134e7fc853e92882",
