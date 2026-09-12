@@ -10,9 +10,9 @@
   },
   "source": {
     "branch": "graduate/package-release-20260912",
-    "commit": "688e1b872238cd5fc7a42fa370d550b301df09cc",
+    "commit": "4d03a5d4dc54400995b4792047058b731484f003",
     "generated_at": "2026-09-12",
-    "note": "Describes the preceding implementation commit. Six focused regression tests and the extended transition validation pass; 199 tests collect. Predictions use validated source summaries and declared local operation rules before reading target observations. The full repaired-head private matrix and exact review remain pending. Owner-selected licensing and stable graduation remain open."
+    "note": "Describes the preceding implementation/test commit. Six focused regressions, extended transition validation and all five molecular tests pass;199tests collect. Full artifact matrix and exact review are pending. Owner-selected licensing and stable graduation remain open."
   },
   "authority": {
     "owns": [
@@ -41,7 +41,7 @@
   },
   "status": {
     "state": "extracted candidate; package preparation implemented; graduation incomplete",
-    "current_claim": "The package preserves the 45-file forge continuation and binds accepted UCNS 6eea1828a34ed8ec99879f8090ea5d48352d8c2d. Preceding 82ab9e5 passed all six 195-test private installations; downloaded artifacts and full receipt contents independently matched Git. Latest changes repair target-dependent prediction, missing stoichiometric multiplicity, incomplete capstone status propagation, invalid witness selection and symmetric visualization. Six focused regression tests and the extended transition validation pass; 199 tests collect. Predictions use validated source summaries and declared local operation rules before reading target observations. The full repaired-head private matrix and exact review remain pending. Owner-selected licensing and stable graduation remain open. Historical falsifications remain retained and no scientific standing transfers."
+    "current_claim": "The package preserves the 45-file forge continuation and binds accepted UCNS 6eea1828a34ed8ec99879f8090ea5d48352d8c2d. Preceding 82ab9e5 passed all six 195-test private installations; downloaded artifacts and full receipt contents independently matched Git. Latest changes repair target-dependent prediction, missing stoichiometric multiplicity, incomplete capstone status propagation, invalid witness selection and symmetric visualization. Six focused regressions, extended transition validation and all five molecular tests pass;199tests collect. The molecular test explicitly requires rejection of undeclared formulas. Predictions use validated source summaries and declared local operation rules before reading target observations. The full repaired-head private matrix and exact review remain pending. Owner-selected licensing and stable graduation remain open. Historical falsifications remain retained and no scientific standing transfers."
   },
   "delivered": [
     {

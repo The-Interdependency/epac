@@ -214,7 +214,7 @@
     },
     {
       "forge_sha256": "8c6f6aca06cf738b234aac87aec46b143f8ba373ea2ce363dcc211e159fea340",
-      "handoff_sha256": "766f515ea30bfcebd112459decc0ac68fac83e51522e9ce5c3960f817f3b037d",
+      "handoff_sha256": "c945d2a3d27f8aaf4db13294601c4c1f18d7d2b4a1c2ae5890e40b9e713e5032",
       "source_path": "research/epac/tests/test_molecular_affixiation.py",
       "target_path": "tests/test_molecular_affixiation.py"
     },
@@ -326,7 +326,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 remains bound. Six focused regression tests and the extended transition validation pass; 199 tests collect. Predictions use validated source summaries and declared local operation rules before reading target observations. The full repaired-head private matrix and exact review remain pending. Owner-selected licensing and stable graduation remain open.",
+    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 remains bound. Six focused regressions, extended transition validation, and all five molecular tests pass;199tests collect. The full repaired-head matrix and exact review remain pending. A previous artifact replay correctly rejected a legacy test expecting undeclared formula zero; that test now requires the missing-input error. Licensed qualification remains separate.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
