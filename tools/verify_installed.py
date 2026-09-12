@@ -86,7 +86,7 @@ def main() -> None:
 
     record_name, = [name for name in expected if name.endswith(".dist-info/RECORD")]
     info = record_name.rsplit("/", 1)[0]
-    generated = {info + "/" + name for name in ("RECORD", "INSTALLER", "REQUESTED", "direct_url.json", "uv_cache.json")}
+    generated = {info + "/" + name for name in ("RECORD", "INSTALLER", "REQUESTED", "direct_url.json", "uv_cache.json", "uv_build.json")}
     immutable = {name: digest for name, digest in expected.items() if name != record_name}
 
     def payload():
