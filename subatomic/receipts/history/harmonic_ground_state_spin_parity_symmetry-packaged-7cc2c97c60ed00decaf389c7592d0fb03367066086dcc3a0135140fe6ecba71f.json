@@ -24,7 +24,7 @@
   "physical_provenance": [
     "compiled nuclear data; web-pinned 2026-08-22"
   ],
-  "receipt": "183794a631625f0c3228782974cab440b2dc38a77a5a506a408189010d2b9c1d",
+  "receipt": "25ed793cb1584a38c0d2185451e389068b0622990054729efb7b3e178bf31680",
   "recurrence": {
     "Ar-36": true,
     "C-12": true,
@@ -39,7 +39,7 @@
     "S-32": true,
     "Si-28": true
   },
-  "recurrence_mapping": "Ground-state spin-parity J^pi: H-1 1/2+, H-2 1+, He-4 0+, Li-7 3/2-, C-12 0+, O-16 0+, Ne-20 0+, Mg-24 0+, Si-28 0+, S-32 0+, Ar-36 0+, Ca-40 0+. The recorded value 0+ recurs for the listed even-even N=Z participants. This predicate tests spin-parity only, not shell closure.",
+  "recurrence_mapping": "Ground-state spin-parity J^pi: H-1 1/2+, H-2 1+, He-4 0+, Li-7 3/2-, C-12 0+, O-16 0+, Ne-20 0+, Mg-24 0+, Si-28 0+, S-32 0+, Ar-36 0+, Ca-40 0+. The value 0+ recurs for even-even, paired, closed-shell N=Z nuclei (He-4 through Ca-40); odd-mass nuclei take half-integer spins.",
   "relation_kind": "symmetry",
   "status": "CROSS-DOMAIN-HYPOTHESIS"
 }

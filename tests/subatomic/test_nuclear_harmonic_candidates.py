@@ -33,6 +33,8 @@
 # === END CHECKS ===
 
 from epac_subatomic import nuclear_harmonic_candidates as m
+from pathlib import Path
+import json
 from dataclasses import replace
 from unittest.mock import patch
 import pytest
@@ -102,6 +104,8 @@ def test_recurrence_deterministic_and_replayable():
             "status": candidate.status,
         }
         assert m.harmonic_receipt(record) == candidate.receipt
+        packaged = json.loads((Path(m.__file__).parent / "receipts" / ("harmonic_" + candidate.candidate_id + ".json")).read_text())
+        assert packaged == {**record, "receipt": candidate.receipt, "recurrence": result}
 
     binding = next(c for c in m.CANDIDATES if c.candidate_id == "binding_per_nucleon_commensurability")
     outcome = m.recurrence_test(binding)

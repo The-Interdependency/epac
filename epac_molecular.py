@@ -798,6 +798,7 @@ def apply_local_step(b: tuple[int, int, int], step: tuple[str, str]) -> tuple[in
     im, d, c = b
     kind, sym = step
     if kind == "introduce":
+        atomic_of(sym)  # Require the same declared atomic record as an affix step.
         return (im, d + 1, c)
     if kind == "affix":
         k = _ligand_slot_contribution(sym)
@@ -1059,11 +1060,11 @@ def boundary_capacity_descriptor_sufficiency_sweep() -> dict[str, Any]:
     # (subatomic_lifted_spiral_matches_control). This is a partition-resemblance
     # fact on bare projections, not a B(R) transition sufficiency fact.
     control_failure_disposition = {
-        "observed_behavior": "subatomic_lifted_spiral_matches_control is True on the nine-formula surface",
+        "observed_behavior": "subatomic_lifted_spiral_matches_control is True on the frozen five-formula evaluation",
         "classification": "stale_or_incorrect_control_assertion",
         "semantics": (
             "Both the bare subatomic lifted-spiral projection and the stoichiometric control "
-            "partition the nine formulas into nine singletons. The prior assertion expected a mismatch. "
+            "partition the five preregistered formulas into five singletons. The prior assertion expected a mismatch. "
             "The flag concerns partition resemblance between two bare/control views; it is not a "
             "direct/composed boundary-capacity transition invariant and does not falsify B(R) compositionality."
         ),

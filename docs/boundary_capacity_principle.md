@@ -26,7 +26,7 @@ The leading 3 is the fixed interior mode count (canonical two-turn double cover 
 ## Survival Summary (internal to this construction)
 
 - Interior modes held fixed at 3.
-- On the frozen ORIGINAL_PREREG set (H₂, H₂O, NH₃, CH₄, CO₂), the molecule view of boundary capacity (sourced from carried lifted-spiral facts that include declared attachments) yields distinct classes that do not match the known-shape partition and do not match the stoichiometric control partition.
+- On the frozen ORIGINAL_PREREG set (H₂, H₂O, NH₃, CH₄, CO₂), the molecule view of boundary capacity (sourced from carried lifted-spiral facts that include declared attachments) yields five distinct classes that do not match the four-class known-shape partition and exactly match the five-singleton stoichiometric control partition. `boundary_capacity_matches_control` is `True`; the sealed-shape standing remains `FALSIFIED`.
 - Bare projections (periodic element gonols and subatomic gonols, both carrying attachment capacity 0) produce control-like partitions under the quantify surfaces (exact match to control on the known-side evaluation for those views).
 - Prior falsifications (charged structure, topology, harmonic survival, lifted spiral) of sealed molecular shape prediction on the prereg set remain unchanged. Boundary capacity is an additional first-class internal descriptor family derived from already-present carried facts.
 
@@ -62,7 +62,7 @@ No monotonicity, conservation rule, or composition formula is assumed in advance
 - Verification is now split between the molecule-level comparison tests and the
   cross-scale closure tests. The previous `subatomic_lifted_spiral_matches_control`
   false expectation has been classified as a stale control assertion on the
-  current nine-formula surface, not as a boundary-compositionality counterexample.
+  frozen five-formula evaluation, not as a boundary-compositionality counterexample.
 
 ## Compositional Transition Closure (stronger internal result)
 
@@ -240,7 +240,7 @@ Result (sealed):
   - boundary_capacity_compositionality: SURVIVED (independently checked bounded closure; state sufficiency remains FALSIFIED)
 - Control failure disposition (subatomic_lifted_spiral_matches_control): classified
   as stale_or_incorrect_control_assertion. Both bare subatomic lifted-spiral
-  and stoichiometric control partition the nine formulas into nine singletons.
+  and stoichiometric control partition the five preregistered formulas into five singletons.
   The flag is a partition-resemblance fact on bare projections; it is not a
   direct/composed boundary-capacity transition invariant and does not falsify
   the transition results. impacts_b_sufficiency: false.

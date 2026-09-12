@@ -156,6 +156,12 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
                     function(formula)
         for path in generate_compositional_paths("H2"):
             self.assertEqual(accumulate_from_local_path((3, 0, 0), path), (3, 2, 2))
+        for symbol in ("", "Xx", "H20", None):
+            for kind in ("introduce", "affix"):
+                with self.assertRaises((ValueError, KeyError)):
+                    apply_local_step((3, 0, 0), (kind, symbol))
+                with self.assertRaises((ValueError, KeyError)):
+                    accumulate_from_local_path((3, 0, 0), [("introduce", "H"), (kind, symbol)])
         for kind in ("", "introduse", "unknown", None):
             with self.assertRaisesRegex(ValueError, "unknown local transition kind"):
                 apply_local_step((3, 0, 0), (kind, "H"))

@@ -81,3 +81,5 @@ previously omitted operational skill resources. These source-integrity checks
 do not grant release rights or change scientific standing.
 
 The graduation candidate now binds accepted UCNS source `6eea1828a34ed8ec99879f8090ea5d48352d8c2d` at tree `41a5207600b8b5eaeef907199e48d841362cc934`. Its source archive SHA-256 is `1665ae06921a0a425ef1c99ce9d811cf8b52c20e4873edea53c4cdecaf2895d9`; the complete installed Python source map is in `data/ucns-source-lock.json`. Earlier pin-specific receipts remain historical evidence. This dependency update transfers no geometry, proof, or empirical standing.
+
+The private replay input gate permits only the declared pure-Python wheel metadata, verifies its pinned setuptools generator, portable tag, package names and license-file coverage, and rejects undeclared entry points before installation. Current packaged harmonic receipts are checked against every executable candidate and recurrence result; superseded receipt bytes remain under `subatomic/receipts/history/`. The frozen boundary-capacity/control comparison is an exact match on five singleton classes, while its known-shape prediction remains FALSIFIED.
