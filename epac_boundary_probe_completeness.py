@@ -112,6 +112,11 @@ Observable = Any
 ObservableFn = Callable[[StateContext], Observable]
 
 OPERATION_SOURCE_FILES = (
+    "epac_atomic.py",
+    "epac_ucns_provenance.py",
+    "viz/spiral_viz.py",
+    "viz/cli.py",
+    "viz/__main__.py",
     "epac_public_gonol.py",
     "epac_dimensional_arity.py",
     "epac_periodic.py",
@@ -299,8 +304,9 @@ def _declared_names(path: Path) -> tuple[str, ...]:
 def _declared_operations() -> tuple[dict[str, str], ...]:
     operations: list[dict[str, str]] = []
     for relative_path in OPERATION_SOURCE_FILES:
-        path = (Path(str(files("epac_subatomic").joinpath(relative_path.split("/", 1)[1])))
-                if relative_path.startswith("subatomic/") else EPAC_ROOT / relative_path)
+        package = {"subatomic": "epac_subatomic", "viz": "epac_viz"}.get(relative_path.split("/", 1)[0])
+        path = (Path(str(files(package).joinpath(relative_path.split("/", 1)[1])))
+                if package else EPAC_ROOT / relative_path)
         module = _module_label(relative_path)
         for name in _declared_names(path):
             operations.append(
@@ -315,6 +321,9 @@ def _declared_operations() -> tuple[dict[str, str], ...]:
 
 
 def _classify_operation(module: str, name: str) -> str:
+    if module in {"epac_atomic", "epac_ucns_provenance", "viz.spiral_viz", "viz.cli"}:
+        return AMBIGUOUS
+
     if name in OmittedButNomenclature.NAMES:
         return PROVENANCE_IDENTITY
     if name in STRUCTURAL_OBSERVER_NAMES:

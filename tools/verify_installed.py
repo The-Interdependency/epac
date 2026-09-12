@@ -126,7 +126,7 @@ def main() -> None:
     result = pytest.main([str(source / "tests"), "--junitxml=" + str(xml_path), "-q", "-x", "-p", "no:cacheprovider", "-o", "xfail_strict=true"])
     assert result == 0, result
     cases = list(ET.parse(xml_path).getroot().iter("testcase"))
-    assert len(cases) == 192 and not any(c.find(tag) is not None for c in cases for tag in ("skipped", "failure", "error"))
+    assert len(cases) == 195 and not any(c.find(tag) is not None for c in cases for tag in ("skipped", "failure", "error"))
     assert payload() == before
     origins = {name: str(Path(module.__file__).resolve()) for name, module in sys.modules.items()
                if name.startswith("epac_") and getattr(module, "__file__", None)}

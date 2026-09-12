@@ -23,7 +23,7 @@ No new probe, coordinate, descriptor component, operation, physics claim, UCNS
 continuum result, PCEA mapping, or runtime encoding is introduced.
 
 The operation inventory covers exported callables from the bounded EPAC
-construction/evidence modules. Each operation is classified as one of:
+construction, evidence, provenance and visualization modules. The inventory covers every packaged executable module; package initializer re-exports add no distinct operation. A coverage test checks the installed module files against the inventory. Each operation is classified as one of:
 
 - boundary-observing
 - boundary-transforming
@@ -35,13 +35,13 @@ construction/evidence modules. Each operation is classified as one of:
 
 | item | count |
 |---|---:|
-| declared operations classified | 109 |
+| declared operations classified | 128 |
 | boundary-relevant operations | 58 |
 | omitted boundary-relevant operations | 14 |
 | omitted operations that distinguish same-B frozen states | 13 |
-| ambiguous operations | 12 |
+| ambiguous operations | 31 |
 
-Twelve exported operations, including the representation, probe-relativity, minimal-refinement and probe-completeness audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
+Thirty-one exported operations, including the representation, probe-relativity, minimal-refinement and probe-completeness audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
 
 ## Partition Result
 

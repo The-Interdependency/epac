@@ -766,7 +766,7 @@ def apply_local_step(b: tuple[int, int, int], step: tuple[str, str]) -> tuple[in
     if kind == "affix":
         k = _ligand_slot_contribution(sym)
         return (im, d, c + k)
-    return b
+    raise ValueError(f"unknown local transition kind: {kind!r}")
 
 
 def accumulate_from_local_path(start: tuple[int, int, int], path: list[tuple[str, str]]) -> tuple[int, int, int]:
@@ -1004,20 +1004,20 @@ def boundary_capacity_descriptor_sufficiency_sweep() -> dict[str, Any]:
             }
         )
 
-    # Cross-scale element compatibility snapshot (from locked element ledgers, no mutation)
-    # We call the existing pure function surface if present; otherwise mark unresolved for that slice.
-    cross_scale_element_status = UNRESOLVED
+    # Closure and state sufficiency answer different questions. Read the
+    # bounded closure audit's actual statuses without promoting a collision.
+    closure_keys = ("subatomic_to_element_closure", "end_to_end_subatomic_to_molecule_closure",
+                    "boundary_capacity_compositionality")
     try:
-        from epac_cross_scale_closure import element_closure_ledger, required_element_symbols as _req
-
-        req = _req()
-        elem_ledgers = [element_closure_ledger(s) for s in req]
-        if all(l.get("status") == SURVIVED for l in elem_ledgers):
-            cross_scale_element_status = SURVIVED
-        elif any(l.get("status") == FALSIFIED for l in elem_ledgers):
-            cross_scale_element_status = FALSIFIED
+        from epac_cross_scale_closure import cross_scale_compositional_closure
+        actual = cross_scale_compositional_closure().get("statuses", {})
+        closure_statuses = {
+            key: actual.get(key) if actual.get(key) in (SURVIVED, FALSIFIED, UNRESOLVED, BLOCKED) else UNRESOLVED
+            for key in closure_keys
+        }
     except Exception:
-        cross_scale_element_status = BLOCKED
+        closure_statuses = {key: BLOCKED for key in closure_keys}
+    cross_scale_element_status = closure_statuses["subatomic_to_element_closure"]
 
     # Explicit disposition of the pre-existing control-like partition failure
     # (subatomic_lifted_spiral_matches_control). This is a partition-resemblance
@@ -1057,9 +1057,7 @@ def boundary_capacity_descriptor_sufficiency_sweep() -> dict[str, Any]:
         "control_failure_disposition": control_failure_disposition,
         "aggregate": {
             "boundary_capacity_sufficiency": aggregate,
-            "subatomic_to_element_closure": cross_scale_element_status,
-            "end_to_end_subatomic_to_molecule_closure": "SURVIVED",  # preserved from prior locked closure result
-            "boundary_capacity_compositionality": aggregate,
+            **closure_statuses,
         },
         "sealed": True,
         "no_new_coordinate": True,

@@ -47,6 +47,32 @@ from epac_comparison import SEALED_PATH as SEALED
 
 
 class GeometryComparisonAfterConstructionTest(unittest.TestCase):
+    def test_unknown_local_transition_kind_fails(self) -> None:
+        from epac_molecular import apply_local_step, accumulate_from_local_path
+        for kind in ("", "introduse", "unknown", None):
+            with self.assertRaisesRegex(ValueError, "unknown local transition kind"):
+                apply_local_step((3, 0, 0), (kind, "H"))
+            with self.assertRaisesRegex(ValueError, "unknown local transition kind"):
+                accumulate_from_local_path((3, 0, 0), [("introduce", "H"), (kind, "H")])
+        self.assertEqual(apply_local_step((3, 0, 0), ("introduce", "H")), (3, 1, 0))
+        self.assertEqual(apply_local_step((3, 1, 0), ("affix", "H")), (3, 1, 1))
+
+    def test_sufficiency_preserves_independent_closure_statuses(self) -> None:
+        from unittest.mock import patch
+        keys = ("subatomic_to_element_closure", "end_to_end_subatomic_to_molecule_closure", "boundary_capacity_compositionality")
+        # Empty fixture isolates status propagation; the sealed sweep test below
+        # separately proves real collisions coexist with surviving closure.
+        with patch("epac_molecular.MOLECULE_COMPOSITIONS", {}), patch("epac_molecular.construct_declared_molecules", return_value={}):
+            with patch("epac_cross_scale_closure.cross_scale_compositional_closure") as closure:
+                for status in ("SURVIVED", "FALSIFIED", "UNRESOLVED", "BLOCKED", "invalid", None):
+                    closure.return_value = {"statuses": {key: status for key in keys}}
+                    result = boundary_capacity_descriptor_sufficiency_sweep()["aggregate"]
+                    expected = status if status in ("SURVIVED", "FALSIFIED", "UNRESOLVED", "BLOCKED") else "UNRESOLVED"
+                    self.assertEqual({key: result[key] for key in keys}, {key: expected for key in keys})
+                closure.side_effect = RuntimeError("closure unavailable")
+                result = boundary_capacity_descriptor_sufficiency_sweep()["aggregate"]
+                self.assertTrue(all(result[key] == "BLOCKED" for key in keys))
+
     def test_comparison_requires_complete_frozen_preregistration(self) -> None:
         from unittest.mock import patch
         for omitted in ORIGINAL_PREREG:
@@ -909,7 +935,12 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
         self.assertEqual(agg.get("subatomic_to_element_closure"), "SURVIVED")
         self.assertEqual(agg.get("end_to_end_subatomic_to_molecule_closure"), "SURVIVED")
         # Sufficiency on the present descriptor is decided by collisions among non-equivalent states.
-        self.assertIn(agg.get("boundary_capacity_sufficiency"), ("SURVIVED", "FALSIFIED"))
+        self.assertEqual(agg["boundary_capacity_sufficiency"], "FALSIFIED")
+        self.assertEqual(agg["boundary_capacity_compositionality"], "SURVIVED")
+        from epac_cross_scale_closure import cross_scale_compositional_closure
+        closure_statuses = cross_scale_compositional_closure()["statuses"]
+        for key in ("subatomic_to_element_closure", "end_to_end_subatomic_to_molecule_closure", "boundary_capacity_compositionality"):
+            self.assertEqual(agg[key], closure_statuses[key])
 
         # Control-like partition failure is explicitly classified (not a B transition counterexample).
         disp = sweep.get("control_failure_disposition", {})

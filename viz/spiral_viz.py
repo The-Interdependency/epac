@@ -234,7 +234,7 @@ def _charges_from_structure(structure: Mapping[str, Any] | None) -> dict[str, in
     if not structure:
         return ch
     for d in structure.get("degree", ()) or ():
-        if isinstance(d, dict):
+        if isinstance(d, Mapping):
             dim = d.get("dimension")
             charge = d.get("charge")
             if dim is not None and charge is not None:
@@ -284,8 +284,10 @@ def extract_spiral_scene(obj: Any) -> SpiralScene:
         invariants = getattr(obj, "invariants", {}) or {}
         source_id = getattr(receipt, "source_id", str(type(obj)))
         relation = getattr(receipt, "relation", "unknown")
+    # The closed gonol owns the relation on real PublicGonolReceipt values.
+    relation = getattr(getattr(receipt, "gonol", None), "relation", getattr(receipt, "relation", "unknown"))
     from epac_public_gonol import _lifted_spiral_signature
-    bare = "subatomic" in str(source_id) or "subatomic" in str(relation)
+    bare = relation in {"epac.atomic.element", "epac.subatomic.element", "epac.subatomic"}
     frames, axes, attachment_count = _lifted_spiral_signature(receipt, bare=bare)
     mob = dict(_get_mobius(invariants))
     if mob:

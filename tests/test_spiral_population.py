@@ -92,10 +92,28 @@ class SpiralPopulationTest(unittest.TestCase):
         for formula, construction in construct_declared_molecules().items():
             direct = extract_spiral_scene(construction.receipt)
             wrapped = extract_spiral_scene(construction)
+            self.assertEqual(direct.relation, construction.receipt.gonol.relation)
+            self.assertEqual(wrapped.relation, direct.relation)
+            expected_charges = {d["dimension"]: d["charge"] for d in construction.receipt.structure["degree"]}
+            self.assertTrue(expected_charges)
+            self.assertEqual(direct.dimension_charges, expected_charges)
+            self.assertEqual(wrapped.dimension_charges, expected_charges)
             self.assertEqual(direct.turns, wrapped.turns, formula)
             self.assertEqual(direct.participant_axes, wrapped.participant_axes, formula)
             self.assertEqual(len(direct.attachments), len(wrapped.attachments), formula)
             self.assertTrue(all(slot.center is None and slot.site is None for slot in direct.attachments))
+        for constructor in (construct_element_gonol, subatomic_gonol.construct_subatomic_gonol):
+            receipt = constructor("H")
+            scene = extract_spiral_scene(receipt)
+            self.assertEqual(scene.relation, receipt.gonol.relation)
+            self.assertEqual(scene.dimension_charges, {d["dimension"]: d["charge"] for d in (receipt.structure or {}).get("degree", ())})
+            carried = tuple((key, value[:-1] + "1" if key == "lifted-spiral" else value) for key, value in receipt.gonol.carried_options)
+            invalid = replace(receipt, gonol=replace(receipt.gonol, carried_options=carried))
+            with self.assertRaisesRegex(ValueError, "attachment count"):
+                extract_spiral_scene(invalid)
+            from epac_molecular import lifted_spiral_from_receipt
+            with self.assertRaisesRegex(ValueError, "attachment count"):
+                lifted_spiral_from_receipt(invalid)
         from types import MappingProxyType
         from epac_molecular import construct_molecule
         construction = construct_molecule("H2O")

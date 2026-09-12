@@ -122,11 +122,23 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
             6,
         )
 
+    def test_inventory_covers_packaged_execution_modules(self) -> None:
+        from importlib.resources import files
+        expected = {path.name for path in _installed_audit.EPAC_ROOT.glob("epac_*.py")}
+        for directory, package in (("subatomic", "epac_subatomic"), ("viz", "epac_viz")):
+            expected.update(directory + "/" + path.name for path in files(package).iterdir()
+                            if path.name.endswith(".py") and path.name != "__init__.py")
+        self.assertEqual(set(_installed_audit.OPERATION_SOURCE_FILES), expected)
+        operations = {row["operation"]: row for row in _installed_audit._declared_operations()}
+        for name in ("AtomicRecord", "ElectronState", "atomic_record", "iter_table"):
+            row = operations["epac_atomic." + name]
+            self.assertEqual(_installed_audit._classify_operation(row["module"], row["name"]), AMBIGUOUS)
+
     def test_declared_operations_preserve_unresolved_semantics(self) -> None:
         inventory = self.report["operation_inventory"]
-        self.assertEqual(inventory["operation_count"], 109)
+        self.assertEqual(inventory["operation_count"], 128)
         self.assertEqual(inventory["boundary_relevant_count"], 58)
-        self.assertEqual(inventory["ambiguous_count"], 12)
+        self.assertEqual(inventory["ambiguous_count"], 31)
         ambiguous = [row for row in self.report["operation_ledger"] if row["boundary_relevance"] == AMBIGUOUS]
         for row in ambiguous:
             self.assertIsNone(row["currently_probed"])

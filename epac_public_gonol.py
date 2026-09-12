@@ -31,7 +31,7 @@ Usage guidance
 #   summary: EPAC candidate constructor that closes gonols on the UCNS Public Gonol carrier with oriented couplings and arity charge states; not the EDCM text-domain constructor
 #   owner: The Interdependency
 #   public_surface: CONSTRUCTOR_ID, CONSTRUCTOR_VERSION, PINNED_UCNS_COMMIT, PINNED_PUBLIC_GONOL_SHA256, ClosedPublicGonol, PublicGonolReceipt, PublicGonolConstructionError, construct_public_gonol, replay_public_gonol, canonical_receipt_bytes
-#   internal_surface: _require_text, _validate_occurrence, _canonical_carried_options, _identity_position, _verified_ucns_commit, _geometry_record, _geometry, _validate_retained_geometry, _freeze_json, _json_ready, _tuple_tree, _canonical_coupling_record, _coupling_sort_key, _canonical_couplings_and_structure, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings, _validate_structure_matches_couplings, _validate_retained_gonol_tree, _validate_retained_receipt
+#   internal_surface: _lifted_spiral_signature, _require_text, _validate_occurrence, _canonical_carried_options, _identity_position, _verified_ucns_commit, _geometry_record, _geometry, _validate_retained_geometry, _freeze_json, _json_ready, _tuple_tree, _canonical_coupling_record, _coupling_sort_key, _canonical_couplings_and_structure, _canonical_structure_tree, _participant_payload, _atomic_payload, _receipt_payload, _digest, _expected_structure_from_couplings, _validate_structure_matches_couplings, _validate_retained_gonol_tree, _validate_retained_receipt
 #   auth_boundary: EPAC owns particle/energy gonol closure; UCNS owns Public Gonol carrier identity and native Möbius ε; EDCM text-domain constructor is not used; METAPAT affixiation is consumed, not redefined
 #   storage_boundary: none; receipts remain caller-owned in-memory objects
 #   network_boundary: none
@@ -146,6 +146,7 @@ def _lifted_spiral_signature(receipt: Any, *, bare: bool = False) -> tuple:
         frame_text, axis_text, count_text = value.split(";", 2)
     except (AttributeError, KeyError, TypeError, ValueError) as error:
         raise ValueError("missing or malformed carried lifted-spiral evidence") from error
+    bare = bare or getattr(receipt.gonol, "relation", None) in {"epac.atomic.element", "epac.subatomic.element"}
     frames = tuple(frame_text.split("|"))
     axes = tuple(axis_text.split(","))
     if len(frames) != 3 or not all(frames) or not all(axes) or len(set(axes)) != len(axes):

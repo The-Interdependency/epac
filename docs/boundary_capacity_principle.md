@@ -175,7 +175,7 @@ Aggregate statuses from `epac_boundary_probe_completeness.py`:
 - quotient_partition_stability_under_omitted_existing_observables: FALSIFIED
 - boundary_probe_completeness: FALSIFIED
 
-The audit classified 109 exported callable operations, retained 12 with unresolved
+The audit classified 128 exported callable operations, retained 31 with unresolved
 boundary relevance, and found 14 omitted
 boundary-relevant operations. Existing dimensional-arity observers such as
 `topology_structure_readout`, `charged_structure_readout`, and
@@ -237,7 +237,7 @@ Result (sealed):
   - boundary_capacity_sufficiency: FALSIFIED
   - subatomic_to_element_closure: SURVIVED (cross-scale ledger)
   - end_to_end_subatomic_to_molecule_closure: SURVIVED (locked compositional closure)
-  - boundary_capacity_compositionality: FALSIFIED (sufficiency fails)
+  - boundary_capacity_compositionality: SURVIVED (independently checked bounded closure; state sufficiency remains FALSIFIED)
 - Control failure disposition (subatomic_lifted_spiral_matches_control): classified
   as stale_or_incorrect_control_assertion. Both bare subatomic lifted-spiral
   and stoichiometric control partition the nine formulas into nine singletons.
