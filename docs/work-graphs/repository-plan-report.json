@@ -10,7 +10,7 @@
   },
   "source": {
     "branch": "graduate/package-release-20260912",
-    "commit": "1ff2cae0926dd1fbb8dc731f2381444fb4c1edaa",
+    "commit": "6ed4b82dba355af323f7b2636a83c06dbfbf487a",
     "generated_at": "2026-09-12",
     "note": "Describes the implementation commit preceding the final report-only refresh. Private packaging evidence does not qualify an unlicensed candidate or transfer implementation or empirical authority."
   },
