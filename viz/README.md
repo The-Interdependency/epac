@@ -57,3 +57,5 @@ This is the exact file the background search located and the file that all gonol
 - `__init__.py`, `__main__.py` — package niceties
 
 All output is pure data projection. No new claims, no position operations, no geometry invention.
+
+The SVG renderer accepts integer dimensions of at least 640 × 400 pixels. It preserves carried frame/axis values and rejects malformed bare-subatomic attachment counts; rendering does not establish the validity of caller-supplied evidence.

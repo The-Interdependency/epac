@@ -47,6 +47,51 @@ from epac_comparison import SEALED_PATH as SEALED
 
 
 class GeometryComparisonAfterConstructionTest(unittest.TestCase):
+    def test_representation_overall_includes_every_required_stage(self) -> None:
+        from contextlib import ExitStack
+        from copy import deepcopy
+        from unittest.mock import patch
+        from epac_molecular import epac_representation_audit
+        states = [{"state_id": str(index), "behavior": {"b": (3, 1, 1), "ligand_contribution_K": 1}} for index in range(27)]
+        prerequisites = {
+            "closure": ("epac_molecular.compositional_boundary_closure", {"all_formulas_exhibit_compositional_transition_closure": True}, ("all_formulas_exhibit_compositional_transition_closure",)),
+            "non_degeneracy": ("epac_boundary_nondegeneracy.boundary_descriptor_nondegeneracy_report", {"statuses": {"boundary_descriptor_non_degeneracy": "SURVIVED"}}, ("statuses", "boundary_descriptor_non_degeneracy")),
+            "sufficiency": ("epac_molecular.boundary_capacity_descriptor_sufficiency_sweep", {"aggregate": {"boundary_capacity_sufficiency": "SURVIVED"}}, ("aggregate", "boundary_capacity_sufficiency")),
+            "collision_localization": ("epac_molecular.boundary_capacity_information_loss_localization", {"aggregate": {"information_loss_localization": "SURVIVED"}}, ("aggregate", "information_loss_localization")),
+            "behavioral_equivalence": ("epac_molecular.boundary_capacity_quotient_test", {"aggregate": {"boundary_capacity_quotient": "SURVIVED"}}, ("aggregate", "boundary_capacity_quotient")),
+            "probe_completeness": ("epac_boundary_probe_completeness.boundary_probe_completeness_report", {"statuses": {"boundary_probe_completeness": "SURVIVED"}}, ("statuses", "boundary_probe_completeness")),
+            "minimal_refinement": ("epac_molecular.boundary_capacity_minimal_refinement_audit", {"aggregate": {"minimal_behavioral_refinement": "SURVIVED"}}, ("aggregate", "minimal_behavioral_refinement")),
+        }
+        with ExitStack() as stack:
+            stack.enter_context(patch("epac_molecular._build_frozen_27_states", return_value=states))
+            mocks = {name: stack.enter_context(patch(path, return_value=deepcopy(value))) for name, (path, value, _) in prerequisites.items()}
+            self.assertEqual(epac_representation_audit()["outputs"]["overall"], "SURVIVED")
+            for name, (_, original, keys) in prerequisites.items():
+                for status in ("FALSIFIED", "UNRESOLVED"):
+                    value = deepcopy(original)
+                    target = value
+                    for key in keys[:-1]:
+                        target = target[key]
+                    target[keys[-1]] = (False if status == "FALSIFIED" else None) if name == "closure" else status
+                    mocks[name].return_value = value
+                    result = epac_representation_audit()["outputs"]
+                    self.assertEqual(result["overall"], status, name)
+                    self.assertEqual(result["representation_equivalence"], "SURVIVED", name)
+                    self.assertIn(name, result["failed_stages" if status == "FALSIFIED" else "unresolved_stages"])
+                mocks[name].return_value = deepcopy(original)
+            mocks["closure"].return_value = {"all_formulas_exhibit_compositional_transition_closure": False}
+            mocks["non_degeneracy"].side_effect = RuntimeError("missing prerequisite")
+            result = epac_representation_audit()["outputs"]
+            self.assertEqual(result["overall"], "FALSIFIED")
+            self.assertIn("non_degeneracy", result["unresolved_stages"])
+            mocks["closure"].return_value = deepcopy(prerequisites["closure"][1])
+            self.assertEqual(epac_representation_audit()["outputs"]["overall"], "UNRESOLVED")
+            mocks["non_degeneracy"].side_effect = None
+            states[0]["behavior"]["affix_Ks"] = (2,)
+            result = epac_representation_audit()["outputs"]
+            self.assertEqual(result["overall"], "FALSIFIED")
+            self.assertIn("representation_equivalence", result["failed_stages"])
+
     def test_failed_structural_probe_is_unresolved(self) -> None:
         from unittest.mock import patch
         from epac_boundary_probe_completeness import OMITTED_OBSERVABLES

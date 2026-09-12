@@ -82,20 +82,32 @@ class SpiralPopulationTest(unittest.TestCase):
         receipt.gonol.carried_options = (("lifted-spiral", "malformed"),)
         with self.assertRaisesRegex(ValueError, "carried lifted-spiral"):
             extract_spiral_scene(receipt)
+        for count in ("invalid", "1", "-1", "", "00", "0;unexpected"):
+            receipt.gonol.carried_options = (("lifted-spiral", "left|left|right;axis;" + count),)
+            with self.assertRaisesRegex(ValueError, "attachment count"):
+                extract_spiral_scene(receipt)
 
     def test_svg_escapes_phase_and_fits_requested_width(self) -> None:
         scene = extract_spiral_scene(subatomic_gonol.construct_subatomic_gonol("H"))
         phase = "<script>alert(1)</script>&"
-        scene = replace(scene, turns=tuple(replace(turn, visible_phase=phase) for turn in scene.turns))
-        root = ET.fromstring(render_scene_svg(scene, width=640))
+        scene = replace(scene, turns=tuple(replace(turn, t=phase, visible_phase=phase) for turn in scene.turns),
+                        one_turn_flips_frame=phase, complete_restored_at_t2=phase)
+        root = ET.fromstring(render_scene_svg(scene, width=640, height=400))
         namespace = {"svg": "http://www.w3.org/2000/svg"}
         self.assertEqual(root.findall(".//svg:script", namespace), [])
         self.assertIn("visible: " + phase, [node.text for node in root.findall(".//svg:text", namespace)])
         for node in root.findall(".//svg:rect", namespace):
             self.assertGreaterEqual(float(node.attrib["x"]), 0)
             self.assertLessEqual(float(node.attrib["x"]) + float(node.attrib["width"]), 640)
+            self.assertGreaterEqual(float(node.attrib["y"]), 0)
+            self.assertLessEqual(float(node.attrib["y"]) + float(node.attrib["height"]), 400)
         with self.assertRaisesRegex(ValueError, "at least 640"):
             render_scene_svg(scene, width=639)
+        with self.assertRaisesRegex(ValueError, "at least 400"):
+            render_scene_svg(scene, height=399)
+        for invalid in (100.5, float("nan"), True, "640"):
+            with self.assertRaisesRegex(ValueError, "integers"):
+                render_scene_svg(scene, width=invalid)
 
     def test_full_population_covers_all_declared_molecules(self) -> None:
         pop = extract_full_spiral_population()

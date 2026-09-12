@@ -4,7 +4,7 @@
   "files": [
     {
       "forge_sha256": "f1a4639327828f6bc5ca39a3a1c441d5fc3f3b60823e646d149920e225554c11",
-      "handoff_sha256": "39548a20926a90f50da5d5167d8057a38f61ebda93bf86e8e97dc2ecf400ca90",
+      "handoff_sha256": "dd98623049562e8d0abdedefd5beee507bb2717d6f14268de38a40857fae5a08",
       "source_path": "research/epac/README.md",
       "target_path": "README.md"
     },
@@ -22,31 +22,31 @@
     },
     {
       "forge_sha256": "3159024e61e1edee0d0338e7b9984a0f0228a7c425c37a059e87a3222b212d5e",
-      "handoff_sha256": "3159024e61e1edee0d0338e7b9984a0f0228a7c425c37a059e87a3222b212d5e",
+      "handoff_sha256": "0c90a58d77c694f8f9e33e3367c12b00c4132b8ca7c44dde9d50c9b73668aa89",
       "source_path": "research/epac/docs/boundary_capacity_quotient.md",
       "target_path": "docs/boundary_capacity_quotient.md"
     },
     {
       "forge_sha256": "49f4025aef6711b72a372ebb41cd07b851c4e55ad1670cc1145c75180920e4ef",
-      "handoff_sha256": "49f4025aef6711b72a372ebb41cd07b851c4e55ad1670cc1145c75180920e4ef",
+      "handoff_sha256": "872dfc5903d3c48fef729ead5c93eb3d8da375709f90db36e61eab0c6109fc23",
       "source_path": "research/epac/docs/boundary_descriptor_nondegeneracy.md",
       "target_path": "docs/boundary_descriptor_nondegeneracy.md"
     },
     {
       "forge_sha256": "bba6e05440b1bc9db9c8a6285a6dd13592df0c941d20de9a31d526bb5bd7db9b",
-      "handoff_sha256": "bba6e05440b1bc9db9c8a6285a6dd13592df0c941d20de9a31d526bb5bd7db9b",
+      "handoff_sha256": "f4282d73eb59f6a5aba3ce6f672edaa0741b9584264d1f583bbdb8d45afe8adf",
       "source_path": "research/epac/docs/boundary_minimal_refinement.md",
       "target_path": "docs/boundary_minimal_refinement.md"
     },
     {
       "forge_sha256": "bcb1db06672deb0703f0aa0afb0e41db1da3e7476e602322897662e9ce9a8043",
-      "handoff_sha256": "bcb1db06672deb0703f0aa0afb0e41db1da3e7476e602322897662e9ce9a8043",
+      "handoff_sha256": "3e4faec0de2c42aa63b2edae73ccc76c3d635236d4c65ef7ee3a176eabfd1e41",
       "source_path": "research/epac/docs/boundary_probe_completeness.md",
       "target_path": "docs/boundary_probe_completeness.md"
     },
     {
       "forge_sha256": "402b9191311b2b5606a30893b001c5383236017afb379138081ed6b0f3c71d6e",
-      "handoff_sha256": "402b9191311b2b5606a30893b001c5383236017afb379138081ed6b0f3c71d6e",
+      "handoff_sha256": "6ebd88407ce3450a5e4d3d76bdffb1d154e6580fd49d5a0ea91915945ea8fe2d",
       "source_path": "research/epac/docs/cross_scale_compositional_closure.md",
       "target_path": "docs/cross_scale_compositional_closure.md"
     },
@@ -64,7 +64,7 @@
     },
     {
       "forge_sha256": "cb1d9e4e2e1339123eab2775509e9604c6a25482d21c77e158cd4514bd5b743e",
-      "handoff_sha256": "aea9be5f99ac0269550bb0eb6b075fbc354318a2201c4a61f057a0931f695a73",
+      "handoff_sha256": "9deeaf61d53bbb2994198a90bbb6f8149bfb0e05de0c93751f1190633692a57e",
       "source_path": "research/epac/epac_boundary_probe_completeness.py",
       "target_path": "epac_boundary_probe_completeness.py"
     },
@@ -88,7 +88,7 @@
     },
     {
       "forge_sha256": "df121c18b37b4c2f1acf58a879b5f4f02974408cc91a5747a74b2e6cf42d726a",
-      "handoff_sha256": "093f5cfa22fed8337677f6bfe57232aee2a84048a647142451719dcd184a4c81",
+      "handoff_sha256": "c6435566729589f01353f0c78376be0bb6515f580a9e5d0c9f97f6a3f58e943c",
       "source_path": "research/epac/epac_molecular.py",
       "target_path": "epac_molecular.py"
     },
@@ -196,7 +196,7 @@
     },
     {
       "forge_sha256": "f279644854c703679ae6097bd269d09ec9e1aec73e091b1613f5a6504d17ea59",
-      "handoff_sha256": "304a9333f8477efd36e011f0a4242fa7b95006b3c06f22e87189f518571a513c",
+      "handoff_sha256": "d0df994a00d05a4d0c794d5edec7102c2babb80ac50f6cb35ed0b8b63568a0d7",
       "source_path": "research/epac/tests/test_boundary_probe_completeness.py",
       "target_path": "tests/test_boundary_probe_completeness.py"
     },
@@ -208,7 +208,7 @@
     },
     {
       "forge_sha256": "7b433384035f726626a0a40799537604c4b32aa677232d2bcee88d0bfa9bfbc5",
-      "handoff_sha256": "6326319aaab3d6df671d9172e9fd3f6ce5c5f9d4bd3f3b41c07ce648484a576f",
+      "handoff_sha256": "5a06bbe8896f710b29589caa5acf20a8ff98b6ccbb28ef72a0772cf8c6c5f7f5",
       "source_path": "research/epac/tests/test_geometry_comparison_after_construction.py",
       "target_path": "tests/test_geometry_comparison_after_construction.py"
     },
@@ -226,13 +226,13 @@
     },
     {
       "forge_sha256": "14c3563267d21e41f04e20e8dbdd8c88a071841b77b9a4ba0936835950a6d826",
-      "handoff_sha256": "bdbc86edf33f8ec597298fdf2b04f6f357ee51b4b5bae2216173a90895f2bce5",
+      "handoff_sha256": "eb97ae87bf2ed7c02c1b5bd36ff4c7b33f4e7c9dd4d696f83f0ee6001d2c6738",
       "source_path": "research/epac/tests/test_spiral_population.py",
       "target_path": "tests/test_spiral_population.py"
     },
     {
       "forge_sha256": "3603f9ca0604eaff72bb1ba511f419eabcadf55ebc0f298dbe49722318345157",
-      "handoff_sha256": "3def2b79fbb79941d2c12d4d60fddb38c19eeac4b60483155283e58f6d67aa2f",
+      "handoff_sha256": "ded5e1bf60a1b8daab506816d5fd414b999cb58b18bd952d70069e70c62b58cf",
       "source_path": "research/epac/viz/README.md",
       "target_path": "viz/README.md"
     },
@@ -268,7 +268,7 @@
     },
     {
       "forge_sha256": "4a888dd253665518cca48e764262e2ec1b3be53a713d15ca17d5cd48af18361e",
-      "handoff_sha256": "c9fd2831f8f6d69e04f33b3fd038a6dc50f5b366e55de914bcbb47b2dd9d0220",
+      "handoff_sha256": "f5e5bbd6619d2ccf2a3a9a7527bba67699961835dc2bfb7ebf722570e7fc3aef",
       "source_path": "research/epac/viz/spiral_viz.py",
       "target_path": "viz/spiral_viz.py"
     }
@@ -286,7 +286,11 @@
     "Failed or missing structural probe evidence remains UNRESOLVED; the comparison reuses one probe-relativity result.",
     "Candidate dependency export uses the archived lock and verifier, regardless of caller checkout.",
     "Loaded UCNS cross-module functions, classes, module exports and nested-code references receive independent source witnesses.",
-    "Visualizer retains carried subatomic frames/axes, escapes phase text, and scales stations within supported SVG widths."
+    "Visualizer retains carried subatomic frames/axes, escapes phase text, and scales stations within supported SVG widths.",
+    "Unknown operation semantics remain ambiguous; known counterexamples retain FALSIFIED standing even with unresolved operations.",
+    "Representation audit aggregates all prerequisite stages and reports narrower equivalence, failed stages, and unresolved stages separately.",
+    "Verification examples use the installed repository environment; stable builds enforce CPython 3.11.15.",
+    "SVG dimensions and bare-subatomic attachment counts are validated; every dynamic SVG text value is escaped."
   ],
   "schema": "epac.forge-continuation-handoff",
   "scope": "Preserve continued EPAC research and adapt imports for independent packaging; no completed authority transfer or domain ratification.",
@@ -319,7 +323,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 is bound. All 42 affected tests and 23 subtests passed after review repairs; the expanded 186-test artifact matrix is pending. Licensed qualification remains separate.",
+    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 remains bound. All 42 selected tests across five documented verification suites and new regressions pass after latest repairs; the expanded 188-test artifact matrix is pending. Licensed qualification remains separate.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
@@ -348,17 +352,17 @@
         "wheel",
         "sdist"
       ],
-      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34690063986",
+      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34691147281",
       "python_versions": [
         "3.10",
         "3.11",
         "3.12"
       ],
-      "scope": "Preceding final-pin source before latest review repairs; private checks only, not release qualification.",
+      "scope": "Preceding source before aggregate, classification, renderer, and runtime review repairs. All downloaded private artifacts and receipts independently match Git; this is not licensed release qualification.",
       "skips": 0,
-      "source_commit": "6443982707425f1dd3fa0ae74caa1d0070ab3a05",
+      "source_commit": "f311eb3d5b2aaeccd9b569d7ce0d5b86919ecf15",
       "status": "passed",
-      "tests_per_artifact": 181
+      "tests_per_artifact": 186
     },
     "source_suite": {
       "log_sha256": "d9406628e06fdfa27b555c536cb339420c1133117ab8cfa8134e7fc853e92882",

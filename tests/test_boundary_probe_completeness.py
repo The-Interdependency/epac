@@ -9,7 +9,7 @@
 #
 # id: check_boundary_probe_audit_inventory_covers_declared_operations
 #   proves: boundary_probe_audit_inventory_covers_declared_operations
-#   call: self::test_declared_operations_are_classified_without_ambiguity
+#   call: self::test_declared_operations_preserve_unresolved_semantics
 #   mutates: none
 #   cleanup: none
 #
@@ -65,6 +65,7 @@ from epac_boundary_probe_completeness import (
     BOUNDARY_OBSERVING,
     FALSIFIED,
     SURVIVED,
+    UNRESOLVED,
     boundary_probe_completeness_report,
 )
 from epac_boundary_quotient import BOUNDARY_CAPACITY_PROBES
@@ -121,14 +122,20 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
             6,
         )
 
-    def test_declared_operations_are_classified_without_ambiguity(self) -> None:
+    def test_declared_operations_preserve_unresolved_semantics(self) -> None:
         inventory = self.report["operation_inventory"]
         self.assertEqual(inventory["operation_count"], 105)
-        self.assertEqual(inventory["boundary_relevant_count"], 59)
-        self.assertEqual(inventory["ambiguous_count"], 0)
-        self.assertFalse(
-            any(row["boundary_relevance"] == AMBIGUOUS for row in self.report["operation_ledger"])
-        )
+        self.assertEqual(inventory["boundary_relevant_count"], 58)
+        self.assertEqual(inventory["ambiguous_count"], 8)
+        ambiguous = [row for row in self.report["operation_ledger"] if row["boundary_relevance"] == AMBIGUOUS]
+        for row in ambiguous:
+            self.assertIsNone(row["currently_probed"])
+            self.assertEqual(row["represented_by"], "unresolved_boundary_relevance")
+            self.assertEqual(row["effect_on_quotient"], "unresolved_boundary_relevance")
+        self.assertIn("epac_molecular.epac_representation_audit", {row["operation"] for row in ambiguous})
+        self.assertIn("epac_molecular.epac_probe_relativity_formalization", {row["operation"] for row in ambiguous})
+        for name in ("new_operation", "boundary_new_operation", "new_harmonic_operation"):
+            self.assertEqual(_installed_audit._classify_operation("fixture", name), AMBIGUOUS)
 
         charged = self._row_by_operation(
             self.report,
@@ -227,7 +234,7 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
             self.report["statuses"],
             {
                 "declared_operation_inventory": SURVIVED,
-                "ambiguous_boundary_semantics": SURVIVED,
+                "ambiguous_boundary_semantics": UNRESOLVED,
                 "omitted_boundary_relevant_operations": FALSIFIED,
                 "quotient_partition_stability_under_omitted_existing_observables": FALSIFIED,
                 "boundary_probe_completeness": FALSIFIED,

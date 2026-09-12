@@ -106,5 +106,6 @@ inside those same-`B` classes.
 Verification command:
 
 ```bash
-PYTHONPATH="research/epac:research/epac/subatomic:libs/ucns/src" python3 -m unittest research/epac/tests/test_boundary_capacity_quotient.py -q
+uv sync --locked --extra test
+.venv/bin/python -m pytest tests/test_boundary_capacity_quotient.py -q
 ```

@@ -35,11 +35,13 @@ construction/evidence modules. Each operation is classified as one of:
 
 | item | count |
 |---|---:|
-| declared operations classified | 104 |
-| boundary-relevant operations | 59 |
+| declared operations classified | 105 |
+| boundary-relevant operations | 58 |
 | omitted boundary-relevant operations | 14 |
 | omitted operations that distinguish same-B frozen states | 13 |
-| ambiguous operations | 0 |
+| ambiguous operations | 8 |
+
+Eight exported operations, including the representation and probe-relativity audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
 
 ## Partition Result
 
@@ -87,7 +89,7 @@ Other omitted structural operations with quotient-refining effects include
 | item | status |
 |---|---|
 | declared_operation_inventory | SURVIVED |
-| ambiguous_boundary_semantics | SURVIVED |
+| ambiguous_boundary_semantics | UNRESOLVED |
 | omitted_boundary_relevant_operations | FALSIFIED |
 | quotient_partition_stability_under_omitted_existing_observables | FALSIFIED |
 | boundary_probe_completeness | FALSIFIED |
@@ -113,7 +115,8 @@ reduces the claim:
 Verification command:
 
 ```bash
-PYTHONPATH="research/epac:research/epac/subatomic:libs/ucns/src" python3 -m unittest research/epac/tests/test_boundary_probe_completeness.py -q
+uv sync --locked --extra test
+.venv/bin/python -m pytest tests/test_boundary_probe_completeness.py -q
 ```
 
 ## Follow-On Minimal Refinement

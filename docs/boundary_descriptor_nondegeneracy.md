@@ -109,5 +109,6 @@ boundary-capacity quotient, while state sufficiency remains falsified.
 Verification command:
 
 ```bash
-PYTHONPATH="research/epac:research/epac/subatomic:libs/ucns/src" python3 -m unittest research/epac/tests/test_boundary_descriptor_nondegeneracy.py -q
+uv sync --locked --extra test
+.venv/bin/python -m pytest tests/test_boundary_descriptor_nondegeneracy.py -q
 ```

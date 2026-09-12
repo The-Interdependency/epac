@@ -10,7 +10,7 @@ stack acceptance are separate operations over the resulting immutable hashes.
 #   summary: builds an immutable candidate from licensed exact Git source
 #   owner: The Interdependency
 #   public_surface: python tools/build_release.py NEW_OUTPUT
-#   internal_surface: main, normalize_sdist, normalize_wheel
+#   internal_surface: main, check_runtime, check_compressor, normalize_sdist, normalize_wheel
 #   auth_boundary: none
 #   storage_boundary: write
 #   storage_notes: temporary source archive and new caller-selected output directory
@@ -44,6 +44,14 @@ import tempfile
 import time
 import zipfile
 import zlib
+
+
+def check_runtime() -> dict[str, str]:
+    actual = {"implementation": sys.implementation.name,
+              "version": ".".join(map(str, sys.version_info[:3]))}
+    if actual != {"implementation": "cpython", "version": "3.11.15"}:
+        raise RuntimeError(f"release builds require CPython 3.11.15: {actual}")
+    return actual
 
 
 def check_compressor() -> dict[str, str]:
@@ -95,6 +103,7 @@ def main() -> None:
         return subprocess.check_output(("git", "-C", str(root), *arguments), text=True).strip()
     if git("status", "--porcelain"):
         raise ValueError("release source must be clean")
+    runtime = check_runtime()
     compressor = check_compressor()
     commit = git("rev-parse", "HEAD")
     def source_bytes(path):
@@ -137,7 +146,7 @@ def main() -> None:
         raise ValueError("expected one wheel and one sdist")
     manifest = {"schema": "epac.release-candidate", "version": 1, "source_commit": commit,
                 "source_tree": git("rev-parse", f"{commit}^{{tree}}"), "build_toolchain": versions,
-                "python": sys.version, "source_date_epoch": epoch, "compressor": compressor,
+                "python": sys.version, "python_runtime": runtime, "source_date_epoch": epoch, "compressor": compressor,
                 "license_sha256": hashlib.sha256(license_bytes).hexdigest(),
                 "ucns_source_lock_sha256": hashlib.sha256(source_bytes("data/ucns-source-lock.json")).hexdigest(),
                 "artifacts_sha256": artifacts, "acceptance": "candidate; clean replay and stack acceptance required",

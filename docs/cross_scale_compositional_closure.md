@@ -111,5 +111,6 @@ cross-scale boundary-capacity compositionality by itself.
 Verification command:
 
 ```bash
-PYTHONPATH="research/epac:research/epac/subatomic:libs/ucns/src" python3 -m unittest research/epac/tests/test_cross_scale_compositional_closure.py -q
+uv sync --locked --extra test
+.venv/bin/python -m pytest tests/test_cross_scale_compositional_closure.py -q
 ```

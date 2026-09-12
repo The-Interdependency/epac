@@ -2091,7 +2091,9 @@ def epac_representation_audit() -> dict[str, Any]:
     # === Stage ledger (as specified) ===
     stages = {
         "closure": {
-            "status": "SURVIVED" if cross.get("all_formulas_exhibit_compositional_transition_closure") else "FALSIFIED",
+            "status": ("SURVIVED" if cross.get("all_formulas_exhibit_compositional_transition_closure") is True
+                       else "FALSIFIED" if cross.get("all_formulas_exhibit_compositional_transition_closure") is False
+                       else "UNRESOLVED"),
             "note": "subatomic→element→molecule compositional closure (local steps only)",
         },
         "non_degeneracy": {
@@ -2129,7 +2131,12 @@ def epac_representation_audit() -> dict[str, Any]:
         },
     }
 
-    overall = "SURVIVED" if stages["representation_equivalence"]["status"] == "SURVIVED" else "FALSIFIED"
+    failed_stages = [name for name, stage in stages.items() if stage["status"] == "FALSIFIED"]
+    unresolved_stages = [name for name, stage in stages.items() if stage["status"] not in {"SURVIVED", "FALSIFIED"}]
+    # Preserve known falsification; incomplete stages remain separately explicit.
+    overall = ("FALSIFIED" if failed_stages else "BLOCKED"
+               if any(stage["status"] == "BLOCKED" for stage in stages.values())
+               else "UNRESOLVED" if unresolved_stages else "SURVIVED")
 
     # Partitions (canonical)
     partitions = {
@@ -2147,10 +2154,10 @@ def epac_representation_audit() -> dict[str, Any]:
     )
 
     hmmm = (
-        "A refined descriptor that exactly reproduces the observable boundary behavior on the frozen surface "
-        "has been earned for the current admissible probe set. It remains silent on the broader declared operation "
-        "surface once omitted structural observables are admitted (probe completeness). "
-        "Representation equivalence is therefore relative to the sealed admissible surface used for the audit."
+        "The representation-equivalence stage is limited to the sealed admissible surface. "
+        "Its result does not resolve failed or unavailable prerequisite stages or establish "
+        "completeness over additional declared operations. Known falsifications remain recorded "
+        "even when other stage evidence is unresolved."
     )
 
     return {
@@ -2164,6 +2171,9 @@ def epac_representation_audit() -> dict[str, Any]:
         "stages": stages,
         "outputs": {
             "overall": overall,
+            "representation_equivalence": stages["representation_equivalence"]["status"],
+            "failed_stages": failed_stages,
+            "unresolved_stages": unresolved_stages,
             "witnesses": witnesses,
             "partitions": partitions,
             "counterexamples": counterexamples,

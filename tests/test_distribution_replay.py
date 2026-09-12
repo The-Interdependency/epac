@@ -15,6 +15,9 @@ import subprocess
 import sys
 import tarfile
 from tempfile import TemporaryDirectory
+import importlib.util
+from types import SimpleNamespace
+from unittest.mock import patch
 
 
 def test_replay_exports_the_archived_dependency_lock(tmp_path):
@@ -66,3 +69,20 @@ raise SystemExit("unexpected installer operation")
 def check_epac_replay_uses_candidate_lock():
     with TemporaryDirectory() as directory:
         test_replay_exports_the_archived_dependency_lock(Path(directory))
+
+
+def test_release_builder_requires_documented_python_runtime():
+    path = Path(__file__).resolve().parents[1] / "tools/build_release.py"
+    spec = importlib.util.spec_from_file_location("epac_release_builder_fixture", path)
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    with patch.object(builder, "sys", SimpleNamespace(implementation=SimpleNamespace(name="cpython"), version_info=(3, 11, 15))):
+        assert builder.check_runtime() == {"implementation": "cpython", "version": "3.11.15"}
+    for implementation, version in (("cpython", (3, 10, 20)), ("cpython", (3, 12, 3)), ("cpython", (3, 11, 14)), ("pypy", (3, 11, 15))):
+        with patch.object(builder, "sys", SimpleNamespace(implementation=SimpleNamespace(name=implementation), version_info=version)):
+            try:
+                builder.check_runtime()
+            except RuntimeError as error:
+                assert "require CPython 3.11.15" in str(error)
+            else:
+                raise AssertionError("unqualified release runtime was accepted")

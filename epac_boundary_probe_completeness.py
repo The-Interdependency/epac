@@ -93,7 +93,7 @@ from epac_subatomic.subatomic_gonol import construct_subatomic_gonol
 #
 # id: boundary_probe_audit_classifies_completeness
 #   given: all operation ledger rows and omitted-observable effects
-#   then: the aggregate status is SURVIVED only if no omitted existing boundary-relevant operation refines the quotient, FALSIFIED if one does, and UNRESOLVED if any operation has ambiguous boundary semantics
+#   then: the aggregate status is FALSIFIED for an observed quotient-refining counterexample, otherwise UNRESOLVED for ambiguous operation semantics, and SURVIVED only when neither remains
 #   class: correctness
 # === END CONTRACTS ===
 
@@ -329,19 +329,16 @@ def _classify_operation(module: str, name: str) -> str:
         return BOUNDARY_OBSERVING
     if name in CONSTRUCTION_OPERATION_NAMES:
         return BOUNDARY_TRANSFORMING
-    if "lifted_spiral" in name:
+    if name in {"lifted_spiral_carried_on_subatomic", "lifted_spiral_carried_on_element",
+                "lifted_spiral_from_receipt", "lifted_spiral_carried_on_molecule"}:
         return BOUNDARY_OBSERVING
-    if "boundary" in name or "coupling" in name:
-        if module.endswith("symbol_coupling"):
-            return PROVENANCE_IDENTITY
-        return BOUNDARY_OBSERVING
-    if name in PROVENANCE_NAMES or "harmonic" in name:
+    if name in PROVENANCE_NAMES:
         return PROVENANCE_IDENTITY
     if name in {"get_compositional_local_steps", "generate_compositional_paths"}:
         return BOUNDARY_TRANSFORMING
     if name in {"compare_after_construction"}:
         return BOUNDARY_OBSERVING
-    return INTERNAL_NON_BOUNDARY
+    return AMBIGUOUS
 
 
 class OmittedButNomenclature:
@@ -364,7 +361,9 @@ def _is_currently_probed(module: str, name: str, relevance: str) -> bool | None:
     return True
 
 
-def _represented_by(name: str, currently_probed: bool | None) -> str:
+def _represented_by(name: str, currently_probed: bool | None, relevance: str) -> str:
+    if relevance == AMBIGUOUS:
+        return "unresolved_boundary_relevance"
     if currently_probed is None:
         return "not_applicable"
     if currently_probed:
@@ -379,6 +378,8 @@ def _represented_by(name: str, currently_probed: bool | None) -> str:
 
 
 def _observable_carried(name: str, relevance: str) -> str:
+    if relevance == AMBIGUOUS:
+        return "unresolved_boundary_relevance"
     if relevance not in {BOUNDARY_OBSERVING, BOUNDARY_TRANSFORMING}:
         return "not_applicable"
     if name in OMITTED_OBSERVABLE_OPERATION_NAMES:
@@ -688,9 +689,10 @@ def declared_operation_ledger() -> tuple[OperationRecord, ...]:
                 "boundary_relevance": relevance,
                 "currently_probed": currently_probed,
                 "observable_carried": _observable_carried(raw["name"], relevance),
-                "represented_by": _represented_by(raw["name"], currently_probed),
+                "represented_by": _represented_by(raw["name"], currently_probed, relevance),
                 "can_distinguish_same_B_states": can_distinguish_same_b,
                 "effect_on_quotient": (
+                    "unresolved_boundary_relevance" if relevance == AMBIGUOUS else
                     "refines_quotient_partition"
                     if can_distinguish_same_b
                     else (
@@ -729,10 +731,11 @@ def boundary_probe_completeness_report() -> dict[str, Any]:
         row for row in omitted if row["can_distinguish_same_B_states"]
     )
 
-    if ambiguous:
-        aggregate = UNRESOLVED
-    elif omitted_distinguishing:
+    # A known counterexample remains falsifying even while other relevance is unknown.
+    if omitted_distinguishing or combined["quotient_partition_changes"]:
         aggregate = FALSIFIED
+    elif ambiguous:
+        aggregate = UNRESOLVED
     else:
         aggregate = SURVIVED
 

@@ -77,7 +77,7 @@ assert replay_public_gonol(receipt).receipt_digest == receipt.receipt_digest
 GitHub release assets are the selected distribution surface. Once the owner
 records the license, install `requirements-build.txt` and run
 `python tools/build_release.py /tmp/epac-candidate` from a clean commit using
-uv-managed CPython 3.11.15 and `requirements-build.txt`. The builder enforces
+uv-managed CPython 3.11.15 and `requirements-build.txt`. The builder enforces that Python implementation/version plus
 zlib 1.3.1 at compile time and runtime and records both identities. Test
 those exact hashes in both the clean installation and stack before publishing.
 Download the published assets and verify `SHA256SUMS` before reconsumption.

@@ -167,11 +167,15 @@ class SpiralScene:
 
 
 def _get_mobius(inv: Mapping[str, Any] | None) -> Mapping[str, Any]:
-    if not inv:
+    if inv is None:
         return {}
-    m = inv.get("mobius") if isinstance(inv, dict) else None
-    if isinstance(m, dict):
+    if not isinstance(inv, Mapping):
+        raise ValueError("mobius invariants must be a mapping")
+    m = inv.get("mobius")
+    if isinstance(m, Mapping):
         return m
+    if m is not None:
+        raise ValueError("carried mobius evidence must be a mapping")
     return {}
 
 
@@ -284,20 +288,22 @@ def extract_spiral_scene(obj: Any) -> SpiralScene:
         try:
             gon = getattr(receipt, "gonol", receipt)
             carried = dict(getattr(gon, "carried_options", ()))
-        except Exception:
-            carried = {}
+        except (TypeError, ValueError) as error:
+            raise ValueError("malformed subatomic carried options") from error
         val = carried.get("lifted-spiral", "")
         frames = ()
         axes = ()
         if val:
             try:
-                fpart, apart, _ac = val.split(";", 2)
+                fpart, apart, attachment_count = val.split(";", 2)
                 frames = tuple(fpart.split("|")) if fpart else ()
                 axes = tuple(sorted(a for a in apart.split(",") if a)) if apart else ()
             except (AttributeError, ValueError) as error:
                 raise ValueError("malformed carried lifted-spiral evidence") from error
             if len(frames) != 3 or not all(frames) or not axes:
                 raise ValueError("carried lifted-spiral evidence requires three frames and declared axes")
+            if attachment_count != "0":
+                raise ValueError("bare subatomic carried lifted-spiral attachment count must be 0")
             mob = {
                 "law": "ucns.native-mobius-root-loop",
                 "participant_axes": axes,
@@ -395,7 +401,7 @@ def render_to_text(scene: SpiralScene) -> str:
     lines.append(f"parameter={scene.parameter}")
     lines.append(f"binding={scene.binding}")
     lines.append("")
-    lines.append("Canonical two-turn double cover (visible phase constant, frame flips):")
+    lines.append("Recorded turn states:")
     lines.append("")
 
     for ts in scene.turns:
@@ -458,13 +464,17 @@ def render_scene_svg(
     Layout (faithful to the data):
     - Three vertical stations for t=0, t=1, t=2
     - Horizontal ribbon showing the double cover
-    - Same visible phase shown at every station
+    - Carried visible phase shown at each station
     - Frame arrows or labels that flip at t=1 and restore at t=2
     - Participant axes listed under each station with their charges
     - Attachment arcs drawn between participants (center-ligand or symmetric)
     """
+    if type(width) is not int or type(height) is not int:
+        raise ValueError("SVG dimensions must be integers")
     if width < 640:
         raise ValueError("SVG width must be at least 640 pixels")
+    if height < 400:
+        raise ValueError("SVG height must be at least 400 pixels")
     title = title or f"Lifted Spiral — {scene.source_id}"
     margin = 40
     top = 80
@@ -519,7 +529,7 @@ def render_scene_svg(
         # Station header
         parts.append(
             f'<text x="{x}" y="{top - 6}" text-anchor="middle" fill="#94a3b8" '
-            f'font-family="monospace" font-size="12">t = {ts.t}</text>'
+            f'font-family="monospace" font-size="12">t = {_svg_escape(str(ts.t))}</text>'
         )
 
         # Visible phase pill (same for all)
@@ -549,7 +559,7 @@ def render_scene_svg(
         # Turn label under ribbon
         parts.append(
             f'<text x="{x}" y="{ribbon_y + ribbon_h + 18}" text-anchor="middle" '
-            f'fill="#64748b" font-family="monospace" font-size="10">turn {ts.t}</text>'
+            f'fill="#64748b" font-family="monospace" font-size="10">turn {_svg_escape(str(ts.t))}</text>'
         )
 
     # Participant axes (left side list)
@@ -595,19 +605,19 @@ def render_scene_svg(
     )
     parts.append(
         f'<text x="{lx+12}" y="{ly+16}" fill="#94a3b8" font-family="monospace" font-size="10">'
-        "UCNS native-möbius-root-loop</text>"
+        f"{_svg_escape(scene.law)}</text>"
     )
     parts.append(
         f'<text x="{lx+12}" y="{ly+30}" fill="#64748b" font-family="monospace" font-size="9">'
-        "visible phase unchanged after integer turns</text>"
+        "carried visible phases and local frames</text>"
     )
     parts.append(
         f'<text x="{lx+12}" y="{ly+44}" fill="#64748b" font-family="monospace" font-size="9">'
-        "frame flips at t=1, restored at t=2</text>"
+        "frame/restore flags are recorded below</text>"
     )
     parts.append(
         f'<text x="{lx+12}" y="{ly+58}" fill="#64748b" font-family="monospace" font-size="9">'
-        f"one_turn_flips={scene.one_turn_flips_frame}  complete@2={scene.complete_restored_at_t2}</text>"
+        f"one_turn_flips={_svg_escape(str(scene.one_turn_flips_frame))}  complete@2={_svg_escape(str(scene.complete_restored_at_t2))}</text>"
     )
     parts.append(
         f'<text x="{lx+12}" y="{ly+72}" fill="#64748b" font-family="monospace" font-size="9">'
