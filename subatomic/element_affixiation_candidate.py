@@ -88,7 +88,7 @@ from ucns import native_mobius_state, public_gonol_function
 from epac_ucns_provenance import verify_loaded_ucns_commit
 
 PINNED_METAPAT_COMMIT = "34d954aa1e2092e615b03a180500f6b6977f501e"
-PINNED_UCNS_COMMIT = "be42dfc9c1b1e4ccfb820ae1fba7779958a6d1b8"
+PINNED_UCNS_COMMIT = "6eea1828a34ed8ec99879f8090ea5d48352d8c2d"
 
 SOURCE_COMMITS = MappingProxyType(
     {

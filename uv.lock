@@ -325,7 +325,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -358,7 +358,7 @@ name = "importlib-metadata"
 version = "9.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6f/7e/1e7e8dc30634b93ebb3d58a3dea569ad146e656218d3960ab04f62047b29/importlib_metadata-9.0.1.tar.gz", hash = "sha256:ab830580bc0ef3db61ce8fae716389e5462b67e033018bab6d8f80ef17172f99", size = 59124, upload-time = "2026-08-28T15:30:34.646Z" }
 wheels = [
@@ -399,7 +399,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'test'", specifier = "==9.1.1" },
     { name = "setuptools", marker = "extra == 'build'", specifier = "==84.0.0" },
     { name = "twine", marker = "extra == 'build'", specifier = "==7.0.0" },
-    { name = "ucns", url = "https://github.com/The-Interdependency/ucns/archive/be42dfc9c1b1e4ccfb820ae1fba7779958a6d1b8.tar.gz" },
+    { name = "ucns", url = "https://github.com/The-Interdependency/ucns/archive/6eea1828a34ed8ec99879f8090ea5d48352d8c2d.tar.gz" },
     { name = "wheel", marker = "extra == 'build'", specifier = "==0.48.0" },
 ]
 provides-extras = ["test", "build"]
@@ -1006,29 +1006,34 @@ wheels = [
 [[package]]
 name = "ucns"
 version = "0.0.0.dev0"
-source = { url = "https://github.com/The-Interdependency/ucns/archive/be42dfc9c1b1e4ccfb820ae1fba7779958a6d1b8.tar.gz" }
+source = { url = "https://github.com/The-Interdependency/ucns/archive/6eea1828a34ed8ec99879f8090ea5d48352d8c2d.tar.gz" }
 dependencies = [
     { name = "mpmath" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
-sdist = { hash = "sha256:2b8f6846eeb8fad8ef75dd81887742facca58f64e44ff8331f8b4534d72a34da" }
+sdist = { hash = "sha256:1665ae06921a0a425ef1c99ce9d811cf8b52c20e4873edea53c4cdecaf2895d9" }
 
 [package.metadata]
 requires-dist = [
     { name = "build", marker = "extra == 'build'", specifier = "==1.5.0" },
+    { name = "build", marker = "extra == 'test'", specifier = "==1.5.0" },
     { name = "mpmath", specifier = ">=1.3" },
     { name = "mpmath", marker = "extra == 'research'", specifier = ">=1.3,<2" },
     { name = "mpmath", marker = "extra == 'test'", specifier = ">=1.3,<2" },
     { name = "numpy", specifier = ">=1.24" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1" },
     { name = "setuptools", marker = "extra == 'build'", specifier = "==84.0.0" },
+    { name = "setuptools", marker = "extra == 'test'", specifier = "==84.0.0" },
     { name = "sympy", marker = "extra == 'research'", specifier = ">=1.12,<2" },
     { name = "sympy", marker = "extra == 'test'", specifier = ">=1.12,<2" },
     { name = "tomli", marker = "python_full_version < '3.11' and extra == 'build'", specifier = ">=2" },
+    { name = "tomli", marker = "python_full_version < '3.11' and extra == 'test'", specifier = ">=2" },
     { name = "twine", marker = "extra == 'build'", specifier = "==7.0.0" },
+    { name = "uv", marker = "extra == 'test'", specifier = "==0.11.18" },
     { name = "wheel", marker = "extra == 'build'", specifier = "==0.48.0" },
+    { name = "wheel", marker = "extra == 'test'", specifier = "==0.48.0" },
 ]
 provides-extras = ["test", "research", "build"]
 

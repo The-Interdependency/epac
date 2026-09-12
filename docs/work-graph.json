@@ -1,7 +1,7 @@
 {
   "schema": "the-interdependency.stack-manifest",
   "version": "1.0.0",
-  "work_graph_sha256": "a058dd8290daf5986f4d40ea49bf10c5173bab3bee90ef2f1c7ddade3d5237ab",
+  "work_graph_sha256": "d4ebcf8aecfb7ad6c2b51d8b91e4ef4ab573df582240e02ce684b909f8f3bd1c",
   "repositories": [
     {
       "repository": "The-Interdependency/stack",
@@ -23,7 +23,7 @@
     },
     {
       "repository": "The-Interdependency/ucns",
-      "commit": "be42dfc9c1b1e4ccfb820ae1fba7779958a6d1b8",
+      "commit": "6eea1828a34ed8ec99879f8090ea5d48352d8c2d",
       "authority": "geometry and mathematical representation",
       "relation": "licensed source archive consumed by the package candidate; exact archive and runtime source hashes in data/ucns-source-lock.json"
     }

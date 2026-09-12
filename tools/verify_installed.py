@@ -9,7 +9,7 @@ clean installation. This receipt measures reproducibility, not domain validity.
 #   module_kind: instrument
 #   summary: verifies installed EPAC payloads, imports, tests, and preserved falsification standing
 #   owner: The Interdependency
-#   public_surface: python tools/verify_installed.py SOURCE WHEEL RECEIPT
+#   public_surface: python tools/verify_installed.py SOURCE WHEEL RECEIPT ARTIFACT
 #   internal_surface: main
 #   auth_boundary: none
 #   storage_boundary: write
@@ -133,6 +133,7 @@ def main() -> None:
     assert all(Path(path).is_relative_to(Path(sys.prefix)) for path in origins.values()), origins
     standings = compare_after_construction()["standings"]
     assert standings == EXPECTED_STANDINGS, standings
+    assert payload() == before, "installed distribution changed during comparison"
     assert source_snapshot(source) == archived_inputs, "source changed during replay"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == artifact_digest
     receipt = {"artifact_kind": artifact_kind, "artifact_sha256": artifact_digest, "artifact_name": artifact.name, "schema": "epac.installed-replay", "version": 1, "status": "passed", "python": sys.version,

@@ -100,7 +100,7 @@
     },
     {
       "forge_sha256": "226e4a38dcb6bbc050ce01273a0e1c7c561900019dd68f34f80324af9eac30de",
-      "handoff_sha256": "292623a37b4a50a5c0061561cf90218b322a0789e0f55fa985d5384b8aff4d45",
+      "handoff_sha256": "3a282b1911657f7482dc08023b76e206f96210b90685f0caad4ecc689406b004",
       "source_path": "research/epac/subatomic/element_affixiation_candidate.py",
       "target_path": "subatomic/element_affixiation_candidate.py"
     },
@@ -315,7 +315,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "hmmm; new 181-test suite includes standing-population regression",
+    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea1828a34ed8ec99879f8090ea5d48352d8c2d is bound; the new private artifact matrix is pending. Licensed release qualification remains separate.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
@@ -338,6 +338,23 @@
         "ucns_mobius_as_sealed_shape_prediction": "FALSIFIED"
       },
       "status": "passed"
+    },
+    "preceding_private_artifact_matrix": {
+      "artifact_kinds": [
+        "wheel",
+        "sdist"
+      ],
+      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34689026423",
+      "python_versions": [
+        "3.10",
+        "3.11",
+        "3.12"
+      ],
+      "scope": "Preceding source before final accepted UCNS dependency update; not release qualification.",
+      "skips": 0,
+      "source_commit": "57b2bd3396e1b1bc19445701a762ec8cd33d198b",
+      "status": "passed",
+      "tests_per_artifact": 181
     },
     "source_suite": {
       "log_sha256": "d9406628e06fdfa27b555c536cb339420c1133117ab8cfa8134e7fc853e92882",

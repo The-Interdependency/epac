@@ -28,8 +28,14 @@ jobs:
           python -m pip install uv==0.11.18
           uv sync --locked --python python --extra test --extra build
       - name: Build package candidates
+        env:
+          EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          .venv/bin/python -m build
+          test -z "$(git status --porcelain --untracked-files=all)"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_COMMIT"
+          mkdir /tmp/epac-build-source
+          git archive "$EXPECTED_SOURCE_COMMIT" | tar -x -C /tmp/epac-build-source
+          .venv/bin/python -m build --outdir "$PWD/dist" /tmp/epac-build-source
           .venv/bin/python -m twine check dist/*
       - name: Replay installed wheel and source artifact
         run: bash tools/replay_distributions.sh . dist /tmp/epac-replay python
@@ -48,3 +54,40 @@ jobs:
           assert actual == doc["work_graph_sha256"], (actual, doc["work_graph_sha256"])
           print(actual)
           PY
+      - name: Retain private artifact replay evidence
+        env:
+          EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import shutil
+          import subprocess
+          import sys
+
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True).strip()
+          if git('status', '--porcelain', '--untracked-files=all') or git('rev-parse', 'HEAD') != os.environ['EXPECTED_SOURCE_COMMIT']:
+              raise SystemExit('source identity changed during qualification')
+          output = Path('/tmp/epac-ci-evidence')
+          output.mkdir()
+          shutil.copytree('dist', output / 'artifacts')
+          replay = output / 'replay'
+          replay.mkdir()
+          for path in Path('/tmp/epac-replay').iterdir():
+              if path.is_file():
+                  shutil.copy2(path, replay / path.name)
+          (output / 'source.json').write_text(json.dumps({
+              'source_commit': git('rev-parse', 'HEAD'),
+              'source_tree': git('rev-parse', 'HEAD^{tree}'),
+              'python': sys.version,
+              'license_qualification': 'recorded; release qualification separate' if Path('LICENSE').is_file() else 'pending owner choice',
+              'publication_or_authority_transfer': False
+          }, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: epac-private-replay-${{ matrix.python-version }}
+          path: /tmp/epac-ci-evidence
+          if-no-files-found: error

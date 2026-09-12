@@ -100,7 +100,7 @@ class EpacPublicGonolTest(unittest.TestCase):
         self.assertEqual(receipt.gonol.carrier_index, public_gonol_function("O").index)
         self.assertEqual(receipt.geometry["ucns_commit"], PINNED_UCNS_COMMIT)
         self.assertEqual(receipt.gonol.geometry, receipt.geometry)
-        self.assertEqual(PINNED_UCNS_COMMIT, "be42dfc9c1b1e4ccfb820ae1fba7779958a6d1b8")
+        self.assertEqual(PINNED_UCNS_COMMIT, "6eea1828a34ed8ec99879f8090ea5d48352d8c2d")
         self.assertEqual(
             PINNED_PUBLIC_GONOL_SHA256,
             "55d10c84529a4d7bc7714786357e977b68d9df2ac3f73d20e229580b552c2ef5",
