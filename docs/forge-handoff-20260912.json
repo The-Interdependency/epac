@@ -4,7 +4,7 @@
   "files": [
     {
       "forge_sha256": "f1a4639327828f6bc5ca39a3a1c441d5fc3f3b60823e646d149920e225554c11",
-      "handoff_sha256": "dd98623049562e8d0abdedefd5beee507bb2717d6f14268de38a40857fae5a08",
+      "handoff_sha256": "43347b906a5216d001cc52f806aae2b97414bac52d8a2c6846a3ee7688eb99cf",
       "source_path": "research/epac/README.md",
       "target_path": "README.md"
     },
@@ -76,7 +76,7 @@
     },
     {
       "forge_sha256": "f96f81e37127ada9c93008440929d499466ae2c28024575ba58f59dd31f8e10f",
-      "handoff_sha256": "089957d9bb7e3cb39e598ffa56a77113edb8ecb61237ce592dd3fd0289adbf48",
+      "handoff_sha256": "7283c099923310f8dae24d577505b54c25919290b358be2aefa5fde1b8285535",
       "source_path": "research/epac/epac_comparison.py",
       "target_path": "epac_comparison.py"
     },
@@ -88,7 +88,7 @@
     },
     {
       "forge_sha256": "df121c18b37b4c2f1acf58a879b5f4f02974408cc91a5747a74b2e6cf42d726a",
-      "handoff_sha256": "25f76d53d999819284598e49f30ab6ccc2a3f5cf63ddb33b584274d5af519b8d",
+      "handoff_sha256": "1bcf2cd48206da34ff60649592ee52359c7652b00cdbb509e34779a0b4c90b32",
       "source_path": "research/epac/epac_molecular.py",
       "target_path": "epac_molecular.py"
     },
@@ -112,7 +112,7 @@
     },
     {
       "forge_sha256": "cb4b97e2e8595ace20ca7a3e5f6915dcf7125d3cd199454eab55e5e9987aa308",
-      "handoff_sha256": "6281116a79c2bd1059da92f46433486b43b2bc31e4872d9de36d064075b32964",
+      "handoff_sha256": "90f6c4ce1b8c1caf0d9c5605c65b2100a63089a1563858d6e91fee01721fdef6",
       "source_path": "research/epac/subatomic/nuclear_harmonic_candidates.py",
       "target_path": "subatomic/nuclear_harmonic_candidates.py"
     },
@@ -166,7 +166,7 @@
     },
     {
       "forge_sha256": "e17db29cbb1474e33075a0ffd1d00a0ced796a603f75bed5625ba89451cefc71",
-      "handoff_sha256": "9ab3363136056647c082cbb5b6bc7c8ab6f74d53e97c6e316bdb9a2e28179754",
+      "handoff_sha256": "bb6fdd64a0f3807a84c2e93501fadfc1f71804125bbc26e977d1d896a8f096ad",
       "source_path": "research/epac/subatomic/test_nuclear_harmonic_candidates.py",
       "target_path": "tests/subatomic/test_nuclear_harmonic_candidates.py"
     },
@@ -208,7 +208,7 @@
     },
     {
       "forge_sha256": "7b433384035f726626a0a40799537604c4b32aa677232d2bcee88d0bfa9bfbc5",
-      "handoff_sha256": "db02e9c352952ceb50974e17f85ba14c1cccdfadb7d71ae4d7bf6d60c8979802",
+      "handoff_sha256": "801629d40600df5d00173e53c6db63d43aa272b8e75d331355b7308617b77d3b",
       "source_path": "research/epac/tests/test_geometry_comparison_after_construction.py",
       "target_path": "tests/test_geometry_comparison_after_construction.py"
     },
@@ -226,13 +226,13 @@
     },
     {
       "forge_sha256": "14c3563267d21e41f04e20e8dbdd8c88a071841b77b9a4ba0936835950a6d826",
-      "handoff_sha256": "38d0a70ea3605148217f6d258bb699c5c412a6f33f6c1c73693b90a1e6bee2c8",
+      "handoff_sha256": "3f208d281bd8ae0a740bad0023a6b228c08a463264f1d98ca323f939529f7b2c",
       "source_path": "research/epac/tests/test_spiral_population.py",
       "target_path": "tests/test_spiral_population.py"
     },
     {
       "forge_sha256": "3603f9ca0604eaff72bb1ba511f419eabcadf55ebc0f298dbe49722318345157",
-      "handoff_sha256": "452c90c6d5046a1c62c2a4676dbdeca4c22b40e85da33adb479149ad40edc3b1",
+      "handoff_sha256": "f4a880fcc32a0f750ceec7fe589b48905df6c46ebb4aa6fee6287cb1cc583fbd",
       "source_path": "research/epac/viz/README.md",
       "target_path": "viz/README.md"
     },
@@ -268,7 +268,7 @@
     },
     {
       "forge_sha256": "4a888dd253665518cca48e764262e2ec1b3be53a713d15ca17d5cd48af18361e",
-      "handoff_sha256": "2ff1b0880a16ea2c60961db2eb72578dd617c2f9db1db12ba12ccb42abc0ddf9",
+      "handoff_sha256": "b7bb06a4160d09e7461fd10dc60d7c2ba2fe3b3b6b233a7da20b27c6322a62a9",
       "source_path": "research/epac/viz/spiral_viz.py",
       "target_path": "viz/spiral_viz.py"
     }
@@ -329,7 +329,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 remains bound. All 11 affected inventory and compatibility tests pass after the latest review repairs. Public initializer re-exports are inventoried by AST resolution and checked against the installed epac_viz exports;136 callable addresses,39 ambiguous. Element compatibility uses its own actual cross-scale status independently of source refinement. The suite remains199tests; the exact-head artifact matrix and review are pending. Owner-selected licensing and stable graduation remain open.",
+    "final_dependency_pin_and_clean_package_matrix": "Five review findings repaired: unknown local formulas reject; every quantified partition uses the frozen preregistered population; source replay binds the complete Git snapshot and wheel before archived execution and checks it again afterward; ground-spin prose claims only the tested 0+ predicate; SVGs retain all participant axes. Nine simple and three input-binding tests pass, including eight stale/mismatched-input rejection cases. Real canonical wheel/sdist build, Twine, complete source binding and independent static verification pass at f20a478abcff953e2bf872903dadc4dca5396248. The suite collects 208 tests. The full affected run passed 39 tests before an obsolete boundary/control assertion failed; that assertion is corrected and its rerun plus exact-head six-install CI and review remain pending. Owner-selected licensing and stable graduation remain open.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
@@ -358,18 +358,18 @@
         "wheel",
         "sdist"
       ],
-      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34696686346",
-      "independent_acceptance_sha256": "fb27af605d5913ba576b490830e899d211e1eafde97256e931083ac75d262a12",
+      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34698849691",
+      "independent_acceptance_sha256": "e06345c1177127c431855c6692eb05b5988e1f34db6db9942a906560815ba0da",
       "python_versions": [
         "3.10",
         "3.11",
         "3.12"
       ],
-      "scope": "Preceding source before recurrence, refinement-status, comparison-cache and SVG-title repairs. Six downloaded private artifact installs independently matched Git. No licensed release qualification.",
+      "scope": "Preceding source before five input-binding and evidence-scope repairs. Six downloaded private installs independently verified with historical verifier 31416. No licensed release qualification.",
       "skips": 0,
-      "source_commit": "73fa8127d2c8ebcfb63e92126be931f69bb22414",
+      "source_commit": "50b6e8b53ff9a74be64d0550fc05d6e98822561c",
       "status": "passed",
-      "tests_per_artifact": 199
+      "tests_per_artifact": 205
     },
     "source_suite": {
       "log_sha256": "d9406628e06fdfa27b555c536cb339420c1133117ab8cfa8134e7fc853e92882",

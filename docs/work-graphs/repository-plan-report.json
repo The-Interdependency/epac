@@ -10,9 +10,9 @@
   },
   "source": {
     "branch": "graduate/package-release-20260912",
-    "commit": "e90d1b5836ff16cf9749c6fce5c6c76cec3b4014",
+    "commit": "f20a478abcff953e2bf872903dadc4dca5396248",
     "generated_at": "2026-09-12",
-    "note": "All 20 affected cache-isolation, operation-inventory and current-pin receipt replay checks pass. The suite collects 205 tests. An internal private-cache/copy decorator protects molecular invariants and all cached public audit reports, including element/formula ledgers and frozen boundary surfaces. Declared molecule collections return independent constructions. Mutating nested returned evidence cannot alter later calls or the capstone. Replay guidance now binds accepted UCNS 6eea182 and labels older receipt sets historical. The new exact-head artifact matrix and review remain pending. The owner-selected license and full release/authority transition remain open."
+    "note": "Five review findings repaired: unknown local formulas reject; every quantified partition uses the frozen preregistered population; source replay binds the complete Git snapshot and wheel before archived execution and checks it again afterward; ground-spin prose claims only the tested 0+ predicate; SVGs retain all participant axes. Nine simple and three input-binding tests pass, including eight stale/mismatched-input rejection cases. Real canonical wheel/sdist build, Twine, complete source binding and independent static verification pass at f20a478abcff953e2bf872903dadc4dca5396248. The suite collects 208 tests. The full affected run passed 39 tests before an obsolete boundary/control assertion failed; that assertion is corrected and its rerun plus exact-head six-install CI and review remain pending. Owner-selected licensing and stable graduation remain open."
   },
   "authority": {
     "owns": [
@@ -41,7 +41,7 @@
   },
   "status": {
     "state": "extracted candidate; package preparation implemented; graduation incomplete",
-    "current_claim": "All 20 affected cache-isolation, operation-inventory and current-pin receipt replay checks pass. The suite collects 205 tests. An internal private-cache/copy decorator protects molecular invariants and all cached public audit reports, including element/formula ledgers and frozen boundary surfaces. Declared molecule collections return independent constructions. Mutating nested returned evidence cannot alter later calls or the capstone. Replay guidance now binds accepted UCNS 6eea182 and labels older receipt sets historical. The new exact-head artifact matrix and review remain pending. The owner-selected license and full release/authority transition remain open."
+    "current_claim": "Five review findings repaired: unknown local formulas reject; every quantified partition uses the frozen preregistered population; source replay binds the complete Git snapshot and wheel before archived execution and checks it again afterward; ground-spin prose claims only the tested 0+ predicate; SVGs retain all participant axes. Nine simple and three input-binding tests pass, including eight stale/mismatched-input rejection cases. Real canonical wheel/sdist build, Twine, complete source binding and independent static verification pass at f20a478abcff953e2bf872903dadc4dca5396248. The suite collects 208 tests. The full affected run passed 39 tests before an obsolete boundary/control assertion failed; that assertion is corrected and its rerun plus exact-head six-install CI and review remain pending. Owner-selected licensing and stable graduation remain open."
   },
   "delivered": [
     {
@@ -120,7 +120,8 @@
     "artifact_replay": "tools/replay_distributions.sh",
     "graduation": "docs/graduation.json",
     "ucns_source_identity": "data/ucns-source-lock.json",
-    "subatomic_tests": "tests/subatomic/"
+    "subatomic_tests": "tests/subatomic/",
+    "replay_input_binding": "tools/verify_replay_inputs.py"
   },
   "hmmm": [
     "owner-selected license/distribution rights remain unresolved",
