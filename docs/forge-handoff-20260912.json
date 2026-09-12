@@ -4,7 +4,7 @@
   "files": [
     {
       "forge_sha256": "f1a4639327828f6bc5ca39a3a1c441d5fc3f3b60823e646d149920e225554c11",
-      "handoff_sha256": "43347b906a5216d001cc52f806aae2b97414bac52d8a2c6846a3ee7688eb99cf",
+      "handoff_sha256": "a2e8393466d9330166422492eab20f91d6dd7cb9b0deddd35b7544d23704a359",
       "source_path": "research/epac/README.md",
       "target_path": "README.md"
     },
@@ -40,7 +40,7 @@
     },
     {
       "forge_sha256": "bcb1db06672deb0703f0aa0afb0e41db1da3e7476e602322897662e9ce9a8043",
-      "handoff_sha256": "36619fefbf870624b88053725f56241ab26c5159765c21949d84d4b84df8b31f",
+      "handoff_sha256": "2d341255fd42e1036a1d43a37b88b4f3ea76bc4842d331688a6835a5851a52c6",
       "source_path": "research/epac/docs/boundary_probe_completeness.md",
       "target_path": "docs/boundary_probe_completeness.md"
     },
@@ -64,7 +64,7 @@
     },
     {
       "forge_sha256": "cb1d9e4e2e1339123eab2775509e9604c6a25482d21c77e158cd4514bd5b743e",
-      "handoff_sha256": "ab4e4bfaa7605ae9825b402c1b76d828afea29555c3a830d3e5ef7ecd96b5a4f",
+      "handoff_sha256": "0ac0f59d1129ef7fae80186815231df1f0881f547185ae2532b8e331eec179c4",
       "source_path": "research/epac/epac_boundary_probe_completeness.py",
       "target_path": "epac_boundary_probe_completeness.py"
     },
@@ -196,7 +196,7 @@
     },
     {
       "forge_sha256": "f279644854c703679ae6097bd269d09ec9e1aec73e091b1613f5a6504d17ea59",
-      "handoff_sha256": "aa5dd1a8cea3da427ab29d4d53af88efb8975d99fb0f68c86cc76a6414cd26d8",
+      "handoff_sha256": "9717acee17df1603fb9edcbe6a2d3929fa8ac45ba1992be0cb54f0208f549383",
       "source_path": "research/epac/tests/test_boundary_probe_completeness.py",
       "target_path": "tests/test_boundary_probe_completeness.py"
     },
@@ -329,7 +329,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "Four further review findings repaired: frozen boundary/control prose now reports five matching singleton classes and FALSIFIED shape prediction; introduced symbols require declared atomic records; all current packaged harmonic receipts match executable records and recurrence outputs, with old spin-parity bytes retained as history; replay rejects undeclared wheel metadata and checks pinned generator, portable tag, pure-library placement, source package names, license coverage and README bytes before archived execution. All 10 targeted tests pass in 5.19 seconds, including 13 mismatched-input scenarios. Real canonical build, Twine, initial/final source binding and independent source-derived core metadata verification pass at fabbbb66751c5aea9b31337d3b90abd51b597774 (187 Git, 194 archived, 64 wheel files). The suite remains 208 tests. The next exact-head artifact matrix and review remain pending. Owner-selected licensing and final release/authority transition remain open.",
+    "final_dependency_pin_and_clean_package_matrix": "Four review findings repaired. Replay derives all core metadata from TOML source and validates every release-manifest field, including typed non-transfer flags, license/UCNS digests, source epoch, runtime, compressor, toolchain and candidate disposition. Python 3.10 bootstraps tomli 2.4.1 from a source-owned hashed wheel requirement. Builder and replay execute Git-bound helper bytes directly. Release qualification requires owner-selected LICENSE, explicit SPDX/license-files metadata and removal of unresolved LICENSE_STATUS. Thirteen targeted gate/audit tests pass in 69.91 seconds; four gate tests also pass on Python 3.10.20 in 21.76 seconds. Seventeen mismatched-input scenarios and fifteen invalid complete-manifest/license cases reject; a complete fixture passes. A synthetic license fixture builds identical bytes across umasks 022/077 and passes both source gates and independent checks; it grants no actual EPAC release qualification. The operation inventory retains136 addresses, with49 ambiguous,48 known boundary-relevant,4 known omitted and3 measured distinguishing readouts. Ten unsupported proxies now remain hmmm; the three actual readouts still falsify completeness. Real canonical build/Twine/input checks pass at d7b8f81a635cd28a05722eb31b3c1c18f46ed112 (189 Git,196 archived,64 wheel files). The suite collects209 tests; final exact-head CI/review and owner license choice remain pending.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
@@ -358,18 +358,18 @@
         "wheel",
         "sdist"
       ],
-      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34698849691",
-      "independent_acceptance_sha256": "e06345c1177127c431855c6692eb05b5988e1f34db6db9942a906560815ba0da",
+      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34703201866",
+      "independent_acceptance_sha256": "e852d8ffd8fac2bde6e6cd7240cde1f2bb67b2a5bd32635b3a3545f1bc5ed1de",
       "python_versions": [
         "3.10",
         "3.11",
         "3.12"
       ],
-      "scope": "Preceding source before five input-binding and evidence-scope repairs. Six downloaded private installs independently verified with historical verifier 31416. No licensed release qualification.",
+      "scope": "Historical private evidence before full manifest/license gates and withdrawal of unsupported operation proxies. Six downloaded installs independently checked by verifier f7d9; no licensed release qualification.",
       "skips": 0,
-      "source_commit": "50b6e8b53ff9a74be64d0550fc05d6e98822561c",
+      "source_commit": "00afff001f6ae8c76410009e8d297ae86c029738",
       "status": "passed",
-      "tests_per_artifact": 205
+      "tests_per_artifact": 208
     },
     "source_suite": {
       "log_sha256": "d9406628e06fdfa27b555c536cb339420c1133117ab8cfa8134e7fc853e92882",

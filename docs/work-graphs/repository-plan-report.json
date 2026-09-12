@@ -10,9 +10,9 @@
   },
   "source": {
     "branch": "graduate/package-release-20260912",
-    "commit": "fabbbb66751c5aea9b31337d3b90abd51b597774",
+    "commit": "d7b8f81a635cd28a05722eb31b3c1c18f46ed112",
     "generated_at": "2026-09-12",
-    "note": "Four further review findings repaired: frozen boundary/control prose now reports five matching singleton classes and FALSIFIED shape prediction; introduced symbols require declared atomic records; all current packaged harmonic receipts match executable records and recurrence outputs, with old spin-parity bytes retained as history; replay rejects undeclared wheel metadata and checks pinned generator, portable tag, pure-library placement, source package names, license coverage and README bytes before archived execution. All 10 targeted tests pass in 5.19 seconds, including 13 mismatched-input scenarios. Real canonical build, Twine, initial/final source binding and independent source-derived core metadata verification pass at fabbbb66751c5aea9b31337d3b90abd51b597774 (187 Git, 194 archived, 64 wheel files). The suite remains 208 tests. The next exact-head artifact matrix and review remain pending. Owner-selected licensing and final release/authority transition remain open."
+    "note": "Four review findings repaired. Replay derives all core metadata from TOML source and validates every release-manifest field, including typed non-transfer flags, license/UCNS digests, source epoch, runtime, compressor, toolchain and candidate disposition. Python 3.10 bootstraps tomli 2.4.1 from a source-owned hashed wheel requirement. Builder and replay execute Git-bound helper bytes directly. Release qualification requires owner-selected LICENSE, explicit SPDX/license-files metadata and removal of unresolved LICENSE_STATUS. Thirteen targeted gate/audit tests pass in 69.91 seconds; four gate tests also pass on Python 3.10.20 in 21.76 seconds. Seventeen mismatched-input scenarios and fifteen invalid complete-manifest/license cases reject; a complete fixture passes. A synthetic license fixture builds identical bytes across umasks 022/077 and passes both source gates and independent checks; it grants no actual EPAC release qualification. The operation inventory retains136 addresses, with49 ambiguous,48 known boundary-relevant,4 known omitted and3 measured distinguishing readouts. Ten unsupported proxies now remain hmmm; the three actual readouts still falsify completeness. Real canonical build/Twine/input checks pass at d7b8f81a635cd28a05722eb31b3c1c18f46ed112 (189 Git,196 archived,64 wheel files). The suite collects209 tests; final exact-head CI/review and owner license choice remain pending."
   },
   "authority": {
     "owns": [
@@ -41,7 +41,7 @@
   },
   "status": {
     "state": "extracted candidate; package preparation implemented; graduation incomplete",
-    "current_claim": "Four further review findings repaired: frozen boundary/control prose now reports five matching singleton classes and FALSIFIED shape prediction; introduced symbols require declared atomic records; all current packaged harmonic receipts match executable records and recurrence outputs, with old spin-parity bytes retained as history; replay rejects undeclared wheel metadata and checks pinned generator, portable tag, pure-library placement, source package names, license coverage and README bytes before archived execution. All 10 targeted tests pass in 5.19 seconds, including 13 mismatched-input scenarios. Real canonical build, Twine, initial/final source binding and independent source-derived core metadata verification pass at fabbbb66751c5aea9b31337d3b90abd51b597774 (187 Git, 194 archived, 64 wheel files). The suite remains 208 tests. The next exact-head artifact matrix and review remain pending. Owner-selected licensing and final release/authority transition remain open."
+    "current_claim": "Four review findings repaired. Replay derives all core metadata from TOML source and validates every release-manifest field, including typed non-transfer flags, license/UCNS digests, source epoch, runtime, compressor, toolchain and candidate disposition. Python 3.10 bootstraps tomli 2.4.1 from a source-owned hashed wheel requirement. Builder and replay execute Git-bound helper bytes directly. Release qualification requires owner-selected LICENSE, explicit SPDX/license-files metadata and removal of unresolved LICENSE_STATUS. Thirteen targeted gate/audit tests pass in 69.91 seconds; four gate tests also pass on Python 3.10.20 in 21.76 seconds. Seventeen mismatched-input scenarios and fifteen invalid complete-manifest/license cases reject; a complete fixture passes. A synthetic license fixture builds identical bytes across umasks 022/077 and passes both source gates and independent checks; it grants no actual EPAC release qualification. The operation inventory retains136 addresses, with49 ambiguous,48 known boundary-relevant,4 known omitted and3 measured distinguishing readouts. Ten unsupported proxies now remain hmmm; the three actual readouts still falsify completeness. Real canonical build/Twine/input checks pass at d7b8f81a635cd28a05722eb31b3c1c18f46ed112 (189 Git,196 archived,64 wheel files). The suite collects209 tests; final exact-head CI/review and owner license choice remain pending."
   },
   "delivered": [
     {
@@ -121,7 +121,8 @@
     "graduation": "docs/graduation.json",
     "ucns_source_identity": "data/ucns-source-lock.json",
     "subatomic_tests": "tests/subatomic/",
-    "replay_input_binding": "tools/verify_replay_inputs.py"
+    "replay_input_binding": "tools/verify_replay_inputs.py",
+    "release_contract": "tools/release_contract.py"
   },
   "hmmm": [
     "owner-selected license/distribution rights remain unresolved",
