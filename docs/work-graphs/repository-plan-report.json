@@ -10,9 +10,9 @@
   },
   "source": {
     "branch": "graduate/package-release-20260912",
-    "commit": "75e5afd881d7ceda61d0c7f6d283c200908df56e",
+    "commit": "5845bfdae949c855e181c275d80d1d6d1bb9edc1",
     "generated_at": "2026-09-12",
-    "note": "Describes the preceding implementation commit. All 11 affected inventory and compatibility tests pass after the latest review repairs. Public initializer re-exports are inventoried by AST resolution and checked against the installed epac_viz exports;136 callable addresses,39 ambiguous. Element compatibility uses its own actual cross-scale status independently of source refinement. The suite remains199tests; the exact-head artifact matrix and review are pending. Owner-selected licensing and stable graduation remain open."
+    "note": "All 15 affected recurrence, closure, SVG and real comparison-cache tests pass; 203 tests are collected. Unsupported alpha-cluster participants are rejected and declared decompositions check recorded nucleon accounting. Source refinement has its own status; shared-field mismatches remain element compatibility failures. Comparison callers receive deep copies and SVG wrappers preserve custom titles. The preceding 73fa matrix passed six 199-test installs and its downloaded artifacts and receipts independently matched Git. The new exact-head artifact matrix and review remain pending; licensing and graduation remain incomplete."
   },
   "authority": {
     "owns": [
@@ -41,7 +41,7 @@
   },
   "status": {
     "state": "extracted candidate; package preparation implemented; graduation incomplete",
-    "current_claim": "The package preserves the 45-file forge continuation, accepted UCNS 6eea182 pin, target-independent transition evidence and corrected stoichiometric projections. The preceding82ab matrix passed six195-test installs with downloaded artifacts and receipts independently verified against Git. All 11 affected inventory and compatibility tests pass after the latest review repairs. Public initializer re-exports are inventoried by AST resolution and checked against the installed epac_viz exports;136 callable addresses,39 ambiguous. Element compatibility uses its own actual cross-scale status independently of source refinement. The suite remains199tests; the exact-head artifact matrix and review are pending. Owner-selected licensing and stable graduation remain open. Historical falsifications remain preserved with no scientific or authority transfer."
+    "current_claim": "All 15 affected recurrence, closure, SVG and real comparison-cache tests pass; 203 tests are collected. Unsupported alpha-cluster participants are rejected and declared decompositions check recorded nucleon accounting. Source refinement has its own status; shared-field mismatches remain element compatibility failures. Comparison callers receive deep copies and SVG wrappers preserve custom titles. The preceding 73fa matrix passed six 199-test installs and its downloaded artifacts and receipts independently matched Git. The new exact-head artifact matrix and review remain pending; licensing and graduation remain incomplete."
   },
   "delivered": [
     {

@@ -46,7 +46,7 @@
     },
     {
       "forge_sha256": "402b9191311b2b5606a30893b001c5383236017afb379138081ed6b0f3c71d6e",
-      "handoff_sha256": "6ebd88407ce3450a5e4d3d76bdffb1d154e6580fd49d5a0ea91915945ea8fe2d",
+      "handoff_sha256": "da56e71a60abc426fb32511b706cf9bd206489dfdf6a77c3a54a6b1e01e802a2",
       "source_path": "research/epac/docs/cross_scale_compositional_closure.md",
       "target_path": "docs/cross_scale_compositional_closure.md"
     },
@@ -76,13 +76,13 @@
     },
     {
       "forge_sha256": "f96f81e37127ada9c93008440929d499466ae2c28024575ba58f59dd31f8e10f",
-      "handoff_sha256": "4dcbd1a4fa9e33faa910b38d399a471d9ca660a1db71e2a3ef16f1a759b16e2d",
+      "handoff_sha256": "089957d9bb7e3cb39e598ffa56a77113edb8ecb61237ce592dd3fd0289adbf48",
       "source_path": "research/epac/epac_comparison.py",
       "target_path": "epac_comparison.py"
     },
     {
       "forge_sha256": "f633a75755884f0b2ba7860b54e3943058891e7711775b9b3a3efefc1ab81d3a",
-      "handoff_sha256": "6b9d34304c5f6bacf2a30cbeb23278995a3fa086cfdeb34bf663e82f0e390b87",
+      "handoff_sha256": "711fc87788899ad116e3c719dd84eb19dddf588a4017e982a67dd2ff1e1608df",
       "source_path": "research/epac/epac_cross_scale_closure.py",
       "target_path": "epac_cross_scale_closure.py"
     },
@@ -112,7 +112,7 @@
     },
     {
       "forge_sha256": "cb4b97e2e8595ace20ca7a3e5f6915dcf7125d3cd199454eab55e5e9987aa308",
-      "handoff_sha256": "e9d2c17708bcd732949a43aa698b0ebc565eb4b28c5a894f93b7402e994ce22c",
+      "handoff_sha256": "6281116a79c2bd1059da92f46433486b43b2bc31e4872d9de36d064075b32964",
       "source_path": "research/epac/subatomic/nuclear_harmonic_candidates.py",
       "target_path": "subatomic/nuclear_harmonic_candidates.py"
     },
@@ -166,7 +166,7 @@
     },
     {
       "forge_sha256": "e17db29cbb1474e33075a0ffd1d00a0ced796a603f75bed5625ba89451cefc71",
-      "handoff_sha256": "6dacbaaece6d1728cc892417ec49439a2a6771092cd8b811f30e69721f0ce274",
+      "handoff_sha256": "9ab3363136056647c082cbb5b6bc7c8ab6f74d53e97c6e316bdb9a2e28179754",
       "source_path": "research/epac/subatomic/test_nuclear_harmonic_candidates.py",
       "target_path": "tests/subatomic/test_nuclear_harmonic_candidates.py"
     },
@@ -202,13 +202,13 @@
     },
     {
       "forge_sha256": "f412165deef20eda92f0241d39e107e2bdf4944cb5ad55c66ca768d02efa635b",
-      "handoff_sha256": "5ef811fb433ef90a8fb8f2b143057b5fb7bcb24765781d3c36144929d0a6b0a9",
+      "handoff_sha256": "51a0a735c9f90292e1968ef3e34c965641a56cd496e0ce780591eeeac40dda69",
       "source_path": "research/epac/tests/test_cross_scale_compositional_closure.py",
       "target_path": "tests/test_cross_scale_compositional_closure.py"
     },
     {
       "forge_sha256": "7b433384035f726626a0a40799537604c4b32aa677232d2bcee88d0bfa9bfbc5",
-      "handoff_sha256": "eb63baf40ef8d82cbfe4626786af6cd577be45948e8c0800ebda9e471de63c7f",
+      "handoff_sha256": "db02e9c352952ceb50974e17f85ba14c1cccdfadb7d71ae4d7bf6d60c8979802",
       "source_path": "research/epac/tests/test_geometry_comparison_after_construction.py",
       "target_path": "tests/test_geometry_comparison_after_construction.py"
     },
@@ -226,7 +226,7 @@
     },
     {
       "forge_sha256": "14c3563267d21e41f04e20e8dbdd8c88a071841b77b9a4ba0936835950a6d826",
-      "handoff_sha256": "38bce3684896fb96e2b5f50fe65e6b87410c831d2b8a1e03f29c86a1b4c182c5",
+      "handoff_sha256": "38d0a70ea3605148217f6d258bb699c5c412a6f33f6c1c73693b90a1e6bee2c8",
       "source_path": "research/epac/tests/test_spiral_population.py",
       "target_path": "tests/test_spiral_population.py"
     },
@@ -268,7 +268,7 @@
     },
     {
       "forge_sha256": "4a888dd253665518cca48e764262e2ec1b3be53a713d15ca17d5cd48af18361e",
-      "handoff_sha256": "24accb32ffef04d41589e7d29260eb8bf2679a7d13c90247ef795dc9673d6170",
+      "handoff_sha256": "2ff1b0880a16ea2c60961db2eb72578dd617c2f9db1db12ba12ccb42abc0ddf9",
       "source_path": "research/epac/viz/spiral_viz.py",
       "target_path": "viz/spiral_viz.py"
     }
@@ -294,7 +294,8 @@
     "All receipt scales use strict carried spiral parsing; bare core projections reject nonzero counts. Direct receipt visualization retains frames, axes and attachment counts with unrecorded endpoint details left unknown. Population errors propagate; all five frozen preregistered cases are required before scoring. The inventory includes minimal-refinement and probe-completeness modules: 109 operations, 12 explicitly ambiguous. Both result documents and the executable visualization example agree.",
     "Descriptor sufficiency no longer overwrites compositionality; actual cross-scale closure statuses are carried separately. Inventory covers all packaged executable modules (128 operations,31 ambiguous), including atomic records, provenance, visualization and the CLI entry point, with installed-file coverage checked. Real receipt relations come from the closed gonol, bare element counts are rejected by core and visualization, frozen charge mappings are preserved when present, and unknown local transition kinds raise.",
     "Transition predictions are independent of target invariants and reject empty/wrong source summaries, noncanonical operation counts, wrong-formula targets and relabeled mismatching constituents. Bare comparison/control families preserve every stoichiometric instance with global occurrence numbering. The capstone closure stage propagates all required cross-scale statuses. Minimality/capstone witnesses select deterministic pairs that actually cross the partitions. Unsupported D_min monotonicity wording is removed; symmetric and unrecorded attachment slots render without fabricating endpoints.",
-    "Explicit public package re-exports are resolved from relative AST bindings without execution; all package initializers participate in coverage. Ledger names use installed epac_viz/epac_subatomic namespaces. Callable addresses count aliases separately without implying distinct implementations. The sufficiency report carries element_state_compatibility separately and tests mismatched source-refinement and compatibility states."
+    "Explicit public package re-exports are resolved from relative AST bindings without execution; all package initializers participate in coverage. Ledger names use installed epac_viz/epac_subatomic namespaces. Callable addresses count aliases separately without implying distinct implementations. The sufficiency report carries element_state_compatibility separately and tests mismatched source-refinement and compatibility states.",
+    "Alpha-cluster recurrence rejects undeclared participants and checks the recorded nucleon accounting of declared decompositions. Element ledgers expose source refinement independently of shared-field compatibility. Comparison callers receive deep copies, preserving cached evidence against annotation. Both element and subatomic SVG wrappers honor caller titles. All 15 affected tests pass and 203 tests are collected."
   ],
   "schema": "epac.forge-continuation-handoff",
   "scope": "Preserve continued EPAC research and adapt imports for independent packaging; no completed authority transfer or domain ratification.",
@@ -356,17 +357,18 @@
         "wheel",
         "sdist"
       ],
-      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34694471259",
+      "ci_url": "https://github.com/The-Interdependency/epac/actions/runs/34696686346",
+      "independent_acceptance_sha256": "fb27af605d5913ba576b490830e899d211e1eafde97256e931083ac75d262a12",
       "python_versions": [
         "3.10",
         "3.11",
         "3.12"
       ],
-      "scope": "Preceding source before transition independence, stoichiometric projection, capstone and witness repairs. All downloaded private artifacts and receipts independently match Git; this is not licensed release qualification.",
+      "scope": "Preceding source before recurrence, refinement-status, comparison-cache and SVG-title repairs. Six downloaded private artifact installs independently matched Git. No licensed release qualification.",
       "skips": 0,
-      "source_commit": "82ab9e5ae1d713b89c993d243b9f7b68bad4d071",
+      "source_commit": "73fa8127d2c8ebcfb63e92126be931f69bb22414",
       "status": "passed",
-      "tests_per_artifact": 195
+      "tests_per_artifact": 199
     },
     "source_suite": {
       "log_sha256": "d9406628e06fdfa27b555c536cb339420c1133117ab8cfa8134e7fc853e92882",
