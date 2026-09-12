@@ -16,7 +16,7 @@
     },
     {
       "forge_sha256": "d82623ef38378fbff856a9a4a4fd75e7ca50a4ea59959158a867f4a1fbe3326d",
-      "handoff_sha256": "f9dd69ffa546cd821938e9829dbf5398849fb710fc9edb412fa75d0a395ba520",
+      "handoff_sha256": "beb69acb91080a1987bb47912300dc395ca1aa79e2cc38b458d5945f6158db8c",
       "source_path": "research/epac/docs/boundary_capacity_principle.md",
       "target_path": "docs/boundary_capacity_principle.md"
     },
@@ -40,7 +40,7 @@
     },
     {
       "forge_sha256": "bcb1db06672deb0703f0aa0afb0e41db1da3e7476e602322897662e9ce9a8043",
-      "handoff_sha256": "77df3daeee90e86dac3dbc77b39ca86988affd7f6f30002335602086b5fd4d4d",
+      "handoff_sha256": "36619fefbf870624b88053725f56241ab26c5159765c21949d84d4b84df8b31f",
       "source_path": "research/epac/docs/boundary_probe_completeness.md",
       "target_path": "docs/boundary_probe_completeness.md"
     },
@@ -64,7 +64,7 @@
     },
     {
       "forge_sha256": "cb1d9e4e2e1339123eab2775509e9604c6a25482d21c77e158cd4514bd5b743e",
-      "handoff_sha256": "378a1b7ba029409dc884f6b401cacd3cf0f7c79baf0a165b8aa9087a7e60e396",
+      "handoff_sha256": "d8ea49ea822e61bcda5c8593d384cadef4ff6c0c2ee56e685fdf3330945bfacc",
       "source_path": "research/epac/epac_boundary_probe_completeness.py",
       "target_path": "epac_boundary_probe_completeness.py"
     },
@@ -88,7 +88,7 @@
     },
     {
       "forge_sha256": "df121c18b37b4c2f1acf58a879b5f4f02974408cc91a5747a74b2e6cf42d726a",
-      "handoff_sha256": "9588bb300bd90e443543043d39d6ac751cf5b1b4bb0c793806e366a9078a8b1c",
+      "handoff_sha256": "6838a2d777aa5cc4f0b41d874b24ce5858fc4c194a8f2f3920abb0eb3bf2902d",
       "source_path": "research/epac/epac_molecular.py",
       "target_path": "epac_molecular.py"
     },
@@ -196,7 +196,7 @@
     },
     {
       "forge_sha256": "f279644854c703679ae6097bd269d09ec9e1aec73e091b1613f5a6504d17ea59",
-      "handoff_sha256": "c98fe50306b0862726a53cbd93119d7896fa8cd982879b2c2cdc38199594d33e",
+      "handoff_sha256": "aa5dd1a8cea3da427ab29d4d53af88efb8975d99fb0f68c86cc76a6414cd26d8",
       "source_path": "research/epac/tests/test_boundary_probe_completeness.py",
       "target_path": "tests/test_boundary_probe_completeness.py"
     },
@@ -208,7 +208,7 @@
     },
     {
       "forge_sha256": "7b433384035f726626a0a40799537604c4b32aa677232d2bcee88d0bfa9bfbc5",
-      "handoff_sha256": "9adc73dd2101e6db4c3811fd22855d898f2520697e6cb291cccdd791a455ecfb",
+      "handoff_sha256": "eb63baf40ef8d82cbfe4626786af6cd577be45948e8c0800ebda9e471de63c7f",
       "source_path": "research/epac/tests/test_geometry_comparison_after_construction.py",
       "target_path": "tests/test_geometry_comparison_after_construction.py"
     },
@@ -293,7 +293,8 @@
     "SVG dimensions and bare-subatomic attachment counts are validated; every dynamic SVG text value is escaped.",
     "All receipt scales use strict carried spiral parsing; bare core projections reject nonzero counts. Direct receipt visualization retains frames, axes and attachment counts with unrecorded endpoint details left unknown. Population errors propagate; all five frozen preregistered cases are required before scoring. The inventory includes minimal-refinement and probe-completeness modules: 109 operations, 12 explicitly ambiguous. Both result documents and the executable visualization example agree.",
     "Descriptor sufficiency no longer overwrites compositionality; actual cross-scale closure statuses are carried separately. Inventory covers all packaged executable modules (128 operations,31 ambiguous), including atomic records, provenance, visualization and the CLI entry point, with installed-file coverage checked. Real receipt relations come from the closed gonol, bare element counts are rejected by core and visualization, frozen charge mappings are preserved when present, and unknown local transition kinds raise.",
-    "Transition predictions are independent of target invariants and reject empty/wrong source summaries, noncanonical operation counts, wrong-formula targets and relabeled mismatching constituents. Bare comparison/control families preserve every stoichiometric instance with global occurrence numbering. The capstone closure stage propagates all required cross-scale statuses. Minimality/capstone witnesses select deterministic pairs that actually cross the partitions. Unsupported D_min monotonicity wording is removed; symmetric and unrecorded attachment slots render without fabricating endpoints."
+    "Transition predictions are independent of target invariants and reject empty/wrong source summaries, noncanonical operation counts, wrong-formula targets and relabeled mismatching constituents. Bare comparison/control families preserve every stoichiometric instance with global occurrence numbering. The capstone closure stage propagates all required cross-scale statuses. Minimality/capstone witnesses select deterministic pairs that actually cross the partitions. Unsupported D_min monotonicity wording is removed; symmetric and unrecorded attachment slots render without fabricating endpoints.",
+    "Explicit public package re-exports are resolved from relative AST bindings without execution; all package initializers participate in coverage. Ledger names use installed epac_viz/epac_subatomic namespaces. Callable addresses count aliases separately without implying distinct implementations. The sufficiency report carries element_state_compatibility separately and tests mismatched source-refinement and compatibility states."
   ],
   "schema": "epac.forge-continuation-handoff",
   "scope": "Preserve continued EPAC research and adapt imports for independent packaging; no completed authority transfer or domain ratification.",
@@ -326,7 +327,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 remains bound. Six focused regressions, extended transition validation, and all five molecular tests pass;199tests collect. The full repaired-head matrix and exact review remain pending. A previous artifact replay correctly rejected a legacy test expecting undeclared formula zero; that test now requires the missing-input error. Licensed qualification remains separate.",
+    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 remains bound. All 11 affected inventory and compatibility tests pass after the latest review repairs. Public initializer re-exports are inventoried by AST resolution and checked against the installed epac_viz exports;136 callable addresses,39 ambiguous. Element compatibility uses its own actual cross-scale status independently of source refinement. The suite remains199tests; the exact-head artifact matrix and review are pending. Owner-selected licensing and stable graduation remain open.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
