@@ -14,6 +14,7 @@ stack.
 from __future__ import annotations
 
 from functools import lru_cache
+from epac_evidence_cache import _independent_cached
 from itertools import combinations
 from typing import Any, Mapping
 
@@ -308,7 +309,7 @@ def _candidate_ledger() -> tuple[dict[str, Any], ...]:
     return tuple(rows)
 
 
-@lru_cache(maxsize=1)
+@_independent_cached(maxsize=1)
 def boundary_minimal_refinement_report() -> dict[str, Any]:
     """Search for the minimal existing-observable refinement of B."""
     completeness = boundary_probe_completeness_report()

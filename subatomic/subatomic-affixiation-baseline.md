@@ -60,7 +60,7 @@ hydrogen/helium/lithium claims exist in current metapat or ucns checkouts. Resol
 ## 3. UCNS established baseline (implemented surfaces only)
 
 Cited from the historical UCNS baseline at `1975fe70`; the extracted EPAC
-constructor currently pins UCNS `828c0b8bbcfc267efb5701da714191c1f73a81ff` and
+constructor currently pins UCNS `6eea1828a34ed8ec99879f8090ea5d48352d8c2d` and
 retains the historical receipts as prior-version evidence:
 
 - **Public Gonol carrier** (`implemented`): exactly 157 one-scalar glyph positions in fixed order;
@@ -152,8 +152,8 @@ projection; any canon promotion in METAPAT, UCNS, or elsewhere.
 
 To replay by hand:
 
-1. Pin sources: METAPAT `34d954a`, UCNS `828c0b8` for the current extracted constructor; the
-   `1975fe7` receipt set is historical.
+1. Pin sources: METAPAT `34d954a`, UCNS `6eea1828a34ed8ec99879f8090ea5d48352d8c2d` for the current constructor;
+   the `1975fe7` and `828c0b8` receipt sets are historical.
 2. Read `metapat/docs/applications/affixiation-harmonics.md` for the semantic definitions used.
 3. Read `ucns/src/ucns/public_gonol.py` and `ucns/src/ucns/direct_mobius.py` for the carrier and
    Möbius surfaces used.
@@ -202,7 +202,7 @@ The frozen minimal decisive action from §7 is now implemented locally (not push
   `CONTRACTS` blocks; no position operation is defined or inferred.
 - `test_element_affixiation_candidate.py` — executable witnesses with a `CHECKS` block.
   Current result: source-synchronized witnesses pass against the extracted EPAC UCNS pin
-  `828c0b8`.
+  `6eea1828`.
 - `receipts/{h,he,li,c}.json` — historical sealed construction receipts at UCNS `1975fe7`,
   retained as prior-version evidence:
 
@@ -215,8 +215,8 @@ The frozen minimal decisive action from §7 is now implemented locally (not push
 
 - These historical records were byte-identical under their original UCNS pin; they are not the
   current extracted-constructor receipts.
-- `receipts/ucns-828c0b8/` — current sealed construction receipts at the extracted EPAC UCNS
-  pin, valid only when runtime source verification reproduces that clean checkout:
+- `receipts/ucns-828c0b8/` — historical sealed construction receipts at the initial
+  extraction pin, retained only for replay with that historical runtime:
 
   | Element | Receipt (SHA-256) |
   |---|---|
@@ -381,3 +381,21 @@ This completes the lift of the nuclear harmonic layer (alpha-conjugate broadened
 No sealed labels used in construction; no VSEPR or cartesian geometry; no UCNS position operations invented.
 
 Status remains `CROSS-DOMAIN-HYPOTHESIS / hmmm`. Unresolved items unchanged.
+
+
+## Current accepted UCNS replay inputs
+
+The current constructor uses accepted UCNS
+`6eea1828a34ed8ec99879f8090ea5d48352d8c2d`, bound by
+`data/ucns-source-lock.json` and the package dependency. Current H/He/Li/C receipts
+are in `subatomic/receipts/ucns-6eea182/`; the `1975fe7` and `828c0b8` records
+above remain historical evidence and must not be checked as current-pin receipts.
+
+From the repository root after `uv sync --locked --extra test`, run:
+
+```bash
+uv run --locked python -m pytest tests/subatomic/test_element_affixiation_candidate.py
+```
+
+That suite checks the pin-specific receipts against the installed constructor
+and public replay. Successful replay does not promote the research standing.

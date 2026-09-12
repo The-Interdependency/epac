@@ -11,7 +11,7 @@ UCNS internal inspection is performed here.
 
 from __future__ import annotations
 
-from functools import lru_cache
+from epac_evidence_cache import _independent_cached
 from typing import Any, Mapping
 
 from epac_molecular import (
@@ -241,7 +241,7 @@ def derive_element_boundary_from_subatomic(
     }
 
 
-@lru_cache(maxsize=None)
+@_independent_cached(maxsize=None)
 def element_closure_ledger(symbol: str, occurrence: int = 0) -> dict[str, Any]:
     """Return the subatomic-to-element provenance and closure ledger."""
     subatomic_receipt = construct_subatomic_gonol(symbol, occurrence=occurrence)
@@ -392,7 +392,7 @@ def _consume_introduced_instances(
     return True
 
 
-@lru_cache(maxsize=None)
+@_independent_cached(maxsize=None)
 def formula_closure_ledger(formula: str) -> dict[str, Any]:
     """Return the end-to-end subatomic-to-molecule closure ledger."""
     if formula not in MOLECULE_COMPOSITIONS:
@@ -525,7 +525,7 @@ def control_like_partition_failure_disposition() -> dict[str, Any]:
     }
 
 
-@lru_cache(maxsize=1)
+@_independent_cached(maxsize=1)
 def cross_scale_compositional_closure() -> dict[str, Any]:
     """Run the bounded EPAC cross-scale compositional-closure audit."""
     symbols = required_element_symbols()

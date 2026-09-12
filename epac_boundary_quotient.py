@@ -12,7 +12,7 @@ B remains insufficient for those stronger claims.
 
 from __future__ import annotations
 
-from functools import lru_cache
+from epac_evidence_cache import _independent_cached
 from itertools import combinations
 from typing import Any, Callable, Mapping
 
@@ -281,7 +281,7 @@ def _probe_inventory(signatures: Mapping[str, ProbeSignature]) -> dict[str, Any]
     }
 
 
-@lru_cache(maxsize=1)
+@_independent_cached(maxsize=1)
 def boundary_capacity_quotient_report() -> dict[str, Any]:
     """Compare B-equality with the present boundary-capacity behavior quotient."""
     surface = freeze_current_construction_surface()

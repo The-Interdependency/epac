@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import ast
 from functools import lru_cache
+from epac_evidence_cache import _independent_cached
 from importlib.resources import files
 from itertools import combinations
 from pathlib import Path
@@ -112,6 +113,7 @@ Observable = Any
 ObservableFn = Callable[[StateContext], Observable]
 
 OPERATION_SOURCE_FILES = (
+    "epac_evidence_cache.py",
     "viz/__init__.py",
     "subatomic/__init__.py",
     "data/__init__.py",
@@ -701,7 +703,7 @@ def _combined_omitted_partition(effects: Mapping[str, dict[str, Any]]) -> dict[s
     }
 
 
-@lru_cache(maxsize=1)
+@_independent_cached(maxsize=1)
 def omitted_boundary_operation_effects() -> dict[str, dict[str, Any]]:
     """Evaluate omitted existing boundary observables on frozen states."""
     effects: dict[str, dict[str, Any]] = {}
@@ -710,7 +712,7 @@ def omitted_boundary_operation_effects() -> dict[str, dict[str, Any]]:
     return effects
 
 
-@lru_cache(maxsize=1)
+@_independent_cached(maxsize=1)
 def declared_operation_ledger() -> tuple[OperationRecord, ...]:
     """Classify declared EPAC operations against the current quotient probes."""
     effects = omitted_boundary_operation_effects()
@@ -747,7 +749,7 @@ def declared_operation_ledger() -> tuple[OperationRecord, ...]:
     return tuple(records)
 
 
-@lru_cache(maxsize=1)
+@_independent_cached(maxsize=1)
 def boundary_probe_completeness_report() -> dict[str, Any]:
     """Run the EPAC boundary-probe completeness audit."""
     surface = freeze_current_construction_surface()

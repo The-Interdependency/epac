@@ -13,7 +13,7 @@ external physics/chemistry validation.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from functools import lru_cache
+from epac_evidence_cache import _independent_cached
 import json
 from itertools import combinations
 from typing import Any, Mapping
@@ -247,7 +247,7 @@ def _molecule_state(
     )
 
 
-@lru_cache(maxsize=1)
+@_independent_cached(maxsize=1)
 def freeze_current_construction_surface() -> dict[str, Any]:
     """Freeze the current EPAC boundary states before controls are generated."""
     symbols = required_element_symbols()
@@ -718,7 +718,7 @@ def _collision_search(
     }
 
 
-@lru_cache(maxsize=1)
+@_independent_cached(maxsize=1)
 def boundary_descriptor_nondegeneracy_report() -> dict[str, Any]:
     """Run the bounded EPAC boundary-descriptor non-degeneracy audit."""
     surface = freeze_current_construction_surface()

@@ -15,8 +15,9 @@ It is not an inferred cartesian embedding.
 from __future__ import annotations
 
 import itertools
-from dataclasses import dataclass
-from functools import lru_cache
+from dataclasses import dataclass, replace
+from copy import deepcopy
+from epac_evidence_cache import _independent_cached
 from typing import Any, Mapping
 
 from ucns.direct_mobius import native_mobius_state
@@ -238,7 +239,12 @@ def _mobius_coupling(
     }
 
 
-@lru_cache(maxsize=None)
+def _copy_construction(construction: MolecularConstruction) -> MolecularConstruction:
+    # PublicGonolReceipt is immutable; the construction invariants are not.
+    return replace(construction, invariants=deepcopy(construction.invariants))
+
+
+@_independent_cached(maxsize=None, copier=_copy_construction)
 def construct_molecule(formula: str) -> MolecularConstruction:
     if formula not in MOLECULE_COMPOSITIONS:
         raise ValueError(f"formula {formula!r} is outside the declared run")
@@ -422,16 +428,9 @@ def replay_molecule(construction: MolecularConstruction) -> PublicGonolReceipt:
     return replay_public_gonol(construction.receipt)
 
 
-@lru_cache(maxsize=1)
-def _declared_molecule_items() -> tuple[tuple[str, MolecularConstruction], ...]:
-    return tuple(
-        (formula, construct_molecule(formula))
-        for formula in MOLECULE_COMPOSITIONS
-    )
-
-
 def construct_declared_molecules() -> dict[str, MolecularConstruction]:
-    return dict(_declared_molecule_items())
+    """Return independently annotatable constructions for every declared formula."""
+    return {formula: construct_molecule(formula) for formula in MOLECULE_COMPOSITIONS}
 
 
 def matched_information_control(invariants: Mapping[str, Any]) -> tuple[Any, ...]:
