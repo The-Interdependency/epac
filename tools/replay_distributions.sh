@@ -21,7 +21,7 @@
 # === CONTRACTS ===
 # id: epac_distribution_replay_preserves_artifact_identity
 #   given: one source archive and wheel plus the exact dependency lock
-#   then: dependencies come from the archived candidate lock, and both clean installations match the wheel payload and pass the full suite with verified import origins and unchanged artifact hashes
+#   then: both artifacts and the complete archived source match clean candidate Git before archived code runs; dependencies come from that lock, and both clean installations match the wheel payload and pass the full suite with verified import origins and unchanged artifact hashes
 #   class: evidence
 # === END CONTRACTS ===
 # Usage: bash tools/replay_distributions.sh ROOT DIST NEW_OUTPUT PYTHON
@@ -37,24 +37,8 @@ case "$output/" in "$repo/"*) echo 'OUTPUT must be outside source' >&2; exit 2;;
 test ! -e "$output"
 mkdir -p "$output"
 (cd "$dist"; sha256sum ./*.whl ./*.tar.gz) > "$output/archives.sha256"
-mkdir "$output/source"
 uv venv --python "$runtime" "$output/verification-venv"
-"$output/verification-venv/bin/python" - "$dist" "$output/source" <<'PY'
-from pathlib import Path, PurePosixPath
-import sys, tarfile
-dist, output = map(Path, sys.argv[1:])
-archives = list(dist.glob('*.tar.gz'))
-assert len(archives) == 1 and len(list(dist.glob('*.whl'))) == 1
-with tarfile.open(archives[0]) as archive:
-    roots = set()
-    for member in archive:
-        parts = PurePosixPath(member.name).parts
-        assert parts and not member.name.startswith('/') and '..' not in parts and '\\' not in member.name
-        assert member.isfile() or member.isdir()
-        roots.add(parts[0])
-    assert len(roots) == 1
-    archive.extractall(output, filter="data")
-PY
+"$output/verification-venv/bin/python" "$repo/tools/verify_replay_inputs.py" "$repo" "$dist" "$output"
 source_root=$(find "$output/source" -mindepth 1 -maxdepth 1 -type d)
 "$output/verification-venv/bin/python" "$source_root/tools/verify_installed.py" snapshot "$source_root" "$output/source-snapshot.json"
 uv export --project "$source_root" --locked --extra test --extra build --no-emit-project --no-dev --format requirements.txt --output-file "$output/dependencies.txt" >/dev/null
@@ -73,3 +57,4 @@ for kind in wheel sdist; do
   "$output/verification-venv/bin/python" "$source_root/tools/verify_installed.py" verify-snapshot "$source_root" "$output/source-snapshot.json"
 done
 (cd "$dist"; sha256sum -c "$output/archives.sha256")
+"$output/verification-venv/bin/python" "$repo/tools/verify_replay_inputs.py" "$repo" "$dist" "$output" --final

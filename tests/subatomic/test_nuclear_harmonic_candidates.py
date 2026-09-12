@@ -109,6 +109,11 @@ def test_recurrence_deterministic_and_replayable():
     assert all(outcome[name] is False for name in ("O-16", "Ne-20", "Mg-24", "Si-28", "S-32", "Ar-36", "Ca-40"))
     assert "tested hypothesis" in binding.recurrence_mapping and "fail it" in binding.recurrence_mapping
 
+    spin = next(c for c in m.CANDIDATES if c.candidate_id == "ground_state_spin_parity_symmetry")
+    assert "closed-shell" not in spin.recurrence_mapping
+    assert "not shell closure" in spin.recurrence_mapping
+    assert m.recurrence_test(spin) == {name: m.NUCLIDE_FACTS[name]["J_pi"] == "0+" for name in spin.participants}
+
     receipts = {c.receipt for c in m.CANDIDATES}
     assert len(receipts) == len(m.CANDIDATES)
 

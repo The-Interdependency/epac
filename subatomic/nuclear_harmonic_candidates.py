@@ -268,8 +268,9 @@ CANDIDATES = (
         recurrence_mapping=(
             "Ground-state spin-parity J^pi: H-1 1/2+, H-2 1+, He-4 0+, "
             "Li-7 3/2-, C-12 0+, O-16 0+, Ne-20 0+, Mg-24 0+, Si-28 0+, S-32 0+, "
-            "Ar-36 0+, Ca-40 0+. The value 0+ recurs for even-even, paired, "
-            "closed-shell N=Z nuclei (He-4 through Ca-40); odd-mass nuclei take half-integer spins."
+            "Ar-36 0+, Ca-40 0+. The recorded value 0+ recurs for the listed "
+            "even-even N=Z participants. This predicate tests spin-parity only, "
+            "not shell closure."
         ),
         equivalence_condition='J^pi == "0+" for the even-even symmetry class.',
         information_loss=(

@@ -37,13 +37,16 @@ The extraction preserves the stack research artifacts and their epistemic status
 
 The package gate executes:
 
+- exact Git comparisons for both artifact payloads and the complete archived
+  source before running any archived verifier or tests; release-manifest hashes
+  are checked when present, and the input binding is checked again at the end;
 - all repository and subatomic tests against separate clean wheel and source installs;
 - complete installed-distribution byte maps, import origins, exact UCNS source maps,
   and complete source snapshots before and after each replay;
 - the preregistered molecular comparison, requiring all 14 current standings (including the original four) to remain `FALSIFIED`;
 - deterministic work-graph digest verification.
 
-CI resolves UCNS through the source URL and SHA-256 in `pyproject.toml` and `uv.lock`. Python 3.10, 3.11, and 3.12 are the declared verification matrix. Package tests establish reproducibility; exact candidate stack verification, licensing, stable release, and reconsumption remain separate gates.
+CI resolves UCNS through the source URL and SHA-256 in `pyproject.toml` and `uv.lock`. Python 3.10, 3.11, and 3.12 are the declared verification matrix. Package tests establish the checked construction and replay behavior; reproducible immutable candidate qualification, exact candidate stack verification, licensing, stable release, and reconsumption remain separate gates.
 
 ## Usage guidance
 
@@ -54,6 +57,12 @@ candidate modules are imported through `epac_subatomic`. Names beginning with
 `_` are implementation details. The only runtime project dependency is the
 exact UCNS archive; METAPAT supplies recorded semantic provenance, and stack
 supplies extraction provenance. Neither is a hidden runtime import.
+
+The verification commands require Git and a clean committed checkout. Use new
+output directories. The replay gate records the exact source and artifact binding
+in `candidate-source.json`; a stale or incomplete sdist is rejected before its
+code can run. Source distributions include every tracked repository file,
+including CI definitions and the complete local operational skill snapshot.
 
 ```bash
 python -m pip install uv==0.11.18

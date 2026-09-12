@@ -47,6 +47,25 @@ from epac_comparison import SEALED_PATH as SEALED
 
 
 class GeometryComparisonAfterConstructionTest(unittest.TestCase):
+    def test_quantified_partitions_use_the_same_frozen_population(self) -> None:
+        from epac_comparison import _quantify_distinguishing_power
+        known = {"H2": "a", "CO2": "a", "H2O": "b", "NH3": "c", "CH4": "d"}
+        values = {**known, "later experiment": "new class"}
+        nested = {formula: {"symbol": (value,)} for formula, value in values.items()}
+        spiral = {formula: (("left", "right", "left"), (value,), 0) for formula, value in values.items()}
+        record = _quantify_distinguishing_power(known, values, values, values,
+            harmonic=values, subatomic_harmonic=values, periodic_element_harmonic=values,
+            per_symbol_harmonic=nested, lifted_spiral=spiral, periodic_element_lifted_spiral=values,
+            subatomic_lifted_spiral=values, boundary_capacity=values,
+            periodic_element_boundary_capacity=values, subatomic_boundary_capacity=values)
+        self.assertEqual(record["evaluation_formulas"], tuple(sorted(known)))
+        self.assertTrue(all(record["exact_partition_match"].values()))
+        self.assertEqual(set(record["class_counts"].values()), {4})
+        self.assertEqual(set(record["class_count_ratios_vs_known"].values()), {1.0})
+        incomplete = {name: value for name, value in values.items() if name != "H2"}
+        with self.assertRaisesRegex(ValueError, "missing quantified comparison inputs"):
+            _quantify_distinguishing_power(known, incomplete, values, values)
+
     def test_comparison_callers_cannot_mutate_cached_evidence(self) -> None:
         from copy import deepcopy
         first = compare_after_construction()
@@ -130,7 +149,13 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
                 self.assertNotEqual(candidate_owner[a], candidate_owner[b])
 
     def test_unknown_local_transition_kind_fails(self) -> None:
-        from epac_molecular import apply_local_step, accumulate_from_local_path
+        from epac_molecular import apply_local_step, accumulate_from_local_path, get_compositional_local_steps, generate_compositional_paths, _get_affix_contributing_symbols
+        for formula in ("", "H20", "unsupported"):
+            for function in (get_compositional_local_steps, generate_compositional_paths, _get_affix_contributing_symbols):
+                with self.assertRaisesRegex(ValueError, "outside the declared run"):
+                    function(formula)
+        for path in generate_compositional_paths("H2"):
+            self.assertEqual(accumulate_from_local_path((3, 0, 0), path), (3, 2, 2))
         for kind in ("", "introduse", "unknown", None):
             with self.assertRaisesRegex(ValueError, "unknown local transition kind"):
                 apply_local_step((3, 0, 0), (kind, "H"))
@@ -396,11 +421,11 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
         constructed_readout = record.get("readouts", {}).get("charged_3_structure", {})
         self.assertGreaterEqual(len(constructed_readout), 9)
 
-        # Class counts for the full constructed set reflect the enlargement.
-        # Charged and control each produce one class per constructed formula (9).
-        # Topology is weaker and produces fewer classes (observed: 4 for the current enlarged set).
-        self.assertGreaterEqual(q["class_counts"]["charged_3_structure"], 9)
-        self.assertGreaterEqual(q["class_counts"]["stoichiometric_control"], 9)
+        # Quantified comparisons use the frozen five, even though raw readouts
+        # retain the entire constructed population.
+        self.assertEqual(set(q["evaluation_formulas"]), {"H2", "H2O", "NH3", "CH4", "CO2"})
+        self.assertEqual(q["class_counts"]["charged_3_structure"], 5)
+        self.assertEqual(q["class_counts"]["stoichiometric_control"], 5)
         # Topology count is smaller than the constructed count (by design).
         self.assertLess(q["class_counts"]["topology_3_structure"], q["class_counts"]["charged_3_structure"])
 
@@ -428,7 +453,7 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
 
         # Symmetric quantification numbers for the harmonic survival family
         # (evaluated only against the frozen original 5 known shapes).
-        self.assertEqual(q["class_counts"]["harmonic_survival"], 4)
+        self.assertEqual(q["class_counts"]["harmonic_survival"], 3)
         self.assertEqual(q["splits_known_classes"]["harmonic_survival"], 1)
         self.assertEqual(q["collapses_across_known_classes"]["harmonic_survival"], 2)
 
@@ -439,7 +464,7 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
 
         # The periodic element gonol view of harmonic survival is now treated
         # symmetrically (first-class in quantify, standings, top-level facts).
-        self.assertEqual(q["class_counts"]["periodic_element_harmonic_survival"], 4)
+        self.assertEqual(q["class_counts"]["periodic_element_harmonic_survival"], 3)
         self.assertEqual(q["splits_known_classes"]["periodic_element_harmonic_survival"], 1)
         self.assertEqual(q["collapses_across_known_classes"]["periodic_element_harmonic_survival"], 2)
 
@@ -471,7 +496,10 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
         self.assertIn("boundary_capacity", q["collapses_across_known_classes"])
         self.assertIn("boundary_capacity", q["pairwise_vs_known"])
         self.assertFalse(q["exact_partition_match"]["boundary_capacity_matches_known"])
-        self.assertFalse(q["exact_partition_match"]["boundary_capacity_matches_control"])
+        # On the frozen five, both are singleton partitions. The later four
+        # experiments must not change this quantified comparison population.
+        self.assertTrue(q["exact_partition_match"]["boundary_capacity_matches_control"])
+        self.assertEqual(q["class_counts"]["boundary_capacity"], 5)
 
         # The bare (periodic element / subatomic) views are also quantified symmetrically.
         self.assertIn("periodic_element_boundary_capacity", q["class_counts"])
@@ -491,8 +519,8 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
         self.assertIn("harmonic_survival", q["collapses_across_known_classes"])
         self.assertIn("harmonic_survival", q["pairwise_vs_known"])
 
-        # Full constructed set yields 4 distinct harmonic survival signatures.
-        self.assertEqual(q["class_counts"]["harmonic_survival"], 4)
+        # The frozen five yield three harmonic survival signatures.
+        self.assertEqual(q["class_counts"]["harmonic_survival"], 3)
 
         # Splits/collapses and pairwise are evaluated only against the frozen original 5.
         # Observed: splits 1 known class, collapses 2 known classes; pairwise fp=1, fn=2.

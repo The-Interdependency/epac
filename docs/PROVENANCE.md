@@ -67,4 +67,17 @@ Caller annotations cannot become inputs to later audit or capstone calls.
 The subatomic replay guide identifies accepted UCNS `6eea182` and its current
 receipt directory separately from historical receipt sets.
 
+Quantified partition comparisons now restrict every signature and control to
+the same frozen five-formula population. Full nine-formula readouts remain
+available separately. Unknown formulas cannot produce empty local transition
+paths. The spin-parity candidate now describes its recorded `0+` predicate
+without assigning unsupported shell-closure status; its prior prose-bound
+receipt is preserved under `subatomic/receipts/history/`.
+
+Artifact replay checks complete archived Git source and wheel payloads before
+executing archived verification code, then checks the same binding at completion.
+The source distribution includes the full tracked repository, including CI and
+previously omitted operational skill resources. These source-integrity checks
+do not grant release rights or change scientific standing.
+
 The graduation candidate now binds accepted UCNS source `6eea1828a34ed8ec99879f8090ea5d48352d8c2d` at tree `41a5207600b8b5eaeef907199e48d841362cc934`. Its source archive SHA-256 is `1665ae06921a0a425ef1c99ce9d811cf8b52c20e4873edea53c4cdecaf2895d9`; the complete installed Python source map is in `data/ucns-source-lock.json`. Earlier pin-specific receipts remain historical evidence. This dependency update transfers no geometry, proof, or empirical standing.

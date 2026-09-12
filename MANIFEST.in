@@ -1,9 +1,11 @@
 include AGENTS.md LICENSE LICENSE_STATUS.md uv.lock
+include .gitignore
+recursive-include .github *
 recursive-include tools *.py *.sh
 include requirements-build.txt
 recursive-include tests *.py
 recursive-include docs *.md *.json
 recursive-include data *.json
 recursive-include subatomic *.md *.json
-recursive-include .agents/skills *.md *.json *.py *.ts
+recursive-include .agents/skills *
 recursive-include viz *.py *.md *.svg

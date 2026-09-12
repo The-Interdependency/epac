@@ -372,6 +372,24 @@ def _quantify_distinguishing_power(
     shape labels for evaluation (never during construction).
     """
 
+    def population(values, *, optional=False):
+        if optional and not values:
+            return {}
+        missing = set(known_shapes) - values.keys()
+        if missing:
+            raise ValueError(f"missing quantified comparison inputs: {sorted(missing)}")
+        return {formula: values[formula] for formula in known_shapes}
+
+    charged, topology, control = map(population, (charged, topology, control))
+    (harmonic, subatomic_harmonic, periodic_element_harmonic, per_symbol_harmonic,
+     lifted_spiral, periodic_element_lifted_spiral, subatomic_lifted_spiral,
+     boundary_capacity, periodic_element_boundary_capacity, subatomic_boundary_capacity) = (
+        population(values, optional=True) for values in (
+            harmonic, subatomic_harmonic, periodic_element_harmonic, per_symbol_harmonic,
+            lifted_spiral, periodic_element_lifted_spiral, subatomic_lifted_spiral,
+            boundary_capacity, periodic_element_boundary_capacity, subatomic_boundary_capacity)
+    )
+
     known_partitions = _partitions(known_shapes)
     charged_partitions = _partitions(charged)
     topology_partitions = _partitions(topology)
@@ -616,6 +634,7 @@ def _quantify_distinguishing_power(
         spiral_matches_control = _formula_sets(spiral_partitions) == _formula_sets(control_partitions)
 
     return {
+        "evaluation_formulas": tuple(sorted(known_shapes)),
         "class_counts": class_counts,
         "splits_known_classes": splits_known,
         "collapses_across_known_classes": collapses_across,

@@ -719,9 +719,11 @@ def _get_affix_contributing_symbols(formula: str) -> list[str]:
     For center-based: all non-center instances.
     Determined from composition stoichiometry + the same singleton-center rule used in construction.
     """
+    if formula not in MOLECULE_COMPOSITIONS:
+        raise ValueError(f"formula {formula!r} is outside the declared run")
     if formula == "H2":
         return ["H", "H"]
-    comp = MOLECULE_COMPOSITIONS.get(formula, ())
+    comp = MOLECULE_COMPOSITIONS[formula]
     counts: dict[str, int] = {}
     for s, c in comp:
         counts[s] = counts.get(s, 0) + c
@@ -751,7 +753,9 @@ def get_compositional_local_steps(formula: str) -> list[tuple[str, str]]:
 
     All introduces + all per-ligand affix contributions are included.
     """
-    comp = MOLECULE_COMPOSITIONS.get(formula, ())
+    if formula not in MOLECULE_COMPOSITIONS:
+        raise ValueError(f"formula {formula!r} is outside the declared run")
+    comp = MOLECULE_COMPOSITIONS[formula]
     steps: list[tuple[str, str]] = []
     for sym, cnt in comp:
         for _ in range(cnt):

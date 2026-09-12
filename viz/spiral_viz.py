@@ -425,6 +425,8 @@ def render_scene_svg(
     - Frame arrows or labels that flip at t=1 and restore at t=2
     - Participant axes listed under each station with their charges
     - Attachment arcs drawn between participants (center-ligand or symmetric)
+
+    Height is a minimum; the canvas grows to retain the complete axis list.
     """
     if type(width) is not int or type(height) is not int:
         raise ValueError("SVG dimensions must be integers")
@@ -432,6 +434,7 @@ def render_scene_svg(
         raise ValueError("SVG width must be at least 640 pixels")
     if height < 400:
         raise ValueError("SVG height must be at least 400 pixels")
+    height = max(height, 80 + 110 + 55 + 16 + 14 * max(0, len(scene.participant_axes) - 1) + 30)
     title = title or f"Lifted Spiral — {scene.source_id}"
     margin = 40
     top = 80
@@ -526,7 +529,7 @@ def render_scene_svg(
         f'<text x="{ax_x}" y="{ax_y - 4}" fill="#94a3b8" font-family="monospace" font-size="11">'
         "participant axes</text>"
     )
-    for j, ax in enumerate(scene.participant_axes[:8]):  # keep compact
+    for j, ax in enumerate(scene.participant_axes):
         ch = scene.dimension_charges.get(ax)
         label = f"{ax}  (Z={ch})" if ch is not None else ax
         parts.append(

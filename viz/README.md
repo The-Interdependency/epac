@@ -58,6 +58,6 @@ This is the exact file the background search located and the file that all gonol
 
 All output is pure data projection. No new claims, no position operations, no geometry invention.
 
-The SVG renderer accepts integer dimensions of at least 640 × 400 pixels. It preserves carried frame/axis values and rejects malformed bare-subatomic attachment counts; rendering does not establish the validity of caller-supplied evidence.
+The SVG renderer accepts integer dimensions of at least 640 × 400 pixels. Height is a minimum: the canvas grows when necessary to display every participant axis and its recorded charge. It preserves carried frame/axis values and rejects malformed bare-subatomic attachment counts; rendering does not establish the validity of caller-supplied evidence.
 
 Direct molecule and element receipts preserve their carried frames, axes, and attachment counts. A receipt that carries only an attachment count renders that many slots with unknown endpoints/sites. Construction wrappers retain their recorded attachment details. Missing or malformed spiral evidence, unsupported requested symbols, and construction/extraction errors raise an error; population extraction does not omit failed entries.

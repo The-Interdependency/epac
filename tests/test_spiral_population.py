@@ -72,6 +72,19 @@ from epac_viz.spiral_viz import (
 
 
 class SpiralPopulationTest(unittest.TestCase):
+    def test_svg_retains_every_participant_axis(self) -> None:
+        for symbol in ("O", "Si"):
+            scene = extract_spiral_scene(construct_element_gonol(symbol))
+            root = ET.fromstring(render_scene_svg(scene, width=640, height=400))
+            text_nodes = root.findall(".//{http://www.w3.org/2000/svg}text")
+            for axis in scene.participant_axes:
+                charge = scene.dimension_charges.get(axis)
+                expected = f"{axis}  (Z={charge})" if charge is not None else axis
+                matches = [node for node in text_nodes if node.text == expected]
+                self.assertEqual(len(matches), 1, axis)
+                self.assertLess(float(matches[0].attrib["y"]), float(root.attrib["height"]))
+            self.assertGreaterEqual(len(scene.participant_axes), 9)
+
     def test_element_and_subatomic_wrappers_preserve_custom_titles(self) -> None:
         from epac_viz.spiral_viz import render_element_spiral_svg, render_subatomic_spiral_svg
         for renderer, receipt, scale in (
