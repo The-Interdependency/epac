@@ -28,14 +28,11 @@ Changing that layout requires updating this gate alongside the package contract.
 #   class: provenance
 # === END CONTRACTS ===
 from pathlib import Path, PurePosixPath
-from email.parser import BytesParser
 import base64
 import csv
 import hashlib
 import io
 import json
-import re
-import fnmatch
 import subprocess
 import sys
 import tarfile
@@ -92,6 +89,10 @@ def verify_inputs(repo, dist, output, *, final=False):
     source = tar_files(git("archive", commit))
     require(source.get("tools/verify_replay_inputs.py") == Path(__file__).read_bytes(),
             "executing source gate differs from candidate Git")
+    contract_path = Path(__file__).with_name("release_contract.py")
+    require(source["tools/release_contract.py"] == contract_path.read_bytes(), "release contract differs from candidate Git")
+    contract = {"__name__": "epac_source_release_contract", "__file__": str(contract_path)}
+    exec(compile(source["tools/release_contract.py"], str(contract_path), "exec", dont_inherit=True), contract)
     wheels, sdists = list(dist.glob("*.whl")), list(dist.glob("*.tar.gz"))
     require(len(wheels) == len(sdists) == 1, "expected one wheel and one source distribution")
     wheel, sdist = wheels[0], sdists[0]
@@ -127,14 +128,13 @@ def verify_inputs(repo, dist, output, *, final=False):
             expected[packages[root] + "/" + relative] = value
     info = "interdependency_epac-0.1.0.dist-info/"
     metadata = {name for name in payload if name.startswith(info)}
+    project, license_names = contract["validate_core_metadata"](source, archived, payload, info)
     # This package declares no scripts or entry points and uses setuptools' default
     # root license-file discovery. Unknown installer metadata is not inert data.
-    license_names = {name for name in source if "/" not in name and any(
-        fnmatch.fnmatchcase(name, pattern) for pattern in ("LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"))}
     expected_metadata = {info + name for name in ("METADATA", "WHEEL", "top_level.txt", "RECORD")}
     expected_metadata |= {info + "licenses/" + name for name in license_names}
     require(metadata == expected_metadata, "undeclared or missing wheel metadata")
-    setuptools_pins = set(re.findall(r'"setuptools==([^"\n]+)"', source["pyproject.toml"].decode()))
+    setuptools_pins = {value.removeprefix("setuptools==") for value in project["build-system"]["requires"] if value.startswith("setuptools==")}
     require(len(setuptools_pins) == 1, "expected one exact setuptools source pin")
     wheel_header = ("Wheel-Version: 1.0\nGenerator: setuptools (" + next(iter(setuptools_pins))
                     + ")\nRoot-Is-Purelib: true\nTag: py3-none-any\n\n").encode()
@@ -147,11 +147,6 @@ def verify_inputs(repo, dist, output, *, final=False):
     require(all(payload[name] == value for name, value in expected.items()), "wheel package bytes differ from candidate Git")
     require(payload[info + "METADATA"] == archived["PKG-INFO"] == archived[egg + "PKG-INFO"],
             "wheel and source metadata differ")
-    fields = BytesParser().parsebytes(payload[info + "METADATA"])
-    require(fields["Name"] == "interdependency-epac" and fields["Version"] == "0.1.0", "unexpected package identity")
-    require(sorted(fields.get_all("License-File", [])) == sorted(license_names), "declared license metadata differs from source")
-    require(payload[info + "METADATA"].split(b"\n\n", 1)[1] == source["README.md"],
-            "metadata description differs from source")
     for name in metadata:
         if name.startswith(info + "licenses/"):
             original = name[len(info + "licenses/"):]
@@ -173,6 +168,10 @@ def verify_inputs(repo, dist, output, *, final=False):
         require(manifest["source_commit"] == commit and manifest["source_tree"] == tree,
                 "release manifest source differs from candidate Git")
         require(manifest["artifacts_sha256"] == hashes, "release manifest artifact hashes differ")
+        expected_manifest = contract["expected_release_manifest"](source, commit, tree,
+            git("show", "-s", "--format=%ct", commit).decode().strip(), hashes)
+        require(json.dumps(manifest, sort_keys=True) == json.dumps(expected_manifest, sort_keys=True),
+                "release manifest fields differ from source release contract")
         manifest_digest = digest(manifest_path.read_bytes())
     require(git("rev-parse", "HEAD").decode().strip() == commit
             and not git("status", "--porcelain", "--untracked-files=all"), "candidate source changed during input verification")

@@ -353,6 +353,8 @@ def _declared_operations() -> tuple[dict[str, str], ...]:
 
 
 def _classify_operation(module: str, name: str) -> str:
+    if name in _UNMAPPED_OPERATION_PROBES:
+        return AMBIGUOUS
     if module in {"epac_atomic", "epac_ucns_provenance", "epac_viz", "epac_viz.spiral_viz", "epac_viz.cli"}:
         return AMBIGUOUS
 
@@ -499,97 +501,15 @@ def _identity_excluded_quaternion_structure(context: StateContext) -> Observable
     return tuple(sorted(_strip_identifiers(item[0]) for item in raw))
 
 
-def _identity_excluded_degree(context: StateContext) -> Observable:
-    structure = context["structure"]
-    if not structure:
-        return ("no_structure",)
-    return tuple(
-        sorted(
-            (
-                int(item["degree"]),
-                _strip_identifiers(item["slot_degrees"]),
-                item.get("charge"),
-            )
-            for item in structure["degree"]
-        )
-    )
-
-
-def _identity_excluded_oriented_instances(context: StateContext) -> Observable:
-    structure = context["structure"]
-    if not structure:
-        return ("no_structure",)
-    return tuple(
-        sorted(
-            (
-                int(part["arity"]),
-                _strip_identifiers(part["charge_state"]),
-            )
-            for part in structure["parts"]
-        )
-    )
-
-
-def _identity_excluded_local_threes(context: StateContext) -> Observable:
-    structure = context["structure"]
-    if not structure:
-        return ("no_structure",)
-    quaternions = structure.get("quaternions", ())
-    return (
-        "local_three_count",
-        len(quaternions),
-        tuple(
-            sorted(
-                _strip_identifiers(item["represented_ids"])
-                for item in quaternions
-            )
-        ),
-    )
-
-
-def _identity_excluded_geometry(context: StateContext) -> Observable:
-    structure = context["structure"]
-    if not structure:
-        return ("no_structure",)
-    return (
-        "geometry",
-        int(structure["participating_dimension_count"]),
-        bool(structure["ternary_coupling_declared"]),
-        _identity_excluded_topology(context),
-        _identity_excluded_charged_structure(context),
-        _identity_excluded_quaternion_structure(context),
-    )
-
-
-def _has_any_declared_coupling(context: StateContext) -> Observable:
-    structure = context["structure"]
-    if not structure:
-        return ("has_declared_coupling", False, 0)
-    return ("has_declared_coupling", bool(structure["parts"]), len(structure["parts"]))
-
-
-def _no_missing_oriented_instances(context: StateContext) -> Observable:
-    structure = context["structure"]
-    if not structure:
-        return ("no_structure",)
-    return ("all_declared_instances_oriented", True, len(structure["parts"]))
-
-
+# Only these three mappings call the named operation on the declared structure.
+# The other structural operations need their own argument selection and actual
+# result/error normalization before an effect can be attributed to that operation.
 OMITTED_OBSERVABLES: Mapping[str, ObservableFn] = {
     "charged_structure_readout": _identity_excluded_charged_structure,
     "topology_structure_readout": _identity_excluded_topology,
     "quaternion_structure_readout": _identity_excluded_quaternion_structure,
-    "geometry_from_declared_couplings": _identity_excluded_geometry,
-    "structure_from_charged_couplings": _identity_excluded_charged_structure,
-    "degree_relations": _identity_excluded_degree,
-    "oriented_instance_couplings": _identity_excluded_oriented_instances,
-    "local_three_structures": _identity_excluded_local_threes,
-    "quaternion_of_local_three": _identity_excluded_quaternion_structure,
-    "quaternions_from_declared_couplings": _identity_excluded_quaternion_structure,
-    "has_declared_coupling": _has_any_declared_coupling,
-    "instances_missing_oriented_hub_coupling": _no_missing_oriented_instances,
-    "require_every_instance_has_oriented_hub_coupling": _no_missing_oriented_instances,
 }
+_UNMAPPED_OPERATION_PROBES = OMITTED_OBSERVABLE_OPERATION_NAMES - OMITTED_OBSERVABLES.keys()
 
 
 def _classes_by_signature(signatures: Mapping[str, Any]) -> dict[Any, tuple[str, ...]]:
@@ -722,6 +642,7 @@ def declared_operation_ledger() -> tuple[OperationRecord, ...]:
         currently_probed = _is_currently_probed(raw["module"], raw["name"], relevance)
         effect = effects.get(raw["name"])
         can_distinguish_same_b = (
+            None if relevance == AMBIGUOUS else
             bool(effect and effect["same_B_distinguished_pair_count"] > 0)
             if currently_probed is False
             else False
@@ -831,6 +752,10 @@ def boundary_probe_completeness_report() -> dict[str, Any]:
         },
         "operation_ledger": ledger,
         "omitted_operation_effects": effects,
+        "unmapped_operation_probes": {
+            name: "hmmm: no declared argument mapping and actual result/error normalization"
+            for name in sorted(_UNMAPPED_OPERATION_PROBES)
+        },
         "combined_omitted_observable_effect": combined,
         "omitted_distinguishing_operations": tuple(
             row["operation"] for row in omitted_distinguishing

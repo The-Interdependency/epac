@@ -20,6 +20,7 @@ import base64
 import csv
 import hashlib
 import zipfile
+import shutil
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -57,14 +58,17 @@ def _replay_fixture(tmp_path):
         directory.mkdir(parents=True)
     contents = {
         "uv.lock": b"exact archived lock",
-        "pyproject.toml": b'[build-system]\nrequires = ["setuptools==84.0.0", "wheel==0.48.0"]\n',
+        "pyproject.toml": b'[project]\nname = "interdependency-epac"\nversion = "0.1.0"\ndescription = "fixture"\nreadme = "README.md"\nrequires-python = ">=3.10"\nauthors = [{name = "Fixture"}]\ndependencies = ["sample==1"]\n[project.optional-dependencies]\ntest = ["pytest==9.1.1"]\n[build-system]\nrequires = ["setuptools==84.0.0", "wheel==0.48.0"]\n',
+        "requirements-replay.txt": (source / "requirements-replay.txt").read_bytes(),
+        "requirements-build.txt": (source / "requirements-build.txt").read_bytes(),
+        "data/ucns-source-lock.json": b'{"commit":"fixture"}\n',
         "LICENSE_STATUS.md": b"Owner license choice pending.\n",
         "README.md": b"fixture\n",
         "epac_fixture.py": b'VALUE = "candidate"\n',
         "data/__init__.py": b"", "subatomic/__init__.py": b"", "viz/__init__.py": b"",
         "tests/test_probe.py": b"def test_probe():\n    assert False\n",
     }
-    for name in ("verify_installed.py", "verify_replay_inputs.py", "replay_distributions.sh"):
+    for name in ("verify_installed.py", "verify_replay_inputs.py", "replay_distributions.sh", "release_contract.py"):
         contents["tools/" + name] = (source / "tools" / name).read_bytes()
     for name, value in contents.items():
         path = caller / name
@@ -77,7 +81,8 @@ def _replay_fixture(tmp_path):
     info = "interdependency_epac-0.1.0.dist-info/"
     wheel_payload = {"epac_fixture.py": contents["epac_fixture.py"],
                      "epac_data/__init__.py": b"", "epac_subatomic/__init__.py": b"", "epac_viz/__init__.py": b"",
-                     info + "METADATA": b"Metadata-Version: 2.4\nName: interdependency-epac\nVersion: 0.1.0\nLicense-File: LICENSE_STATUS.md\n\nfixture\n",
+                     "epac_data/ucns-source-lock.json": contents["data/ucns-source-lock.json"],
+                     info + "METADATA": b'Metadata-Version: 2.4\nName: interdependency-epac\nVersion: 0.1.0\nSummary: fixture\nAuthor: Fixture\nRequires-Python: >=3.10\nDescription-Content-Type: text/markdown\nLicense-File: LICENSE_STATUS.md\nRequires-Dist: sample==1\nProvides-Extra: test\nRequires-Dist: pytest==9.1.1; extra == "test"\nDynamic: license-file\n\nfixture\n',
                      info + "WHEEL": b"Wheel-Version: 1.0\nGenerator: setuptools (84.0.0)\nRoot-Is-Purelib: true\nTag: py3-none-any\n\n",
                      info + "top_level.txt": b"epac_data\nepac_fixture\nepac_subatomic\nepac_viz\n",
                      info + "licenses/LICENSE_STATUS.md": contents["LICENSE_STATUS.md"]}
@@ -90,6 +95,8 @@ from pathlib import Path
 import subprocess, sys
 if sys.argv[1] == "venv":
     raise SystemExit(subprocess.run([sys.executable, "-m", "venv", "--without-pip", sys.argv[-1]]).returncode)
+if sys.argv[1:3] == ["pip", "install"]:
+    raise SystemExit(subprocess.run([os.environ["REAL_UV"], *sys.argv[1:]]).returncode)
 if sys.argv[1] == "export":
     project = Path(sys.argv[sys.argv.index("--project") + 1])
     Path(os.environ["EXPORT_TRACE"]).write_text(json.dumps({
@@ -100,7 +107,7 @@ raise SystemExit("unexpected installer operation")
 ''')
     uv.chmod(0o755)
     output = tmp_path / "replay"
-    environment = dict(os.environ, PATH=str(binary) + os.pathsep + os.environ["PATH"], EXPORT_TRACE=str(trace))
+    environment = dict(os.environ, PATH=str(binary) + os.pathsep + os.environ["PATH"], EXPORT_TRACE=str(trace), REAL_UV=shutil.which("uv"))
     command = ["bash", str(caller / "tools/replay_distributions.sh"), str(caller), str(dist), str(output), sys.executable]
     return caller, dist, output, trace, environment, command, contents, wheel_payload
 
@@ -130,7 +137,7 @@ def test_replay_exports_the_archived_dependency_lock(tmp_path):
 
 
 def test_replay_rejects_mismatched_source_and_artifacts(tmp_path):
-    for case in ("stale test", "stale verifier", "missing source", "extra source", "wrong wheel", "wrong manifest source", "wrong manifest hash", "dirty root", "entry points", "wheel tag", "wheel purelib", "top level", "missing license metadata"):
+    for case in ("stale test", "stale verifier", "missing source", "extra source", "wrong wheel", "wrong manifest source", "wrong manifest hash", "dirty root", "entry points", "wheel tag", "wheel purelib", "top level", "missing license metadata", "extra dependency", "python requirement", "extra declaration", "metadata summary"):
         caller, dist, output, trace, environment, command, contents, wheel_payload = _replay_fixture(tmp_path / case)
         marker = tmp_path / case / "archived-verifier-executed"
         expected = "archived source differs from candidate Git"
@@ -150,6 +157,17 @@ def test_replay_rejects_mismatched_source_and_artifacts(tmp_path):
         elif case == "wrong wheel":
             wheel_payload["epac_fixture.py"] = b'VALUE = "wrong candidate"\n'
             expected = "wheel package bytes differ from candidate Git"
+        elif case in ("extra dependency", "python requirement", "extra declaration", "metadata summary"):
+            key = "interdependency_epac-0.1.0.dist-info/METADATA"
+            if case == "extra dependency":
+                wheel_payload[key] = wheel_payload[key].replace(b"\n\n", b"\nRequires-Dist: undeclared==1\n\n", 1)
+            elif case == "python requirement":
+                wheel_payload[key] = wheel_payload[key].replace(b"Requires-Python: >=3.10", b"Requires-Python: >=3.12")
+            elif case == "extra declaration":
+                wheel_payload[key] = wheel_payload[key].replace(b"\n\n", b"\nProvides-Extra: undeclared\n\n", 1)
+            else:
+                wheel_payload[key] = wheel_payload[key].replace(b"Summary: fixture", b"Summary: false summary")
+            expected = "core metadata differs from source"
         elif case == "entry points":
             wheel_payload["interdependency_epac-0.1.0.dist-info/entry_points.txt"] = b"[console_scripts]\nundeclared = epac_fixture:main\n"
             expected = "undeclared or missing wheel metadata"
@@ -191,7 +209,7 @@ def check_epac_replay_uses_candidate_lock():
         test_replay_exports_the_archived_dependency_lock(Path(directory))
 
 
-def test_release_builder_requires_documented_python_runtime():
+def test_release_builder_requires_documented_runtime_and_license(tmp_path):
     path = Path(__file__).resolve().parents[1] / "tools/build_release.py"
     spec = importlib.util.spec_from_file_location("epac_release_builder_fixture", path)
     builder = importlib.util.module_from_spec(spec)
@@ -206,3 +224,78 @@ def test_release_builder_requires_documented_python_runtime():
                 assert "require CPython 3.11.15" in str(error)
             else:
                 raise AssertionError("unqualified release runtime was accepted")
+
+    caller, dist, output, trace, environment, command, contents, wheel_payload = _replay_fixture(tmp_path)
+    (caller / "LICENSE").write_text("Synthetic test fixture license; no EPAC distribution authority.\n")
+    subprocess.run(["git", "-C", str(caller), "add", "LICENSE"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(caller), "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                    "-c", "commit.gpgsign=false", "commit", "-qm", "license without status transition"], check=True, capture_output=True)
+    with patch.object(builder, "__file__", str(caller / "tools/build_release.py")), \
+         patch.object(builder.sys, "argv", ["build_release.py", str(output)]), \
+         patch.object(builder, "check_runtime", return_value={"implementation":"cpython","version":"3.11.15"}), \
+         patch.object(builder, "check_compressor", return_value={"implementation":"zlib","compile_version":"1.3.1","runtime_version":"1.3.1"}):
+        try:
+            builder.main()
+        except ValueError as error:
+            assert "remove the unresolved LICENSE_STATUS.md" in str(error)
+        else:
+            raise AssertionError("builder accepted contradictory license status")
+        assert not output.exists()
+
+
+def test_replay_validates_complete_release_manifest(tmp_path):
+    import copy
+    cases = (None, "license_sha256", "ucns_source_lock_sha256", "build_toolchain", "acceptance",
+             "empirical_status_transfer", "python_runtime", "compressor", "source_date_epoch",
+             "license_expression", "schema", "version", "extra field", "unresolved status", "zero empirical flag", "boolean version")
+    for case in cases:
+        caller, dist, output, trace, environment, command, contents, wheel_payload = _replay_fixture(tmp_path / str(case))
+        info = "interdependency_epac-0.1.0.dist-info/"
+        contents["LICENSE"] = b"Synthetic test fixture license; no EPAC distribution authority.\n"
+        contents.pop("LICENSE_STATUS.md")
+        (caller / "LICENSE_STATUS.md").unlink()
+        contents["pyproject.toml"] = contents["pyproject.toml"].replace(b"[project.optional-dependencies]",
+            b'license = "LicenseRef-GateFixture"\nlicense-files = ["LICENSE"]\n[project.optional-dependencies]')
+        wheel_payload.pop(info + "licenses/LICENSE_STATUS.md")
+        wheel_payload[info + "licenses/LICENSE"] = contents["LICENSE"]
+        wheel_payload[info + "METADATA"] = wheel_payload[info + "METADATA"].replace(
+            b"License-File: LICENSE_STATUS.md", b"License-File: LICENSE\nLicense-Expression: LicenseRef-GateFixture"
+        )
+        if case == "unresolved status":
+            contents["LICENSE_STATUS.md"] = b"hmmm: no license selected; stable publication prohibited\n"
+        for name, value in contents.items():
+            path = caller / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(value)
+        subprocess.run(["git", "-C", str(caller), "add", "-A"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(caller), "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                        "-c", "commit.gpgsign=false", "commit", "-qm", "synthetic license transition"], check=True, capture_output=True)
+        _write_fixture_dist(dist, contents, wheel_payload)
+        def git(*args):
+            return subprocess.check_output(["git", "-C", str(caller), *args], text=True).strip()
+        manifest = {"schema": "epac.release-candidate", "version": 1, "source_commit": git("rev-parse", "HEAD"),
+                    "source_tree": git("rev-parse", "HEAD^{tree}"), "source_date_epoch": git("show", "-s", "--format=%ct", "HEAD"),
+                    "build_toolchain": dict(line.split("==") for line in contents["requirements-build.txt"].decode().splitlines()),
+                    "python_runtime": {"implementation": "cpython", "version": "3.11.15"},
+                    "compressor": {"implementation": "zlib", "compile_version": "1.3.1", "runtime_version": "1.3.1"},
+                    "license_expression": "LicenseRef-GateFixture", "license_sha256": hashlib.sha256(contents["LICENSE"]).hexdigest(),
+                    "ucns_source_lock_sha256": hashlib.sha256(contents["data/ucns-source-lock.json"]).hexdigest(),
+                    "artifacts_sha256": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in dist.iterdir()},
+                    "acceptance": "candidate; clean replay and stack acceptance required", "empirical_status_transfer": False}
+        corrupted = copy.deepcopy(manifest)
+        if case == "zero empirical flag":
+            corrupted["empirical_status_transfer"] = 0
+        elif case == "boolean version":
+            corrupted["version"] = True
+        elif case and case != "unresolved status":
+            corrupted[case] = True if case == "empirical_status_transfer" else "false declaration"
+        (dist / "release-manifest.json").write_text(json.dumps(corrupted))
+        result = subprocess.run(command, env=environment, capture_output=True, text=True)
+        if case is None:
+            assert result.returncode == 73 and trace.exists(), result.stderr
+            binding = json.loads((output / "candidate-source.json").read_text())
+            assert binding["release_manifest_sha256"] == hashlib.sha256((dist / "release-manifest.json").read_bytes()).hexdigest()
+        else:
+            expected = "remove the unresolved LICENSE_STATUS.md" if case == "unresolved status" else "release manifest fields differ"
+            assert result.returncode not in (0, 73) and expected in result.stderr, (case, result.stderr)
+            assert not trace.exists(), case

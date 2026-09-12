@@ -126,3 +126,5 @@ After installing the package, run a scoped audit through its public module:
 python -c "from epac_cross_scale_closure import cross_scale_compositional_closure; print(cross_scale_compositional_closure()['statuses'])"
 python -m epac_viz --help
 ```
+
+Release qualification requires an owner-selected `LICENSE`, its explicit SPDX expression and `license-files = ["LICENSE"]` in `pyproject.toml`, and removal of the unresolved `LICENSE_STATUS.md` (its history remains in Git). Adding license text alongside a status that still prohibits publication does not pass the gate. The replay shell bootstraps the hash-pinned Python 3.10 TOML parser from `requirements-replay.txt`, then validates all source-derived core metadata and every optional release-manifest field before archived code runs. To call `tools/verify_replay_inputs.py` directly on Python 3.10, first install that requirements file with `uv pip install --python /path/to/python --no-deps --require-hashes -r requirements-replay.txt`.

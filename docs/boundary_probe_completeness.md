@@ -36,12 +36,12 @@ construction, evidence, provenance and visualization modules. The inventory cove
 | item | count |
 |---|---:|
 | declared operations classified | 136 |
-| boundary-relevant operations | 58 |
-| omitted boundary-relevant operations | 14 |
-| omitted operations that distinguish same-B frozen states | 13 |
-| ambiguous operations | 39 |
+| boundary-relevant operations | 48 |
+| omitted boundary-relevant operations | 4 |
+| omitted operations that distinguish same-B frozen states | 3 |
+| ambiguous operations | 49 |
 
-Thirty-nine public callable addresses, including the representation, probe-relativity, minimal-refinement and probe-completeness audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
+Forty-nine public callable addresses, including the representation, probe-relativity, minimal-refinement and probe-completeness audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
 
 ## Partition Result
 
@@ -76,13 +76,20 @@ Examples:
 - `quaternion_structure_readout` also refines the quotient from 16 to 21
   classes through existing quaternion component structure.
 
-Other omitted structural operations with quotient-refining effects include
+Ten additional structural operations remain `hmmm` because this audit has no
+declared argument mapping and actual result/error normalization for them:
 `degree_relations`, `geometry_from_declared_couplings`,
 `structure_from_charged_couplings`, `oriented_instance_couplings`,
 `local_three_structures`, `quaternion_of_local_three`,
 `quaternions_from_declared_couplings`, `has_declared_coupling`,
 `instances_missing_oriented_hub_coupling`, and
 `require_every_instance_has_oriented_hub_coupling`.
+
+Earlier counts attributed synthetic structure-derived proxies to these operations.
+Those ten effects are withdrawn from measured operation counts. In particular, a
+successful `require_every_instance_has_oriented_hub_coupling` invocation returns
+`None`; a participant-count tuple is not its result. The three directly invoked
+readouts above retain the observed counterexamples and FALSIFIED completeness.
 
 ## Status Matrix
 

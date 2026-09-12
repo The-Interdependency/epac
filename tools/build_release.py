@@ -108,9 +108,11 @@ def main() -> None:
     commit = git("rev-parse", "HEAD")
     def source_bytes(path):
         return subprocess.check_output(("git", "-C", str(root), "show", f"{commit}:{path}"))
-    license_bytes = source_bytes("LICENSE")
-    if not license_bytes.strip():
-        raise ValueError("owner-selected LICENSE is required before release qualification")
+    source_files = {path: source_bytes(path) for path in git("ls-tree", "-r", "--name-only", commit).splitlines()}
+    contract_path = root / "tools/release_contract.py"
+    contract = {"__name__": "epac_source_release_contract", "__file__": str(contract_path)}
+    exec(compile(source_files["tools/release_contract.py"], str(contract_path), "exec", dont_inherit=True), contract)
+    contract["release_license"](source_files)
     versions = {}
     for line in git("show", f"{commit}:requirements-build.txt").splitlines():
         name, version = line.split("==")
@@ -144,13 +146,9 @@ def main() -> None:
     artifacts = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(out.iterdir())}
     if len(artifacts) != 2 or not any(name.endswith(".whl") for name in artifacts) or not any(name.endswith(".tar.gz") for name in artifacts):
         raise ValueError("expected one wheel and one sdist")
-    manifest = {"schema": "epac.release-candidate", "version": 1, "source_commit": commit,
-                "source_tree": git("rev-parse", f"{commit}^{{tree}}"), "build_toolchain": versions,
-                "python": sys.version, "python_runtime": runtime, "source_date_epoch": epoch, "compressor": compressor,
-                "license_sha256": hashlib.sha256(license_bytes).hexdigest(),
-                "ucns_source_lock_sha256": hashlib.sha256(source_bytes("data/ucns-source-lock.json")).hexdigest(),
-                "artifacts_sha256": artifacts, "acceptance": "candidate; clean replay and stack acceptance required",
-                "empirical_status_transfer": False}
+    manifest = contract["expected_release_manifest"](source_files, commit, git("rev-parse", f"{commit}^{{tree}}"), epoch, artifacts)
+    if manifest["python_runtime"] != runtime or manifest["compressor"] != compressor or manifest["build_toolchain"] != versions:
+        raise ValueError("observed build toolchain differs from release contract")
     receipt = out / "release-manifest.json"
     receipt.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     artifacts[receipt.name] = hashlib.sha256(receipt.read_bytes()).hexdigest()

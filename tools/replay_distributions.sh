@@ -37,7 +37,10 @@ case "$output/" in "$repo/"*) echo 'OUTPUT must be outside source' >&2; exit 2;;
 test ! -e "$output"
 mkdir -p "$output"
 (cd "$dist"; sha256sum ./*.whl ./*.tar.gz) > "$output/archives.sha256"
+test -z "$(git -C "$repo" status --porcelain --untracked-files=all)" || { echo 'candidate Git source must be clean' >&2; exit 2; }
 uv venv --python "$runtime" "$output/verification-venv"
+git -C "$repo" show HEAD:requirements-replay.txt > "$output/requirements-replay.txt"
+uv pip install --python "$output/verification-venv/bin/python" --no-deps --require-hashes -r "$output/requirements-replay.txt"
 "$output/verification-venv/bin/python" "$repo/tools/verify_replay_inputs.py" "$repo" "$dist" "$output"
 source_root=$(find "$output/source" -mindepth 1 -maxdepth 1 -type d)
 "$output/verification-venv/bin/python" "$source_root/tools/verify_installed.py" snapshot "$source_root" "$output/source-snapshot.json"
