@@ -50,3 +50,5 @@ scoped standing. Existing immutable input checks and installed resource loading
 are retained. This source handoff does not complete graduation or transfer
 scientific, theorem, proof, measurement, or empirical validity. Final clean-package
 qualification and license selection remain pending.
+
+The carried binding-energy commensurability prose overstated its own recorded outcomes. Its current receipt now describes a tested hypothesis and explicitly retains the failures from O-16 through Ca-40; the prior prose-bound receipt is preserved under `subatomic/receipts/history/`. No numerical outcome or empirical standing was promoted. Standing partitions now compare the same frozen preregistered formulas on both sides; later experimental additions do not make the SURVIVED branch unreachable.

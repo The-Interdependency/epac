@@ -1,7 +1,7 @@
-"""Allow `python -m viz ...` when PYTHONPATH contains the epac root.
+"""Allow `python -m epac_viz ...` after installing the EPAC package.
 
 Example (from the epac directory):
-    PYTHONPATH=".:subatomic:../../libs/ucns/src" python3 -m viz H2O --svg
+    python3 -m epac_viz H2O --svg
 """
 from __future__ import annotations
 

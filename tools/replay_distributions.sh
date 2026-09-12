@@ -67,7 +67,7 @@ for kind in wheel sdist; do
   (
     cd "$output"
     env -u PYTHONPATH -u PYTHONHOME -u PYTEST_ADDOPTS -u PYTEST_PLUGINS PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
-      "$environment/bin/python" "$repo/tools/verify_installed.py" "$source_root" "$dist"/*.whl "$output/$kind-receipt.json"
+      "$environment/bin/python" "$repo/tools/verify_installed.py" "$source_root" "$dist"/*.whl "$output/$kind-receipt.json" "${artifact[0]}"
   )
   "$output/verification-venv/bin/python" "$repo/tools/verify_installed.py" verify-snapshot "$source_root" "$output/source-snapshot.json"
 done

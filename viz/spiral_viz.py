@@ -24,7 +24,7 @@ existing hmmm boundaries.
 
 # === MODULE_BUILD ===
 # id: epac_lifted_spiral_visualizer
-#   module_name: epac.viz.spiral_viz
+#   module_name: epac_viz.spiral_viz
 #   module_kind: experiment
 #   summary: projects UCNS framed Möbius root-loop (lifted spirals) carried on EPAC Public Gonol receipts into canonical two-turn double-cover scenes; pure data extraction and rendering only
 #   owner: The Interdependency

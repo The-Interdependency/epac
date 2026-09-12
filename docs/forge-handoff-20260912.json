@@ -4,7 +4,7 @@
   "files": [
     {
       "forge_sha256": "f1a4639327828f6bc5ca39a3a1c441d5fc3f3b60823e646d149920e225554c11",
-      "handoff_sha256": "31d8163e7f0a09491270f4f9428d682965e4f2d6c3a281b9f22059005df43192",
+      "handoff_sha256": "39548a20926a90f50da5d5167d8057a38f61ebda93bf86e8e97dc2ecf400ca90",
       "source_path": "research/epac/README.md",
       "target_path": "README.md"
     },
@@ -76,7 +76,7 @@
     },
     {
       "forge_sha256": "f96f81e37127ada9c93008440929d499466ae2c28024575ba58f59dd31f8e10f",
-      "handoff_sha256": "7f465813d0579749c1ecd12e9bc039fa9eaadd1bf60b7f11337183351104552f",
+      "handoff_sha256": "449f06077824472b4a41140240d35208c8e861c4f9814d9d5c4861ffa346fc51",
       "source_path": "research/epac/epac_comparison.py",
       "target_path": "epac_comparison.py"
     },
@@ -112,7 +112,7 @@
     },
     {
       "forge_sha256": "cb4b97e2e8595ace20ca7a3e5f6915dcf7125d3cd199454eab55e5e9987aa308",
-      "handoff_sha256": "3f4cf94f4844ceaf814d651c56f79b922e1587392aaa077b22b98c350fe148ea",
+      "handoff_sha256": "e9d2c17708bcd732949a43aa698b0ebc565eb4b28c5a894f93b7402e994ce22c",
       "source_path": "research/epac/subatomic/nuclear_harmonic_candidates.py",
       "target_path": "subatomic/nuclear_harmonic_candidates.py"
     },
@@ -124,7 +124,7 @@
     },
     {
       "forge_sha256": "f167754001eb500261198914eb6f66b0af151b59ca5d6fcc1a1ee7ff2182deca",
-      "handoff_sha256": "f167754001eb500261198914eb6f66b0af151b59ca5d6fcc1a1ee7ff2182deca",
+      "handoff_sha256": "5fd72fac99ea3f66218e97cbcbee9907d990375c0808022b3b517ee136932e31",
       "source_path": "research/epac/subatomic/receipts/harmonic_binding_per_nucleon_commensurability.json",
       "target_path": "subatomic/receipts/harmonic_binding_per_nucleon_commensurability.json"
     },
@@ -166,7 +166,7 @@
     },
     {
       "forge_sha256": "e17db29cbb1474e33075a0ffd1d00a0ced796a603f75bed5625ba89451cefc71",
-      "handoff_sha256": "a87d8849ccdfeab34dbcb7b2902d82243aaa49507d4b2a995f1eeb07e807edbe",
+      "handoff_sha256": "6dacbaaece6d1728cc892417ec49439a2a6771092cd8b811f30e69721f0ce274",
       "source_path": "research/epac/subatomic/test_nuclear_harmonic_candidates.py",
       "target_path": "tests/subatomic/test_nuclear_harmonic_candidates.py"
     },
@@ -208,7 +208,7 @@
     },
     {
       "forge_sha256": "7b433384035f726626a0a40799537604c4b32aa677232d2bcee88d0bfa9bfbc5",
-      "handoff_sha256": "5e36bb34a17c22febcd45707c0ba6b3c5b300acf69d4e9624e6c962ba744f0eb",
+      "handoff_sha256": "cf40ad5b53529c757b48a04c759c6cab33b14f3ae39df5f702c980c070e6e3ea",
       "source_path": "research/epac/tests/test_geometry_comparison_after_construction.py",
       "target_path": "tests/test_geometry_comparison_after_construction.py"
     },
@@ -232,19 +232,19 @@
     },
     {
       "forge_sha256": "3603f9ca0604eaff72bb1ba511f419eabcadf55ebc0f298dbe49722318345157",
-      "handoff_sha256": "5312f524a827179fedfd9ad725adc0812e4adcf7b2dc4c8c52eb499b39b679c4",
+      "handoff_sha256": "3def2b79fbb79941d2c12d4d60fddb38c19eeac4b60483155283e58f6d67aa2f",
       "source_path": "research/epac/viz/README.md",
       "target_path": "viz/README.md"
     },
     {
       "forge_sha256": "8a49e7b32f1dc8fa2411fade7692986fb30cfdc7e993e29f7a9572888e3f6518",
-      "handoff_sha256": "8a49e7b32f1dc8fa2411fade7692986fb30cfdc7e993e29f7a9572888e3f6518",
+      "handoff_sha256": "bab63e0018104f25c359504d3e9fa639dde956151d75cc64c61acfb69a5ec6ac",
       "source_path": "research/epac/viz/__init__.py",
       "target_path": "viz/__init__.py"
     },
     {
       "forge_sha256": "00509d95dd39dae60300d870f976cf4e1115066cee607e5d493df55167904ef7",
-      "handoff_sha256": "00509d95dd39dae60300d870f976cf4e1115066cee607e5d493df55167904ef7",
+      "handoff_sha256": "5d34e27b2bef8c2cf52fd2f419a424c530d5c0a1f422b3f0339bf2727d0c6495",
       "source_path": "research/epac/viz/__main__.py",
       "target_path": "viz/__main__.py"
     },
@@ -256,7 +256,7 @@
     },
     {
       "forge_sha256": "5f234d44c3ee85b7872ff506f518cc66e6257b0871c7c9a9d525dd5c3b3a72da",
-      "handoff_sha256": "5f234d44c3ee85b7872ff506f518cc66e6257b0871c7c9a9d525dd5c3b3a72da",
+      "handoff_sha256": "85018412bf5d4b7c3e2d0f9a85b3bd64bdc09ec2b6b74ce4492f0e5c7b0adb0e",
       "source_path": "research/epac/viz/cli.py",
       "target_path": "viz/cli.py"
     },
@@ -268,7 +268,7 @@
     },
     {
       "forge_sha256": "4a888dd253665518cca48e764262e2ec1b3be53a713d15ca17d5cd48af18361e",
-      "handoff_sha256": "c8698a8abc9f29a745c192d05f27cdd69cb3070e4a587c3d2e240dbbab38a631",
+      "handoff_sha256": "df9182f31d87df38a7e05421b171b4637049b19156a5ad732364555d5f888fe4",
       "source_path": "research/epac/viz/spiral_viz.py",
       "target_path": "viz/spiral_viz.py"
     }
@@ -277,6 +277,13 @@
   "forge_repository": "The-Interdependency/stack",
   "independent_source_before": "feef35aff7ad9a2e328858c34c3162bf19982f25",
   "previous_forge_comparison": "030022948fb7c749961ae65743a4448c4bb6cbbe",
+  "review_repairs": [
+    "Binding recurrence prose now distinguishes the tested hypothesis from preserved failures; prior receipt retained under subatomic/receipts/history.",
+    "Visualizer usage uses the installed epac_viz namespace.",
+    "All sealed classes enter the construction leakage detector.",
+    "Standing partitions are restricted to the frozen preregistered formula population; a positive-control test reaches SURVIVED.",
+    "Each installed replay receipt identifies its own consumed artifact."
+  ],
   "schema": "epac.forge-continuation-handoff",
   "scope": "Preserve continued EPAC research and adapt imports for independent packaging; no completed authority transfer or domain ratification.",
   "validation": {
@@ -308,7 +315,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "hmmm",
+    "final_dependency_pin_and_clean_package_matrix": "hmmm; new 181-test suite includes standing-population regression",
     "source_suite": {
       "log_sha256": "d9406628e06fdfa27b555c536cb339420c1133117ab8cfa8134e7fc853e92882",
       "skips": 0,

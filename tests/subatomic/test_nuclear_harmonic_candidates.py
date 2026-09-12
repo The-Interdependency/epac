@@ -89,6 +89,12 @@ def test_recurrence_deterministic_and_replayable():
         }
         assert m.harmonic_receipt(record) == candidate.receipt
 
+    binding = next(c for c in m.CANDIDATES if c.candidate_id == "binding_per_nucleon_commensurability")
+    outcome = m.recurrence_test(binding)
+    assert outcome["He-4"] and outcome["C-12"]
+    assert all(outcome[name] is False for name in ("O-16", "Ne-20", "Mg-24", "Si-28", "S-32", "Ar-36", "Ca-40"))
+    assert "tested hypothesis" in binding.recurrence_mapping and "fail it" in binding.recurrence_mapping
+
     receipts = {c.receipt for c in m.CANDIDATES}
     assert len(receipts) == len(m.CANDIDATES)
 

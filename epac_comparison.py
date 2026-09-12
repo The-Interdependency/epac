@@ -61,7 +61,7 @@ from epac_subatomic.subatomic_gonol import (
 
 EPAC_ROOT = Path(__file__).resolve().parent
 SEALED_PATH = files("epac_data").joinpath("sealed_known_molecular_geometry.json")
-SEALED_SHAPE_LABELS = ("linear", "bent", "trigonal-pyramidal", "tetrahedral", "vsepr")
+SEALED_SHAPE_LABELS = ("linear", "bent", "trigonal-pyramidal", "trigonal-planar", "tetrahedral", "vsepr")
 CONSTRUCTION_FILES = (
     "epac_atomic.py",
     "epac_dimensional_arity.py",
@@ -110,6 +110,8 @@ def _standing(
     control.
     """
 
+    readout = {formula: readout[formula] for formula in known_shapes}
+    control = {formula: control[formula] for formula in known_shapes}
     by_shape: dict[str, set[Any]] = defaultdict(set)
     for formula, shape in known_shapes.items():
         by_shape[shape].add(readout[formula])

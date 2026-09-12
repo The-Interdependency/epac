@@ -12,19 +12,17 @@ It never invents UCNS positions, couplings, or geometry. It only projects what t
 
 ## Quick start
 
-From `src/stack/research/epac`:
+After installing the EPAC package:
 
 ```bash
-export PYTHONPATH=".:subatomic:../../libs/ucns/src"
-
 # Text view of the spiral for a molecule
-python3 -m viz H2O
+python3 -m epac_viz H2O
 
 # SVG for the same molecule
-python3 -m viz --svg H2O > /tmp/h2o.svg
+python3 -m epac_viz --svg H2O > /tmp/h2o.svg
 
 # Element gonol (periodic path)
-python3 -m viz --element --svg C > /tmp/carbon.svg
+python3 -m epac_viz --element --svg C > /tmp/carbon.svg
 ```
 
 ## What is shown

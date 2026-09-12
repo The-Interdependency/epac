@@ -288,8 +288,9 @@ CANDIDATES = (
             "Binding energy per nucleon (MeV): H-2 1.11, He-4 7.07, Li-7 5.6, "
             "C-12 7.68, O-16 7.98, Ne-20 8.03, Mg-24 8.26, Si-28 8.45, S-32 8.49, "
             "Ar-36 8.52, Ca-40 8.55. Even-even N=Z nuclei cluster near the peak; "
-            "He-4 and heavier alpha-conjugates are commensurable within the declared "
-            "10% tolerance; Li-7 dips."
+            "The tested hypothesis is commensurability with He-4 within the declared "
+            "10% tolerance. He-4 and C-12 satisfy it; H-2, Li-7, and O-16 through "
+            "Ca-40 fail it. These negative outcomes remain part of the evidence."
         ),
         equivalence_condition=(
             "|BE/A(x) - BE/A(He-4)| / BE/A(He-4) <= 0.10 (declared tolerance)."

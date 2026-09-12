@@ -1,4 +1,4 @@
-"""Usage: run from outside the source tree: python verify_installed.py SOURCE WHEEL RECEIPT.
+"""Usage: run from outside the source tree: python verify_installed.py SOURCE WHEEL RECEIPT ARTIFACT.
 
 The tests come from the source archive; EPAC imports and data must come from the
 clean installation. This receipt measures reproducibility, not domain validity.
@@ -74,7 +74,10 @@ def main() -> None:
             assert current == json.loads(output.read_text()), "archived source changed during replay"
         return
     import pytest
-    source, wheel, receipt_path = (Path(value).resolve() for value in sys.argv[1:])
+    source, wheel, receipt_path, artifact = (Path(value).resolve() for value in sys.argv[1:])
+    artifact_digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
+    artifact_kind = "wheel" if artifact.suffix == ".whl" else "sdist"
+    assert artifact_kind == "wheel" or artifact.name.endswith(".tar.gz")
     assert not Path.cwd().is_relative_to(source), "run outside the extracted source tree"
     assert not receipt_path.is_relative_to(source), "write receipts outside source"
     sys.path[:] = [path for path in sys.path if not Path(path or ".").resolve().is_relative_to(source)]
@@ -118,14 +121,15 @@ def main() -> None:
     result = pytest.main([str(source / "tests"), "--junitxml=" + str(xml_path), "-q", "-x", "-p", "no:cacheprovider", "-o", "xfail_strict=true"])
     assert result == 0, result
     cases = list(ET.parse(xml_path).getroot().iter("testcase"))
-    assert len(cases) == 180 and not any(c.find(tag) is not None for c in cases for tag in ("skipped", "failure", "error"))
+    assert len(cases) == 181 and not any(c.find(tag) is not None for c in cases for tag in ("skipped", "failure", "error"))
     assert payload() == before
     origins = {name: str(Path(module.__file__).resolve()) for name, module in sys.modules.items()
                if name.startswith("epac_") and getattr(module, "__file__", None)}
     assert all(Path(path).is_relative_to(Path(sys.prefix)) for path in origins.values()), origins
     standings = compare_after_construction()["standings"]
     assert standings == EXPECTED_STANDINGS, standings
-    receipt = {"schema": "epac.installed-replay", "version": 1, "status": "passed", "python": sys.version,
+    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == artifact_digest
+    receipt = {"artifact_kind": artifact_kind, "artifact_sha256": artifact_digest, "artifact_name": artifact.name, "schema": "epac.installed-replay", "version": 1, "status": "passed", "python": sys.version,
                "wheel_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(), "ucns_source_commit": identity,
                "installed_payload_sha256": immutable, "installed_distribution_sha256": before, "imported_origins": origins, "tests": len(cases),
                "skips": 0, "comparison_standings": standings, "empirical_status_transfer": False}

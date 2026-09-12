@@ -2,9 +2,9 @@
 
 Usage examples (from the epac directory with correct PYTHONPATH):
 
-    PYTHONPATH=".:subatomic:../../libs/ucns/src" python -m epac.viz.cli H2O
-    PYTHONPATH=".:subatomic:../../libs/ucns/src" python -m epac.viz.cli --svg H2O > /tmp/h2o_spiral.svg
-    PYTHONPATH=".:subatomic:../../libs/ucns/src" python -m epac.viz.cli --element O
+    python -m epac_viz.cli H2O
+    python -m epac_viz.cli --svg H2O > /tmp/h2o_spiral.svg
+    python -m epac_viz.cli --element O
 """
 
 from __future__ import annotations

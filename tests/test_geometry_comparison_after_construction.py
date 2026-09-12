@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sys
 import unittest
+from tempfile import TemporaryDirectory
 from pathlib import Path
 
 import epac_public_gonol as _installed_epac
@@ -10,6 +11,9 @@ EPAC_ROOT = Path(_installed_epac.__file__).resolve().parent
 
 from epac_comparison import (
     ORIGINAL_PREREG,
+    SEALED_SHAPE_LABELS,
+    CONSTRUCTION_FILES,
+    _standing,
     _harmonic_survival_signature,
     _per_symbol_harmonic_survival_from_molecule,
     _periodic_element_harmonic_survival_signature,
@@ -45,6 +49,25 @@ from epac_comparison import SEALED_PATH as SEALED
 class GeometryComparisonAfterConstructionTest(unittest.TestCase):
     def test_construction_omits_sealed_shape_labels(self) -> None:
         self.assertEqual(construction_sources_omit_sealed_labels(), ())
+        labels = {row["known_shape"] for row in json.loads(SEALED.read_text())["molecules"].values()}
+        self.assertLessEqual(labels, set(SEALED_SHAPE_LABELS))
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in CONSTRUCTION_FILES:
+                (root / name).write_text("")
+            for label in labels:
+                (root / CONSTRUCTION_FILES[0]).write_text(label)
+                self.assertIn(CONSTRUCTION_FILES[0] + ":" + label, construction_sources_omit_sealed_labels(root))
+
+    def test_standing_uses_same_preregistered_population(self) -> None:
+        known = {formula: row["known_shape"] for formula, row in json.loads(SEALED.read_text())["molecules"].items() if formula in ORIGINAL_PREREG}
+        prediction = dict(known, BF3="unscored", H2S="another", PH3="extra", SiH4="extra")
+        control = {formula: index for index, formula in enumerate(prediction)}
+        self.assertEqual(_standing(prediction, known, control), "SURVIVED")
+        self.assertEqual(_standing(known, known, control), "SURVIVED")
+        self.assertEqual(_standing(prediction, known, dict(known, BF3="different")), "FALSIFIED")
+        self.assertEqual(_standing(dict(prediction, CO2="split"), known, control), "FALSIFIED")
+        self.assertEqual(_standing(dict(prediction, CH4=known["H2O"]), known, control), "FALSIFIED")
 
     def test_charged_couplings_are_the_three_dimensional_structure(self) -> None:
         constructions = construct_declared_molecules()
