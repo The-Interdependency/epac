@@ -16,7 +16,7 @@
     },
     {
       "forge_sha256": "d82623ef38378fbff856a9a4a4fd75e7ca50a4ea59959158a867f4a1fbe3326d",
-      "handoff_sha256": "d82623ef38378fbff856a9a4a4fd75e7ca50a4ea59959158a867f4a1fbe3326d",
+      "handoff_sha256": "a7e29edd2b2c75d3f4fde32df35edb18ae9edd477f884b4ba5e70714097384c4",
       "source_path": "research/epac/docs/boundary_capacity_principle.md",
       "target_path": "docs/boundary_capacity_principle.md"
     },
@@ -40,7 +40,7 @@
     },
     {
       "forge_sha256": "bcb1db06672deb0703f0aa0afb0e41db1da3e7476e602322897662e9ce9a8043",
-      "handoff_sha256": "3e4faec0de2c42aa63b2edae73ccc76c3d635236d4c65ef7ee3a176eabfd1e41",
+      "handoff_sha256": "a65d09997b4a5cd2f63d82223a47f8cb3fb6d12a69f4ddba85e2cacc75389929",
       "source_path": "research/epac/docs/boundary_probe_completeness.md",
       "target_path": "docs/boundary_probe_completeness.md"
     },
@@ -64,7 +64,7 @@
     },
     {
       "forge_sha256": "cb1d9e4e2e1339123eab2775509e9604c6a25482d21c77e158cd4514bd5b743e",
-      "handoff_sha256": "9deeaf61d53bbb2994198a90bbb6f8149bfb0e05de0c93751f1190633692a57e",
+      "handoff_sha256": "24e0e44cb8910af15ce51cb49d890171127a5468b5f467c20cc942b6440e4890",
       "source_path": "research/epac/epac_boundary_probe_completeness.py",
       "target_path": "epac_boundary_probe_completeness.py"
     },
@@ -76,7 +76,7 @@
     },
     {
       "forge_sha256": "f96f81e37127ada9c93008440929d499466ae2c28024575ba58f59dd31f8e10f",
-      "handoff_sha256": "1b30b8ee684dac4b16a791cfd34e75556a52c73b3dc8695f3652bb9095902edc",
+      "handoff_sha256": "f18f8724dd5c01574bf5d3e081340f27f8cc6ade4719f273fb8a9ff340df532b",
       "source_path": "research/epac/epac_comparison.py",
       "target_path": "epac_comparison.py"
     },
@@ -88,13 +88,13 @@
     },
     {
       "forge_sha256": "df121c18b37b4c2f1acf58a879b5f4f02974408cc91a5747a74b2e6cf42d726a",
-      "handoff_sha256": "c6435566729589f01353f0c78376be0bb6515f580a9e5d0c9f97f6a3f58e943c",
+      "handoff_sha256": "4265452731263ba80ad82e811cd773c512ffa93a7fdd3d32cd8302828b9609f9",
       "source_path": "research/epac/epac_molecular.py",
       "target_path": "epac_molecular.py"
     },
     {
       "forge_sha256": "b3a813ee948d0771601d4fb5bc132c1d9f9144ebac89ac8143cb90228350d541",
-      "handoff_sha256": "6d4963e88057389db6548026dc2a5232d8bcd282b0199a47ad21b471e0f01666",
+      "handoff_sha256": "20474c25aaad15121efc2010227071bd31d1304080dfe45f2aa1115edb95d332",
       "source_path": "research/epac/epac_periodic.py",
       "target_path": "epac_periodic.py"
     },
@@ -154,7 +154,7 @@
     },
     {
       "forge_sha256": "7faa9ed9e1d59ee1abca32462679e6ae33233b51713d4a51e7fd070a254e7841",
-      "handoff_sha256": "59bb7e456f49b33b8c27de8499c71c59df4780431c9f8318a263573b37f0abd6",
+      "handoff_sha256": "3e97f3406eb3406aeb8fa30ec33778226fbc1ab9d2b368f60c2df0a9b0865cda",
       "source_path": "research/epac/subatomic/subatomic_gonol.py",
       "target_path": "subatomic/subatomic_gonol.py"
     },
@@ -172,7 +172,7 @@
     },
     {
       "forge_sha256": "b6dd5271d9f7b4c45b4d09596915c29a570f2649717dd7925500b7593d0f0e99",
-      "handoff_sha256": "b5feb35c8c39bb595558ef137d9040ebf543e1426d09a14e271cfbe3dda96383",
+      "handoff_sha256": "3aa9c7cbc878d1926ac9cd3461d953275fec5f9e911ff7cdfe30348789d2fee9",
       "source_path": "research/epac/subatomic/test_subatomic_gonol.py",
       "target_path": "tests/subatomic/test_subatomic_gonol.py"
     },
@@ -196,7 +196,7 @@
     },
     {
       "forge_sha256": "f279644854c703679ae6097bd269d09ec9e1aec73e091b1613f5a6504d17ea59",
-      "handoff_sha256": "d0df994a00d05a4d0c794d5edec7102c2babb80ac50f6cb35ed0b8b63568a0d7",
+      "handoff_sha256": "0e9d6a9b6cf8412a67fb60e7a188e5d091f9b52dffb2dd4a735cb3a2fe07506c",
       "source_path": "research/epac/tests/test_boundary_probe_completeness.py",
       "target_path": "tests/test_boundary_probe_completeness.py"
     },
@@ -208,7 +208,7 @@
     },
     {
       "forge_sha256": "7b433384035f726626a0a40799537604c4b32aa677232d2bcee88d0bfa9bfbc5",
-      "handoff_sha256": "5a06bbe8896f710b29589caa5acf20a8ff98b6ccbb28ef72a0772cf8c6c5f7f5",
+      "handoff_sha256": "bb318e6794b21750d241797e799982caf65a76adb8d5487dfa9974fa9f2d7823",
       "source_path": "research/epac/tests/test_geometry_comparison_after_construction.py",
       "target_path": "tests/test_geometry_comparison_after_construction.py"
     },
@@ -226,19 +226,19 @@
     },
     {
       "forge_sha256": "14c3563267d21e41f04e20e8dbdd8c88a071841b77b9a4ba0936835950a6d826",
-      "handoff_sha256": "eb97ae87bf2ed7c02c1b5bd36ff4c7b33f4e7c9dd4d696f83f0ee6001d2c6738",
+      "handoff_sha256": "abeef44f24e2e1111155dd48a40ea24663453a3f88281d80b354a41819244edd",
       "source_path": "research/epac/tests/test_spiral_population.py",
       "target_path": "tests/test_spiral_population.py"
     },
     {
       "forge_sha256": "3603f9ca0604eaff72bb1ba511f419eabcadf55ebc0f298dbe49722318345157",
-      "handoff_sha256": "ded5e1bf60a1b8daab506816d5fd414b999cb58b18bd952d70069e70c62b58cf",
+      "handoff_sha256": "452c90c6d5046a1c62c2a4676dbdeca4c22b40e85da33adb479149ad40edc3b1",
       "source_path": "research/epac/viz/README.md",
       "target_path": "viz/README.md"
     },
     {
       "forge_sha256": "8a49e7b32f1dc8fa2411fade7692986fb30cfdc7e993e29f7a9572888e3f6518",
-      "handoff_sha256": "bab63e0018104f25c359504d3e9fa639dde956151d75cc64c61acfb69a5ec6ac",
+      "handoff_sha256": "6c6dea83d6381b5ee7beebc66592d60831d6df791ad05e3335318e6adc479c0a",
       "source_path": "research/epac/viz/__init__.py",
       "target_path": "viz/__init__.py"
     },
@@ -268,7 +268,7 @@
     },
     {
       "forge_sha256": "4a888dd253665518cca48e764262e2ec1b3be53a713d15ca17d5cd48af18361e",
-      "handoff_sha256": "f5e5bbd6619d2ccf2a3a9a7527bba67699961835dc2bfb7ebf722570e7fc3aef",
+      "handoff_sha256": "7d50d81ba03bf66ce6e498948da8d9765415df9ed5a99197246577aa13fe64d8",
       "source_path": "research/epac/viz/spiral_viz.py",
       "target_path": "viz/spiral_viz.py"
     }
@@ -290,7 +290,8 @@
     "Unknown operation semantics remain ambiguous; known counterexamples retain FALSIFIED standing even with unresolved operations.",
     "Representation audit aggregates all prerequisite stages and reports narrower equivalence, failed stages, and unresolved stages separately.",
     "Verification examples use the installed repository environment; stable builds enforce CPython 3.11.15.",
-    "SVG dimensions and bare-subatomic attachment counts are validated; every dynamic SVG text value is escaped."
+    "SVG dimensions and bare-subatomic attachment counts are validated; every dynamic SVG text value is escaped.",
+    "All receipt scales use strict carried spiral parsing; bare core projections reject nonzero counts. Direct receipt visualization retains frames, axes and attachment counts with unrecorded endpoint details left unknown. Population errors propagate; all five frozen preregistered cases are required before scoring. The inventory includes minimal-refinement and probe-completeness modules: 109 operations, 12 explicitly ambiguous. Both result documents and the executable visualization example agree."
   ],
   "schema": "epac.forge-continuation-handoff",
   "scope": "Preserve continued EPAC research and adapt imports for independent packaging; no completed authority transfer or domain ratification.",
@@ -323,7 +324,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 remains bound. All 42 selected tests across five documented verification suites and new regressions pass after latest repairs; the expanded 188-test artifact matrix is pending. Licensed qualification remains separate.",
+    "final_dependency_pin_and_clean_package_matrix": "Accepted UCNS 6eea182 remains bound. All 33 selected tests pass after the latest receipt parsing, complete-population and inventory repairs; the attachment mapping follow-up also passes. The suite collects 192 tests; its private artifact matrix and exact review are pending. Owner-selected licensing and stable publication/authority gates remain open.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",

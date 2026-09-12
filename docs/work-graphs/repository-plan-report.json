@@ -10,9 +10,9 @@
   },
   "source": {
     "branch": "graduate/package-release-20260912",
-    "commit": "208d0675322e1e63d3c4f12cf044ed1adfc7cd7d",
+    "commit": "b15899602dd34ae9d22d4398bfd2b5e9102e0871",
     "generated_at": "2026-09-12",
-    "note": "Describes the preceding implementation commit. The accepted UCNS pin is bound. The previous six private installations passed 186 tests and their downloaded evidence independently matched Git. The latest repairs pass 42 selected tests; the expanded 188-test matrix is pending. Owner-selected licensing and stable publication/authority gates remain open."
+    "note": "Describes the preceding implementation commit. All 33 selected tests pass after the latest receipt parsing, complete-population and inventory repairs; the attachment mapping follow-up also passes. The suite collects 192 tests; its private artifact matrix and exact review are pending. Owner-selected licensing and stable publication/authority gates remain open."
   },
   "authority": {
     "owns": [
@@ -41,7 +41,7 @@
   },
   "status": {
     "state": "extracted candidate; package preparation implemented; graduation incomplete",
-    "current_claim": "The package preserves the 45-file forge continuation and binds accepted UCNS 6eea1828a34ed8ec99879f8090ea5d48352d8c2d by source archive and installed-source hashes. Six private wheel/sdist installs passed 186 tests each on Python 3.10/3.11/3.12, with downloaded artifacts, source maps, dependency exports, installed bytes, and XML receipts independently checked against Git. Latest repairs retain ambiguous operation semantics, propagate every prerequisite stage into audit aggregates, preserve known falsifications alongside unresolved stages, validate visualization inputs, enforce the documented release-builder runtime, and make research verification commands runnable here. All 42 selected tests pass; the expanded 188-test artifact matrix is pending. Historical receipts and 14 FALSIFIED comparison standings remain preserved. Owner-selected licensing, immutable candidate qualification, same-candidate stack verification, publication, and scoped authority transition remain open."
+    "current_claim": "The package preserves the 45-file forge continuation and binds accepted UCNS 6eea1828a34ed8ec99879f8090ea5d48352d8c2d. The prior f311 private matrix passed six 186-test installations and downloaded evidence independently matched Git. Latest repairs preserve carried spiral evidence at every receipt scale, reject malformed bare counts, propagate population failures, require the complete frozen preregistration and include all declared evidence modules in the ambiguous-operation ledger. All 33 selected tests pass after the latest receipt parsing, complete-population and inventory repairs; the attachment mapping follow-up also passes. The suite collects 192 tests; its private artifact matrix and exact review are pending. Owner-selected licensing and stable publication/authority gates remain open. Historical falsifications and authority boundaries remain preserved."
   },
   "delivered": [
     {
