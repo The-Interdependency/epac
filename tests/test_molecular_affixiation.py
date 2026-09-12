@@ -116,7 +116,8 @@ class MolecularAffixiationTest(unittest.TestCase):
         with patch("epac_molecular._instantiate", side_effect=AssertionError("count must not construct gonols")):
             self.assertEqual({formula: declared_valence_attachment_count(formula)
                               for formula in expected}, expected)
-            self.assertEqual(declared_valence_attachment_count("not-declared"), 0)
+            with self.assertRaisesRegex(ValueError, "outside the declared run"):
+                declared_valence_attachment_count("not-declared")
         molecules = construct_declared_molecules()
         signatures = {formula: item.invariants["ucns_coupling_signature"] for formula, item in molecules.items()}
         self.assertEqual(len(set(signatures.values())), len(molecules))
