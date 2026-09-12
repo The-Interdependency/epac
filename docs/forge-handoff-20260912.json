@@ -76,7 +76,7 @@
     },
     {
       "forge_sha256": "f96f81e37127ada9c93008440929d499466ae2c28024575ba58f59dd31f8e10f",
-      "handoff_sha256": "449f06077824472b4a41140240d35208c8e861c4f9814d9d5c4861ffa346fc51",
+      "handoff_sha256": "32933b3e0d881f44ff16ca83d06bca59016365a1c4d0d8e8035fa6c344c0db05",
       "source_path": "research/epac/epac_comparison.py",
       "target_path": "epac_comparison.py"
     },
@@ -316,6 +316,29 @@
       "version": 1
     },
     "final_dependency_pin_and_clean_package_matrix": "hmmm; new 181-test suite includes standing-population regression",
+    "post_review_comparison": {
+      "elapsed_seconds": 420.43129057303304,
+      "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
+      "scope": "Full comparison rerun after population and claim repairs; no empirical status transfer",
+      "source_comparison_sha256": "32933b3e0d881f44ff16ca83d06bca59016365a1c4d0d8e8035fa6c344c0db05",
+      "standings": {
+        "atomic_shells_as_sealed_shape_prediction": "FALSIFIED",
+        "boundary_capacity_as_sealed_shape_prediction": "FALSIFIED",
+        "charged_3_structure_as_sealed_shape_prediction": "FALSIFIED",
+        "harmonic_survival_as_sealed_shape_prediction": "FALSIFIED",
+        "lifted_spiral_as_sealed_shape_prediction": "FALSIFIED",
+        "per_symbol_harmonic_survival_as_sealed_shape_prediction": "FALSIFIED",
+        "periodic_element_boundary_capacity_as_sealed_shape_prediction": "FALSIFIED",
+        "periodic_element_harmonic_survival_as_sealed_shape_prediction": "FALSIFIED",
+        "periodic_element_lifted_spiral_as_sealed_shape_prediction": "FALSIFIED",
+        "subatomic_boundary_capacity_as_sealed_shape_prediction": "FALSIFIED",
+        "subatomic_harmonic_survival_as_sealed_shape_prediction": "FALSIFIED",
+        "subatomic_lifted_spiral_as_sealed_shape_prediction": "FALSIFIED",
+        "topology_3_structure_as_sealed_shape_prediction": "FALSIFIED",
+        "ucns_mobius_as_sealed_shape_prediction": "FALSIFIED"
+      },
+      "status": "passed"
+    },
     "source_suite": {
       "log_sha256": "d9406628e06fdfa27b555c536cb339420c1133117ab8cfa8134e7fc853e92882",
       "skips": 0,

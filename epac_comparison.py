@@ -71,9 +71,9 @@ CONSTRUCTION_FILES = (
 )
 
 # Frozen original preregistered set for sealed-shape prediction policy.
-# All standings and quantify_distinguishing_power metrics against "known_shapes"
-# are computed exclusively over this set, even if the sealed file or constructed
-# set is enlarged for broader experiments.
+# Sealed standings and pairwise comparisons use this frozen population.
+# Readout population summaries may cover every constructed formula, even when
+# the sealed file or constructed set is enlarged for broader experiments.
 ORIGINAL_PREREG = frozenset({"H2", "H2O", "NH3", "CH4", "CO2"})
 
 

@@ -65,6 +65,8 @@ def source_snapshot(root):
 
 
 def main() -> None:
+    if sys.flags.optimize:
+        raise SystemExit("optimized Python mode cannot produce replay evidence")
     if sys.argv[1] in {"snapshot", "verify-snapshot"}:
         root, output = map(Path, sys.argv[2:])
         current = source_snapshot(root)
@@ -78,6 +80,9 @@ def main() -> None:
     artifact_digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
     artifact_kind = "wheel" if artifact.suffix == ".whl" else "sdist"
     assert artifact_kind == "wheel" or artifact.name.endswith(".tar.gz")
+    verifier_bytes = Path(__file__).read_bytes()
+    assert verifier_bytes == (source / "tools/verify_installed.py").read_bytes(), "verifier differs from archived candidate"
+    archived_inputs = source_snapshot(source)
     assert not Path.cwd().is_relative_to(source), "run outside the extracted source tree"
     assert not receipt_path.is_relative_to(source), "write receipts outside source"
     sys.path[:] = [path for path in sys.path if not Path(path or ".").resolve().is_relative_to(source)]
@@ -128,8 +133,10 @@ def main() -> None:
     assert all(Path(path).is_relative_to(Path(sys.prefix)) for path in origins.values()), origins
     standings = compare_after_construction()["standings"]
     assert standings == EXPECTED_STANDINGS, standings
+    assert source_snapshot(source) == archived_inputs, "source changed during replay"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == artifact_digest
     receipt = {"artifact_kind": artifact_kind, "artifact_sha256": artifact_digest, "artifact_name": artifact.name, "schema": "epac.installed-replay", "version": 1, "status": "passed", "python": sys.version,
+               "verifier_sha256": hashlib.sha256(verifier_bytes).hexdigest(), "source_files_sha256": archived_inputs, "outcomes_xml_sha256": hashlib.sha256(xml_path.read_bytes()).hexdigest(),
                "wheel_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(), "ucns_source_commit": identity,
                "installed_payload_sha256": immutable, "installed_distribution_sha256": before, "imported_origins": origins, "tests": len(cases),
                "skips": 0, "comparison_standings": standings, "empirical_status_transfer": False}

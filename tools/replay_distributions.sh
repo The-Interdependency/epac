@@ -28,6 +28,7 @@
 # Installs both artifacts independently; writes local packaging evidence only.
 # License qualification and pre-publication stack acceptance remain separate.
 set -euo pipefail
+case "${PYTHONOPTIMIZE-}" in ""|0) ;; *) echo "optimized Python mode cannot produce replay evidence" >&2; exit 2;; esac
 repo=$(realpath "$1")
 dist=$(realpath "$2")
 output=$(realpath -m "$3")
