@@ -23,7 +23,7 @@ No new probe, coordinate, descriptor component, operation, physics claim, UCNS
 continuum result, PCEA mapping, or runtime encoding is introduced.
 
 The operation inventory covers exported callables from the bounded EPAC
-construction, evidence, provenance and visualization modules. The inventory covers every packaged executable module; package initializer re-exports add no distinct operation. A coverage test checks the installed module files against the inventory. Each operation is classified as one of:
+construction, evidence, provenance and visualization modules. The inventory covers every packaged executable module and public initializer re-export. It counts callable addresses, so an alias and its defining-module address both appear without implying distinct implementations. Relative re-exports are resolved from AST source without executing modules. Coverage tests check installed module files and the actual epac_viz public export set. Each operation is classified as one of:
 
 - boundary-observing
 - boundary-transforming
@@ -35,13 +35,13 @@ construction, evidence, provenance and visualization modules. The inventory cove
 
 | item | count |
 |---|---:|
-| declared operations classified | 128 |
+| declared operations classified | 136 |
 | boundary-relevant operations | 58 |
 | omitted boundary-relevant operations | 14 |
 | omitted operations that distinguish same-B frozen states | 13 |
-| ambiguous operations | 31 |
+| ambiguous operations | 39 |
 
-Thirty-one exported operations, including the representation, probe-relativity, minimal-refinement and probe-completeness audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
+Thirty-nine public callable addresses, including the representation, probe-relativity, minimal-refinement and probe-completeness audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
 
 ## Partition Result
 

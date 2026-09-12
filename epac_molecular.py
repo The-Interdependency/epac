@@ -1039,7 +1039,7 @@ def boundary_capacity_descriptor_sufficiency_sweep() -> dict[str, Any]:
 
     # Closure and state sufficiency answer different questions. Read the
     # bounded closure audit's actual statuses without promoting a collision.
-    closure_keys = ("subatomic_to_element_closure", "end_to_end_subatomic_to_molecule_closure",
+    closure_keys = ("subatomic_to_element_closure", "element_state_compatibility", "end_to_end_subatomic_to_molecule_closure",
                     "boundary_capacity_compositionality")
     try:
         from epac_cross_scale_closure import cross_scale_compositional_closure
@@ -1050,7 +1050,7 @@ def boundary_capacity_descriptor_sufficiency_sweep() -> dict[str, Any]:
         }
     except Exception:
         closure_statuses = {key: BLOCKED for key in closure_keys}
-    cross_scale_element_status = closure_statuses["subatomic_to_element_closure"]
+    cross_scale_element_status = closure_statuses["element_state_compatibility"]
 
     # Explicit disposition of the pre-existing control-like partition failure
     # (subatomic_lifted_spiral_matches_control). This is a partition-resemblance

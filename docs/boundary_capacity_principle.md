@@ -175,7 +175,7 @@ Aggregate statuses from `epac_boundary_probe_completeness.py`:
 - quotient_partition_stability_under_omitted_existing_observables: FALSIFIED
 - boundary_probe_completeness: FALSIFIED
 
-The audit classified 128 exported callable operations, retained 31 with unresolved
+The audit classified 136 public callable addresses, retained 39 with unresolved
 boundary relevance, and found 14 omitted
 boundary-relevant operations. Existing dimensional-arity observers such as
 `topology_structure_readout`, `charged_structure_readout`, and

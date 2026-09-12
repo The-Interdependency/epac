@@ -130,7 +130,7 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
 
     def test_sufficiency_preserves_independent_closure_statuses(self) -> None:
         from unittest.mock import patch
-        keys = ("subatomic_to_element_closure", "end_to_end_subatomic_to_molecule_closure", "boundary_capacity_compositionality")
+        keys = ("subatomic_to_element_closure", "element_state_compatibility", "end_to_end_subatomic_to_molecule_closure", "boundary_capacity_compositionality")
         # Empty fixture isolates status propagation; the sealed sweep test below
         # separately proves real collisions coexist with surviving closure.
         with patch("epac_molecular.MOLECULE_COMPOSITIONS", {}), patch("epac_molecular.construct_declared_molecules", return_value={}):
@@ -140,6 +140,16 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
                     result = boundary_capacity_descriptor_sufficiency_sweep()["aggregate"]
                     expected = status if status in ("SURVIVED", "FALSIFIED", "UNRESOLVED", "BLOCKED") else "UNRESOLVED"
                     self.assertEqual({key: result[key] for key in keys}, {key: expected for key in keys})
+                for key in keys:
+                    for status in ("FALSIFIED", "UNRESOLVED", "BLOCKED", None):
+                        statuses = dict.fromkeys(keys, "SURVIVED")
+                        statuses[key] = status
+                        closure.return_value = {"statuses": statuses}
+                        result = boundary_capacity_descriptor_sufficiency_sweep()
+                        expected = statuses["element_state_compatibility"] or "UNRESOLVED"
+                        self.assertEqual(result["cross_scale_element_compatibility"], expected)
+                        self.assertEqual(result["aggregate"]["element_state_compatibility"], expected)
+                        self.assertEqual(result["aggregate"]["subatomic_to_element_closure"], statuses["subatomic_to_element_closure"] or "UNRESOLVED")
                 closure.side_effect = RuntimeError("closure unavailable")
                 result = boundary_capacity_descriptor_sufficiency_sweep()["aggregate"]
                 self.assertTrue(all(result[key] == "BLOCKED" for key in keys))

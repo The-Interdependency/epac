@@ -112,6 +112,9 @@ Observable = Any
 ObservableFn = Callable[[StateContext], Observable]
 
 OPERATION_SOURCE_FILES = (
+    "viz/__init__.py",
+    "subatomic/__init__.py",
+    "data/__init__.py",
     "epac_atomic.py",
     "epac_ucns_provenance.py",
     "viz/spiral_viz.py",
@@ -275,15 +278,23 @@ OMITTED_OBSERVABLE_OPERATION_NAMES = frozenset(
 
 
 def _module_label(relative_path: str) -> str:
-    return relative_path[:-3].replace("/", ".")
+    parts = relative_path[:-3].split("/")
+    parts[0] = {"subatomic": "epac_subatomic", "viz": "epac_viz", "data": "epac_data"}.get(parts[0], parts[0])
+    if parts[-1] == "__init__":
+        parts.pop()
+    return ".".join(parts)
 
 
-def _declared_names(path: Path) -> tuple[str, ...]:
+def _declared_names(path: Path, seen: tuple[Path, ...] = ()) -> tuple[str, ...]:
+    path = path.resolve()
+    if path in seen:
+        raise ValueError("cyclic public re-export inventory")
+    seen = (*seen, path)
     tree = ast.parse(path.read_text(encoding="utf-8"))
     top_level_defs = {
         node.name
         for node in tree.body
-        if isinstance(node, (ast.FunctionDef, ast.ClassDef))
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
     }
     exported: list[str] = []
     for node in tree.body:
@@ -297,14 +308,33 @@ def _declared_names(path: Path) -> tuple[str, ...]:
             except (SyntaxError, ValueError):
                 exported = []
     if exported:
-        return tuple(name for name in exported if name in top_level_defs)
+        # Follow explicitly exported relative bindings without importing code.
+        # Initializer aliases are public addresses even when the implementation
+        # already appears under the defining module's address.
+        public_callables = set(top_level_defs)
+        for node in tree.body:
+            if not isinstance(node, ast.ImportFrom) or not node.level or not node.module:
+                continue
+            base = path.parent
+            for _ in range(node.level - 1):
+                base = base.parent
+            module_path = base.joinpath(*node.module.split("."))
+            target = module_path.with_suffix(".py")
+            if not target.is_file():
+                target = module_path / "__init__.py"
+            selected = [alias for alias in node.names if (alias.asname or alias.name) in exported]
+            if not selected:
+                continue
+            definitions = set(_declared_names(target, seen))
+            public_callables.update(alias.asname or alias.name for alias in selected if alias.name in definitions)
+        return tuple(name for name in exported if name in public_callables)
     return tuple(name for name in top_level_defs if not name.startswith("_"))
 
 
 def _declared_operations() -> tuple[dict[str, str], ...]:
     operations: list[dict[str, str]] = []
     for relative_path in OPERATION_SOURCE_FILES:
-        package = {"subatomic": "epac_subatomic", "viz": "epac_viz"}.get(relative_path.split("/", 1)[0])
+        package = {"subatomic": "epac_subatomic", "viz": "epac_viz", "data": "epac_data"}.get(relative_path.split("/", 1)[0])
         path = (Path(str(files(package).joinpath(relative_path.split("/", 1)[1])))
                 if package else EPAC_ROOT / relative_path)
         module = _module_label(relative_path)
@@ -321,7 +351,7 @@ def _declared_operations() -> tuple[dict[str, str], ...]:
 
 
 def _classify_operation(module: str, name: str) -> str:
-    if module in {"epac_atomic", "epac_ucns_provenance", "viz.spiral_viz", "viz.cli"}:
+    if module in {"epac_atomic", "epac_ucns_provenance", "epac_viz", "epac_viz.spiral_viz", "epac_viz.cli"}:
         return AMBIGUOUS
 
     if name in OmittedButNomenclature.NAMES:
