@@ -151,6 +151,17 @@ class SpiralPopulationTest(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "scene failed"):
                     extract_full_spiral_population(include_elements=("H",), include_subatomic=())
 
+    def test_svg_renders_symmetric_attachment_slots(self) -> None:
+        from epac_molecular import construct_molecule
+        scene = extract_spiral_scene(construct_molecule("H2"))
+        root = ET.fromstring(render_scene_svg(scene, width=640, height=400))
+        groups = root.findall(".//{http://www.w3.org/2000/svg}g[@data-symmetric-slot]")
+        self.assertEqual(len(groups), len(scene.attachments))
+        self.assertEqual({group.attrib["data-symmetric-slot"] for group in groups}, {str(slot.slot) for slot in scene.attachments})
+        self.assertEqual({group.find("{http://www.w3.org/2000/svg}text").text for group in groups},
+                         {f"{slot.participant}@{slot.site}" for slot in scene.attachments})
+        self.assertTrue(all(group.find("{http://www.w3.org/2000/svg}path") is not None for group in groups))
+
     def test_svg_escapes_phase_and_fits_requested_width(self) -> None:
         scene = extract_spiral_scene(subatomic_gonol.construct_subatomic_gonol("H"))
         phase = "<script>alert(1)</script>&"

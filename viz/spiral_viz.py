@@ -539,7 +539,7 @@ def render_scene_svg(
     if scene.attachments:
         arc_y_base = top + ribbon_h + 55
         arc_x_center = stations_x[0] + 70
-        for a in scene.attachments[:6]:
+        for index, a in enumerate(scene.attachments[:6]):
             if a.center and a.ligand:
                 c = _svg_escape(str(a.center))
                 l = _svg_escape(str(a.ligand))
@@ -552,6 +552,20 @@ def render_scene_svg(
                     f'<text x="{arc_x_center+70}" y="{arc_y_base-36}" text-anchor="middle" '
                     f'fill="#64748b" font-family="monospace" font-size="9">{c}—{l}</text>'
                 )
+
+            elif a.participant is not None:
+                x = arc_x_center + 45 * index
+                y = arc_y_base
+                label = _svg_escape(f"{a.participant}@{a.site}")
+                parts.append(f'<g data-symmetric-slot="{_svg_escape(str(a.slot))}">')
+                parts.append(f'<path d="M {x-12},{y} Q {x},{y-22} {x+12},{y}" '
+                             'fill="none" stroke="#64748b" stroke-width="1.5"/>')
+                parts.append(f'<text x="{x}" y="{y+14}" text-anchor="middle" fill="#94a3b8" '
+                             f'font-family="monospace" font-size="9">{label}</text></g>')
+            else:
+                label = _svg_escape(f"slot {a.slot}: endpoints/sites unrecorded")
+                parts.append(f'<text x="{arc_x_center}" y="{arc_y_base + 14 * index}" fill="#94a3b8" '
+                             f'font-family="monospace" font-size="9">{label}</text>')
 
     # Legend box (bottom right)
     lx = width - margin - 260

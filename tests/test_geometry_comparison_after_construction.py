@@ -47,6 +47,77 @@ from epac_comparison import SEALED_PATH as SEALED
 
 
 class GeometryComparisonAfterConstructionTest(unittest.TestCase):
+    def test_transition_prediction_uses_sources_without_target_invariants(self) -> None:
+        from dataclasses import replace
+        from unittest.mock import patch
+        from epac_molecular import construct_molecule, boundary_capacity_transition_for_molecule, predict_boundary_capacity_from_source_and_op
+        class UnreadableInvariants(dict):
+            def __getitem__(self, key):
+                raise AssertionError("target invariant inspected")
+        target = construct_molecule("H2O")
+        with patch("epac_molecular.construct_molecule", side_effect=AssertionError("target construction inspected")):
+            record = boundary_capacity_transition_for_molecule("H2O", replace(target, invariants=UnreadableInvariants()))
+        self.assertTrue(record["reproducible"])
+        self.assertEqual(record["predicted_b_from_source_and_op"], (3, 3, 2))
+        self.assertEqual(record["op"]["attachment_count"], 2)
+        for invalid in ([], [(3, 99, 0)] * 3, [(3, 1, 1)] * 3, [(3.0, 2, 0)] * 3, list(reversed(record["source_bs"]))):
+            with self.assertRaises(ValueError):
+                predict_boundary_capacity_from_source_and_op(invalid, record["op"])
+        for key in ("atom_count", "attachment_count"):
+            with self.assertRaises(ValueError):
+                predict_boundary_capacity_from_source_and_op(record["source_bs"], dict(record["op"], **{key: 99}))
+        for composition in ((("H", 2), ("O", True)), (("H", 2), ("O", 1.0))):
+            with self.assertRaises(ValueError):
+                predict_boundary_capacity_from_source_and_op(record["source_bs"], dict(record["op"], composition=composition))
+        wrong = construct_molecule("SiH4")
+        with self.assertRaisesRegex(ValueError, "does not belong"):
+            boundary_capacity_transition_for_molecule("CH4", wrong)
+        with self.assertRaisesRegex(ValueError, "does not belong"):
+            boundary_capacity_transition_for_molecule("CH4", replace(wrong, formula="CH4"))
+        spoofed_receipt = replace(wrong.receipt, source_id="epac.molecule:CH4",
+                                  gonol=replace(wrong.receipt.gonol, source_id="epac.molecule:CH4"))
+        with self.assertRaisesRegex(ValueError, "participants do not belong"):
+            boundary_capacity_transition_for_molecule("CH4", replace(wrong, formula="CH4", receipt=spoofed_receipt))
+
+    def test_bare_comparison_projections_preserve_multiplicity(self) -> None:
+        from collections import Counter
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        import epac_comparison as comparison
+        from epac_cross_scale_closure import _subatomic_lifted_spiral_signature as cross_signature
+        cases = (
+            (comparison._periodic_element_lifted_spiral_signature, "epac_comparison.construct_element_gonol", "epac_comparison.lifted_spiral_carried_on_element", True),
+            (comparison._subatomic_lifted_spiral_signature, "epac_comparison.subatomic_gonol.construct_subatomic_gonol", "epac_comparison.lifted_spiral_carried_on_subatomic", True),
+            (comparison._periodic_element_boundary_capacity_signature, "epac_comparison.construct_element_gonol", "epac_comparison.boundary_capacity_from_element_receipt", False),
+            (comparison._subatomic_boundary_capacity_signature, "epac_comparison.subatomic_gonol.construct_subatomic_gonol", "epac_comparison.boundary_capacity_from_subatomic_receipt", False),
+            (cross_signature, "epac_cross_scale_closure.construct_subatomic_gonol", "epac_cross_scale_closure.lifted_spiral_carried_on_subatomic", True),
+        )
+        for function, constructor, extractor, spiral in cases:
+            for formula, composition in MOLECULE_COMPOSITIONS.items():
+                symbols = [symbol for symbol, count in composition for _ in range(count)]
+                with patch(constructor, side_effect=lambda symbol, occurrence: SimpleNamespace(symbol=symbol, occurrence=occurrence)) as build:
+                    with patch(extractor, side_effect=(lambda receipt: (("a", "b", "a"), (f"axis#{receipt.occurrence}",), 0)) if spiral else (lambda receipt: (3, 2, 0))):
+                        result = function(formula)
+                self.assertEqual(Counter(value.split(":", 1)[0] for value in result), Counter(symbols))
+                self.assertEqual([(call.args[0], call.kwargs["occurrence"]) for call in build.call_args_list], list(zip(symbols, range(len(symbols)))))
+
+    def test_partition_witnesses_cross_the_reported_equivalence(self) -> None:
+        from epac_molecular import _partition_disagreement_pairs
+        full = (frozenset(("a", "b")), frozenset(("c", "d")))
+        candidate = (frozenset(("a", "b", "c")), frozenset(("d",)))
+        expected = {"false_merge": (("a", "c"),), "false_split": (("c", "d"),)}
+        for first, second in ((full, candidate), (tuple(reversed(full)), tuple(reversed(candidate)))):
+            result = _partition_disagreement_pairs(first, second)
+            self.assertEqual(result, expected)
+            full_owner = {sid: group for group in first for sid in group}
+            candidate_owner = {sid: group for group in second for sid in group}
+            for a, b in result["false_merge"]:
+                self.assertEqual(candidate_owner[a], candidate_owner[b])
+                self.assertNotEqual(full_owner[a], full_owner[b])
+            for a, b in result["false_split"]:
+                self.assertEqual(full_owner[a], full_owner[b])
+                self.assertNotEqual(candidate_owner[a], candidate_owner[b])
+
     def test_unknown_local_transition_kind_fails(self) -> None:
         from epac_molecular import apply_local_step, accumulate_from_local_path
         for kind in ("", "introduse", "unknown", None):
@@ -98,7 +169,7 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
         from epac_molecular import epac_representation_audit
         states = [{"state_id": str(index), "behavior": {"b": (3, 1, 1), "ligand_contribution_K": 1}} for index in range(27)]
         prerequisites = {
-            "closure": ("epac_molecular.compositional_boundary_closure", {"all_formulas_exhibit_compositional_transition_closure": True}, ("all_formulas_exhibit_compositional_transition_closure",)),
+            "closure": ("epac_cross_scale_closure.cross_scale_compositional_closure", {"statuses": {key: "SURVIVED" for key in ("subatomic_to_element_closure", "element_state_compatibility", "end_to_end_subatomic_to_molecule_closure", "boundary_capacity_compositionality")}}, ("statuses", "boundary_capacity_compositionality")),
             "non_degeneracy": ("epac_boundary_nondegeneracy.boundary_descriptor_nondegeneracy_report", {"statuses": {"boundary_descriptor_non_degeneracy": "SURVIVED"}}, ("statuses", "boundary_descriptor_non_degeneracy")),
             "sufficiency": ("epac_molecular.boundary_capacity_descriptor_sufficiency_sweep", {"aggregate": {"boundary_capacity_sufficiency": "SURVIVED"}}, ("aggregate", "boundary_capacity_sufficiency")),
             "collision_localization": ("epac_molecular.boundary_capacity_information_loss_localization", {"aggregate": {"information_loss_localization": "SURVIVED"}}, ("aggregate", "information_loss_localization")),
@@ -116,14 +187,25 @@ class GeometryComparisonAfterConstructionTest(unittest.TestCase):
                     target = value
                     for key in keys[:-1]:
                         target = target[key]
-                    target[keys[-1]] = (False if status == "FALSIFIED" else None) if name == "closure" else status
+                    target[keys[-1]] = status
                     mocks[name].return_value = value
                     result = epac_representation_audit()["outputs"]
                     self.assertEqual(result["overall"], status, name)
                     self.assertEqual(result["representation_equivalence"], "SURVIVED", name)
                     self.assertIn(name, result["failed_stages" if status == "FALSIFIED" else "unresolved_stages"])
                 mocks[name].return_value = deepcopy(original)
-            mocks["closure"].return_value = {"all_formulas_exhibit_compositional_transition_closure": False}
+            for key in prerequisites["closure"][1]["statuses"]:
+                for status in ("FALSIFIED", "UNRESOLVED", "BLOCKED", None):
+                    value = deepcopy(prerequisites["closure"][1])
+                    value["statuses"][key] = status
+                    mocks["closure"].return_value = value
+                    result = epac_representation_audit()
+                    self.assertEqual(result["stages"]["closure"]["status"], status or "UNRESOLVED")
+                    self.assertEqual(result["outputs"]["overall"], status or "UNRESOLVED")
+            mocks["closure"].side_effect = RuntimeError("cross-scale evidence unavailable")
+            self.assertEqual(epac_representation_audit()["stages"]["closure"]["status"], "BLOCKED")
+            mocks["closure"].side_effect = None
+            mocks["closure"].return_value = {"statuses": {"boundary_capacity_compositionality": "FALSIFIED"}}
             mocks["non_degeneracy"].side_effect = RuntimeError("missing prerequisite")
             result = epac_representation_audit()["outputs"]
             self.assertEqual(result["overall"], "FALSIFIED")

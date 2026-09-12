@@ -522,6 +522,8 @@ def declared_valence_attachment_count(formula: str) -> int:
     It does not construct or inspect any molecule PublicGonol receipt or its carried options.
     Used for boundary-capacity transition recording.
     """
+    if formula not in MOLECULE_COMPOSITIONS:
+        raise ValueError(f"formula {formula!r} is outside the declared run")
     return sum(_ligand_slot_contribution(symbol)
                for symbol in _get_affix_contributing_symbols(formula))
 
@@ -533,7 +535,9 @@ def source_element_boundary_capacities(formula: str) -> list[tuple]:
     These are R0 states for the molecule-forming transformation.
     """
     from epac_periodic import construct_element_gonol, boundary_capacity_from_element_receipt
-    comp = MOLECULE_COMPOSITIONS.get(formula, ())
+    if formula not in MOLECULE_COMPOSITIONS:
+        raise ValueError(f"formula {formula!r} is outside the declared run")
+    comp = MOLECULE_COMPOSITIONS[formula]
     bs: list[tuple] = []
     for sym, cnt in comp:
         for _ in range(cnt):
@@ -553,11 +557,35 @@ def predict_boundary_capacity_from_source_and_op(source_bs: list[tuple], op: Map
 
     This is the candidate transition law under test. No conservation or monotonicity is assumed.
     """
-    atom_count = int(op.get("atom_count", 0))
-    attach_count = int(op.get("attachment_count", 0))
-    # source_bs is accepted for the contract (future rules may use per-source detail)
-    # but the minimal rule for the present constructions depends only on the aggregates in op.
-    return (3, atom_count, attach_count)
+    formula = op.get("formula")
+    if type(formula) is not str or formula not in MOLECULE_COMPOSITIONS:
+        raise ValueError("operation requires a declared formula")
+    composition = MOLECULE_COMPOSITIONS[formula]
+    supplied_composition = op.get("composition", ())
+    if (not isinstance(supplied_composition, (tuple, list))
+            or any(not isinstance(row, (tuple, list)) or len(row) != 2
+                   or type(row[0]) is not str or type(row[1]) is not int or row[1] <= 0
+                   for row in supplied_composition)
+            or tuple(tuple(row) for row in supplied_composition) != composition):
+        raise ValueError("operation composition differs from declared formula")
+    atom_count = sum(count for _, count in composition)
+    if len(source_bs) != atom_count:
+        raise ValueError("source boundary capacities must cover every atom instance")
+    for source in source_bs:
+        if (not isinstance(source, (tuple, list)) or len(source) != 3
+                or any(type(value) is not int for value in source)
+                or source[0] != 3 or source[1] <= 0 or source[2] != 0):
+            raise ValueError("source boundary capacity must describe a bare element")
+    # Validate the ordered summaries against local element records. These
+    # records are R0 evidence, independent of any finished molecule target.
+    if [tuple(source) for source in source_bs] != source_element_boundary_capacities(formula):
+        raise ValueError("source boundary capacities differ from declared local sources")
+    attachment_count = declared_valence_attachment_count(formula)
+    if (type(op.get("atom_count")) is not int or op["atom_count"] != len(source_bs)
+            or type(op.get("attachment_count")) is not int or op["attachment_count"] != attachment_count):
+        raise ValueError("operation counts differ from source records and local attachment rules")
+    # Each validated closed source contributes one molecular participant axis.
+    return (3, len(source_bs), attachment_count)
 
 
 def boundary_capacity_transition_for_molecule(
@@ -568,7 +596,7 @@ def boundary_capacity_transition_for_molecule(
 
     Returns a dict with:
       - source_bs: list of B for constituent element gonols (R0 states)
-      - op: minimal declared operation (composition + atom_count + attachment_count)
+      - op: declared formula, composition, atom_count, and local attachment_count
       - actual_b: B(R1) observed on the closed molecule receipt (recorded for comparison only)
       - predicted_b_from_source_and_op: computed by predict_... using *only* source_bs + op
       - reproducible: whether the prediction matches the actual for this transformation
@@ -577,27 +605,32 @@ def boundary_capacity_transition_for_molecule(
     A caller may supply the already constructed molecule so evidence runs do not
     rebuild the same receipt solely to read its observed B(R1).
     """
+    if formula not in MOLECULE_COMPOSITIONS:
+        raise ValueError(f"formula {formula!r} is outside the declared run")
+    if construction is not None and (
+            construction.formula != formula
+            or construction.receipt.source_id != f"epac.molecule:{formula}"
+            or construction.receipt.gonol.source_id != f"epac.molecule:{formula}"):
+        raise ValueError("supplied construction does not belong to the declared formula")
+    if construction is not None:
+        expected_symbols = [symbol for symbol, count in MOLECULE_COMPOSITIONS[formula] for _ in range(count)]
+        actual_symbols = [symbol_of(participant) for participant in construction.receipt.gonol.participants]
+        if construction.receipt.gonol.relation != RELATION or actual_symbols != expected_symbols:
+            raise ValueError("supplied construction participants do not belong to the declared formula")
     source_bs = source_element_boundary_capacities(formula)
-    comp = MOLECULE_COMPOSITIONS.get(formula, ())
-    if construction is None:
-        atom_count = sum(cnt for _, cnt in comp)
-        attach_count = declared_valence_attachment_count(formula)
-    else:
-        atom_count = int(construction.invariants["atom_count"])
-        attach_count = int(construction.invariants["ligand_attachment_site_count"])
+    comp = MOLECULE_COMPOSITIONS[formula]
     op = {
+        "formula": formula,
         "composition": comp,
-        "atom_count": atom_count,
-        "attachment_count": attach_count,
+        "atom_count": sum(count for _, count in comp),
+        "attachment_count": declared_valence_attachment_count(formula),
     }
-
-    # Record the observed for the transition log (this is the "actual" after the step).
+    # Compute the prediction before obtaining the observed target, and never
+    # read a supplied target's invariants to define the operation.
+    predicted_b = predict_boundary_capacity_from_source_and_op(source_bs, op)
     if construction is None:
         construction = construct_molecule(formula)
     actual_b = boundary_capacity_carried_on_molecule(construction)
-
-    # Prediction is strictly from source + declared op. Target is not used here.
-    predicted_b = predict_boundary_capacity_from_source_and_op(source_bs, op)
 
     return {
         "formula": formula,
@@ -646,7 +679,7 @@ def boundary_capacity_from_receipt(receipt: PublicGonolReceipt) -> tuple:
     (attachment count) of the boundary.
 
     Sources exclusively from the already-carried "lifted-spiral" fact on the receipt
-    (or falls back to empty). No new geometry or UCNS operations.
+    Missing or malformed carried evidence raises. No new geometry or UCNS operations.
     Returns (interior_modes, boundary_dim, boundary_coupling_capacity).
     """
     ls = lifted_spiral_from_receipt(receipt)
@@ -1599,6 +1632,24 @@ def boundary_capacity_quotient_test() -> dict[str, Any]:
 # Minimal behavioral refinement audit (exhaustive subset search against sealed full quotient)
 # ---------------------------------------------------------------------
 
+def _partition_disagreement_pairs(full_partition, candidate_partition) -> dict[str, tuple]:
+    """Select the first sorted pair that proves each disagreeing group."""
+    full_owner = {sid: group for group in full_partition for sid in group}
+    candidate_owner = {sid: group for group in candidate_partition for sid in group}
+    if set(full_owner) != set(candidate_owner):
+        raise ValueError("partition witnesses require the same state population")
+    def witnesses(groups, other_owner):
+        result = []
+        for group in sorted(groups, key=lambda values: tuple(sorted(values))):
+            for pair in itertools.combinations(sorted(group), 2):
+                if other_owner[pair[0]] != other_owner[pair[1]]:
+                    result.append(pair)
+                    break
+        return tuple(result)
+    return {"false_merge": witnesses(candidate_partition, full_owner),
+            "false_split": witnesses(full_partition, candidate_owner)}
+
+
 def boundary_capacity_minimal_refinement_audit() -> dict[str, Any]:
     """Exhaustive audit for the smallest set of already-declared identity-free
     boundary observables that, when added to B, reproduces exactly the sealed
@@ -1754,49 +1805,12 @@ def boundary_capacity_minimal_refinement_audit() -> dict[str, Any]:
 
         exact = (ds_partition == full_partition)
 
-        # false merges / splits via symmetric difference of the set-of-sets
-        # (simpler: count pairs that disagree)
-        # But for ledger we record class counts and exact.
-        false_merges = 0
-        false_splits = 0
-        if not exact:
-            # Find at least one witness pair
-            # A pair that is together in ds but apart in full, or vice versa
-            id_to_full = {}
-            for grp in full_partition:
-                for sid in grp:
-                    id_to_full[sid] = grp
-            # ds groups
-            for grp in ds_partition:
-                rep = next(iter(grp))
-                full_grp = id_to_full[rep]
-                if len(grp) > 1:
-                    # check if all in grp are in same full group
-                    if not all(id_to_full[s] == full_grp for s in grp):
-                        # false merge
-                        a, b = sorted(list(grp)[:2])
-                        false_merges += 1
-                        if S not in witness_for_nonexact:
-                            witness_for_nonexact[S] = (a, b)
-                # also look for splits: members of same full group that landed in different ds
-            # simpler second pass for splits
-            full_to_ds_reps: dict[frozenset, set] = defaultdict(set)
-            for st in states:
-                base = st["b"]
-                extra = []
-                beh = st["behavior"]
-                for p in S:
-                    if p in beh:
-                        extra.append((p, beh[p]))
-                sig = (base, tuple(sorted(extra)))
-                full_to_ds_reps[id_to_full[st["state_id"]]].add(sig)
-            for fgrp, dsigs in full_to_ds_reps.items():
-                if len(dsigs) > 1:
-                    false_splits += 1
-                    if S not in witness_for_nonexact:
-                        # pick two states from the full group that have different sig
-                        sids = list(fgrp)
-                        witness_for_nonexact[S] = (sids[0], sids[1])
+        disagreements = _partition_disagreement_pairs(full_partition, ds_partition)
+        false_merges = len(disagreements["false_merge"])
+        false_splits = len(disagreements["false_split"])
+        pairs = disagreements["false_merge"] + disagreements["false_split"]
+        if pairs:
+            witness_for_nonexact[S] = pairs[0]
 
         per_candidate[S_key] = {
             "S": list(S),
@@ -1991,7 +2005,17 @@ def epac_representation_audit() -> dict[str, Any]:
 
     # === Prior stage results (sealed) ===
     # We re-invoke the sealed surfaces for provenance (they are cached / deterministic).
-    cross = compositional_boundary_closure()  # closure stage (molecule-level, plus cross-scale ledger)
+    try:
+        from epac_cross_scale_closure import cross_scale_compositional_closure
+        cross = cross_scale_compositional_closure()
+        cross_statuses = cross.get("statuses", {})
+        required = [cross_statuses.get(key, "UNRESOLVED") for key in (
+            "subatomic_to_element_closure", "element_state_compatibility",
+            "end_to_end_subatomic_to_molecule_closure", "boundary_capacity_compositionality")]
+        cross_status = ("FALSIFIED" if "FALSIFIED" in required else "BLOCKED" if "BLOCKED" in required
+                        else "SURVIVED" if all(value == "SURVIVED" for value in required) else "UNRESOLVED")
+    except Exception:
+        cross_status = "BLOCKED"
     nondeg = None
     try:
         from epac_boundary_nondegeneracy import boundary_descriptor_nondegeneracy_report as _nd
@@ -2053,35 +2077,15 @@ def epac_representation_audit() -> dict[str, Any]:
     full_n = len(full_partition)
     refined_n = len(refined_partition)
 
-    # Witnesses / counterexamples
-    witnesses: list[dict[str, Any]] = []
-    if not exact:
-        # Find a pair that differs
-        id_to_full = {}
-        for grp in full_partition:
-            for sid in grp:
-                id_to_full[sid] = grp
-        for grp in refined_partition:
-            rep = next(iter(grp))
-            fgrp = id_to_full.get(rep)
-            if fgrp is not None and not all(s in fgrp for s in grp):
-                witnesses.append({"type": "false_merge_under_refined", "group_under_refined": sorted(grp), "full_groups": [sorted(fgrp)]})
-                break
-        # Also splits
-        full_to_ref: dict[frozenset, set] = defaultdict(set)
-        for st in states:
-            full_to_ref[id_to_full[st["state_id"]]].add(_refined_key(st))
-        for fgrp, rsigs in full_to_ref.items():
-            if len(rsigs) > 1:
-                witnesses.append({"type": "false_split_under_refined", "full_group": sorted(fgrp)})
-                break
+    # Witnesses are canonical pairs that actually cross the relevant partition.
+    disagreements = _partition_disagreement_pairs(full_partition, refined_partition)
+    witnesses = [{"type": kind + "_under_refined", "witness_pair": pair}
+                 for kind in ("false_merge", "false_split") for pair in disagreements[kind]]
 
     # === Stage ledger (as specified) ===
     stages = {
         "closure": {
-            "status": ("SURVIVED" if cross.get("all_formulas_exhibit_compositional_transition_closure") is True
-                       else "FALSIFIED" if cross.get("all_formulas_exhibit_compositional_transition_closure") is False
-                       else "UNRESOLVED"),
+            "status": cross_status,
             "note": "subatomic→element→molecule compositional closure (local steps only)",
         },
         "non_degeneracy": {
@@ -2200,7 +2204,7 @@ def epac_probe_relativity_formalization() -> dict[str, Any]:
 
     Properties tested (on the immutable 27-state surface only):
       - Monotonicity of |Q|: if O ⊆ O' then |Q_O| ≤ |Q_O'|
-      - Monotonicity of |D_min|: size of minimal S does not increase under enlargement of O
+      - Minimal descriptor sizes are recorded; no monotonicity constraint on |D_min| is tested
       - Canonicality of D_min (UNIQUE vs NON-UNIQUE)
       - Explicit counterexamples / witnesses for violations
       - Relation of each Q_O to the locked 19-class reference partition

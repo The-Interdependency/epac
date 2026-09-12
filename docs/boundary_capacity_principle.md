@@ -260,3 +260,7 @@ This is an internal EPAC construction result. No external claim. The nine
 locked formulas and all direct carried B values remain untouched.
 
 hmmm: a map that never loses anything may be the territory wearing a fake mustache.
+
+## Evidence corrections during package qualification
+
+Transition operations now come from declared formulas and local element/attachment records before the observed target is read. Source summaries must cover every constituent and match the ordered local sources; a supplied target must belong to that formula and contributes only its observed receipt projection. Bare comparison families preserve stoichiometric multiplicity and molecular occurrence order. These corrections do not promote sealed-shape standings. The capstone closure stage reads every required cross-scale status; molecule-only closure cannot stand in for it. Partition witnesses are selected by the actual merge/split predicates in deterministic order. Probe-relativity reports minimal descriptor sizes but does not claim to test their monotonicity.

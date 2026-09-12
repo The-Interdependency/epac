@@ -480,12 +480,13 @@ def _formula_sets(partitions: Mapping[Any, tuple[str, ...]]) -> frozenset[frozen
 
 def _subatomic_lifted_spiral_signature(formula: str) -> tuple[str, ...]:
     sigs: list[str] = []
-    for symbol, _count in MOLECULE_COMPOSITIONS[formula]:
-        receipt = construct_subatomic_gonol(symbol)
-        frames, axes, attachment_count = lifted_spiral_carried_on_subatomic(receipt)
-        sigs.append(
-            f"{symbol}:{'|'.join(frames)};{','.join(axes)};{attachment_count}"
-        )
+    occurrence = 0
+    for symbol, count in MOLECULE_COMPOSITIONS[formula]:
+        for _ in range(count):
+            receipt = construct_subatomic_gonol(symbol, occurrence=occurrence)
+            frames, axes, attachment_count = lifted_spiral_carried_on_subatomic(receipt)
+            sigs.append(f"{symbol}:{'|'.join(frames)};{','.join(axes)};{attachment_count}")
+            occurrence += 1
     return tuple(sorted(sigs))
 
 
@@ -515,7 +516,7 @@ def control_like_partition_failure_disposition() -> dict[str, Any]:
         "classification": classification,
         "compositional_counterexample": False,
         "status": SURVIVED,
-        "subatomic_projection_semantics": "bare subatomic lifted-spiral projection over distinct composition entries; attachment_count is zero",
+        "subatomic_projection_semantics": "bare subatomic lifted-spiral projection over every atom instance with stoichiometric multiplicity; attachment_count is zero",
         "control_semantics": "molecule-scale stoichiometric control over atom_count, center_symbol, and ligand_symbols",
         "reason": "the control exact-match flag is a partition-resemblance fact, not a direct/composed boundary-transition invariant; on the current nine-formula surface a prior false expectation is stale because both partitions are singletons",
         "subatomic_partition_count": len(subatomic_partitions),

@@ -219,18 +219,15 @@ def _periodic_element_lifted_spiral_signature(formula: str) -> tuple:
     periodic element gonol (pure projection of the framed Möbius root-loop
     witnessed at element construction). This is the bare-element view.
     """
-    comp = MOLECULE_COMPOSITIONS.get(formula, ())
-    # For the element view we take the signature from the first symbol's element gonol
-    # as a representative; for multi-element we can use a composite but for now
-    # we mirror the harmonic pattern by unioning the canonical signatures.
-    # Since the spiral for an element is (frames, axes, attach=0), we collect per-symbol.
-    # To keep a stable molecule-level signature we encode the per-constituent element spirals.
+    comp = MOLECULE_COMPOSITIONS[formula]
     sigs = []
-    for sym, _count in comp:
-        receipt = construct_element_gonol(sym)
-        ls = lifted_spiral_carried_on_element(receipt)
-        # ls is (frames, axes, ac); make a stable string for partitioning
-        sigs.append(f"{sym}:{'|'.join(ls[0])};{','.join(ls[1])};{ls[2]}")
+    occurrence = 0
+    for sym, count in comp:
+        for _ in range(count):
+            receipt = construct_element_gonol(sym, occurrence=occurrence)
+            value = lifted_spiral_carried_on_element(receipt)
+            sigs.append(f"{sym}:{'|'.join(value[0])};{','.join(value[1])};{value[2]}")
+            occurrence += 1
     return tuple(sorted(sigs))
 
 
@@ -241,12 +238,15 @@ def _subatomic_lifted_spiral_signature(formula: str) -> tuple:
     subatomic gonol (pure projection of the framed Möbius root-loop
     witnessed at subatomic construction). Bare-element view (attach=0).
     """
-    comp = MOLECULE_COMPOSITIONS.get(formula, ())
+    comp = MOLECULE_COMPOSITIONS[formula]
     sigs = []
-    for sym, _count in comp:
-        receipt = subatomic_gonol.construct_subatomic_gonol(sym)
-        ls = lifted_spiral_carried_on_subatomic(receipt)
-        sigs.append(f"{sym}:{'|'.join(ls[0])};{','.join(ls[1])};{ls[2]}")
+    occurrence = 0
+    for sym, count in comp:
+        for _ in range(count):
+            receipt = subatomic_gonol.construct_subatomic_gonol(sym, occurrence=occurrence)
+            value = lifted_spiral_carried_on_subatomic(receipt)
+            sigs.append(f"{sym}:{'|'.join(value[0])};{','.join(value[1])};{value[2]}")
+            occurrence += 1
     return tuple(sorted(sigs))
 
 
@@ -320,13 +320,15 @@ def _periodic_element_boundary_capacity_signature(formula: str) -> tuple:
     For bare elements attachment capacity is 0; boundary dim comes from element axes.
     Encoded per-constituent for the composite (parallel to periodic_element_lifted_spiral).
     """
-    comp = MOLECULE_COMPOSITIONS.get(formula, ())
+    comp = MOLECULE_COMPOSITIONS[formula]
     sigs = []
-    for sym, _count in comp:
-        receipt = construct_element_gonol(sym)
-        bc = boundary_capacity_from_element_receipt(receipt)
-        # bc = (3, dim, 0)
-        sigs.append(f"{sym}:{bc[0]},{bc[1]},{bc[2]}")
+    occurrence = 0
+    for sym, count in comp:
+        for _ in range(count):
+            receipt = construct_element_gonol(sym, occurrence=occurrence)
+            value = boundary_capacity_from_element_receipt(receipt)
+            sigs.append(f"{sym}:{value[0]},{value[1]},{value[2]}")
+            occurrence += 1
     return tuple(sorted(sigs))
 
 
@@ -335,12 +337,15 @@ def _subatomic_boundary_capacity_signature(formula: str) -> tuple:
 
     Bare subatomic gonols have attachment capacity 0.
     """
-    comp = MOLECULE_COMPOSITIONS.get(formula, ())
+    comp = MOLECULE_COMPOSITIONS[formula]
     sigs = []
-    for sym, _count in comp:
-        receipt = subatomic_gonol.construct_subatomic_gonol(sym)
-        bc = boundary_capacity_from_subatomic_receipt(receipt)
-        sigs.append(f"{sym}:{bc[0]},{bc[1]},{bc[2]}")
+    occurrence = 0
+    for sym, count in comp:
+        for _ in range(count):
+            receipt = subatomic_gonol.construct_subatomic_gonol(sym, occurrence=occurrence)
+            value = boundary_capacity_from_subatomic_receipt(receipt)
+            sigs.append(f"{sym}:{value[0]},{value[1]},{value[2]}")
+            occurrence += 1
     return tuple(sorted(sigs))
 
 
