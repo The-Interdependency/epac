@@ -52,25 +52,25 @@
     },
     {
       "forge_sha256": "5c04ca8a6f1de3a4ee0b18ac687ae5344ece6404649afc3259c9d97338fd7fec",
-      "handoff_sha256": "5c04ca8a6f1de3a4ee0b18ac687ae5344ece6404649afc3259c9d97338fd7fec",
+      "handoff_sha256": "7e6d830b3a231b25e22ae00339884758010f11edcbd9e34edcdf1826a4b14d36",
       "source_path": "research/epac/epac_boundary_minimal_refinement.py",
       "target_path": "epac_boundary_minimal_refinement.py"
     },
     {
       "forge_sha256": "57506fad240c4e8b3a0baf6d0f0748eea8d692ccbad4fdc3943774f4bda82a5f",
-      "handoff_sha256": "3002a93a3a739a51bd8161456ffe108eb71409b62f5960c6df1ab3d3aa57f885",
+      "handoff_sha256": "e67edf2c171b178873f21eeadc743581c83dff7abb0d6e32cd643843627c2306",
       "source_path": "research/epac/epac_boundary_nondegeneracy.py",
       "target_path": "epac_boundary_nondegeneracy.py"
     },
     {
       "forge_sha256": "cb1d9e4e2e1339123eab2775509e9604c6a25482d21c77e158cd4514bd5b743e",
-      "handoff_sha256": "d8ea49ea822e61bcda5c8593d384cadef4ff6c0c2ee56e685fdf3330945bfacc",
+      "handoff_sha256": "ab4e4bfaa7605ae9825b402c1b76d828afea29555c3a830d3e5ef7ecd96b5a4f",
       "source_path": "research/epac/epac_boundary_probe_completeness.py",
       "target_path": "epac_boundary_probe_completeness.py"
     },
     {
       "forge_sha256": "7398f3f9b3dca1776fc72a001701732bc768b9e76a5e8ff9a740cff48b73120b",
-      "handoff_sha256": "7398f3f9b3dca1776fc72a001701732bc768b9e76a5e8ff9a740cff48b73120b",
+      "handoff_sha256": "91a966c68d65938a9e2641a10b8b2935fe1992fdc70f129b9424290b38b3ab98",
       "source_path": "research/epac/epac_boundary_quotient.py",
       "target_path": "epac_boundary_quotient.py"
     },
@@ -82,13 +82,13 @@
     },
     {
       "forge_sha256": "f633a75755884f0b2ba7860b54e3943058891e7711775b9b3a3efefc1ab81d3a",
-      "handoff_sha256": "711fc87788899ad116e3c719dd84eb19dddf588a4017e982a67dd2ff1e1608df",
+      "handoff_sha256": "9cf3a0c76e17076217dd0c90f467d45a2aa0647754a031f6f826dc3f3a9e9e2c",
       "source_path": "research/epac/epac_cross_scale_closure.py",
       "target_path": "epac_cross_scale_closure.py"
     },
     {
       "forge_sha256": "df121c18b37b4c2f1acf58a879b5f4f02974408cc91a5747a74b2e6cf42d726a",
-      "handoff_sha256": "6838a2d777aa5cc4f0b41d874b24ce5858fc4c194a8f2f3920abb0eb3bf2902d",
+      "handoff_sha256": "25f76d53d999819284598e49f30ab6ccc2a3f5cf63ddb33b584274d5af519b8d",
       "source_path": "research/epac/epac_molecular.py",
       "target_path": "epac_molecular.py"
     },
@@ -148,7 +148,7 @@
     },
     {
       "forge_sha256": "43440232af92ecbb175dbae688bc1acc188c976879ef270d1396c6a3ce129ea4",
-      "handoff_sha256": "0b1d60123ea6842f1c02529211114fbbe66704b367cab4d92211159826877dcd",
+      "handoff_sha256": "a7e4e5d44c149fa60bf03ae34cf4eb2a5178ca0f41361d4736e43798ae5e8a19",
       "source_path": "research/epac/subatomic/subatomic-affixiation-baseline.md",
       "target_path": "subatomic/subatomic-affixiation-baseline.md"
     },
@@ -295,7 +295,8 @@
     "Descriptor sufficiency no longer overwrites compositionality; actual cross-scale closure statuses are carried separately. Inventory covers all packaged executable modules (128 operations,31 ambiguous), including atomic records, provenance, visualization and the CLI entry point, with installed-file coverage checked. Real receipt relations come from the closed gonol, bare element counts are rejected by core and visualization, frozen charge mappings are preserved when present, and unknown local transition kinds raise.",
     "Transition predictions are independent of target invariants and reject empty/wrong source summaries, noncanonical operation counts, wrong-formula targets and relabeled mismatching constituents. Bare comparison/control families preserve every stoichiometric instance with global occurrence numbering. The capstone closure stage propagates all required cross-scale statuses. Minimality/capstone witnesses select deterministic pairs that actually cross the partitions. Unsupported D_min monotonicity wording is removed; symmetric and unrecorded attachment slots render without fabricating endpoints.",
     "Explicit public package re-exports are resolved from relative AST bindings without execution; all package initializers participate in coverage. Ledger names use installed epac_viz/epac_subatomic namespaces. Callable addresses count aliases separately without implying distinct implementations. The sufficiency report carries element_state_compatibility separately and tests mismatched source-refinement and compatibility states.",
-    "Alpha-cluster recurrence rejects undeclared participants and checks the recorded nucleon accounting of declared decompositions. Element ledgers expose source refinement independently of shared-field compatibility. Comparison callers receive deep copies, preserving cached evidence against annotation. Both element and subatomic SVG wrappers honor caller titles. All 15 affected tests pass and 203 tests are collected."
+    "Alpha-cluster recurrence rejects undeclared participants and checks the recorded nucleon accounting of declared decompositions. Element ledgers expose source refinement independently of shared-field compatibility. Comparison callers receive deep copies, preserving cached evidence against annotation. Both element and subatomic SVG wrappers honor caller titles. All 15 affected tests pass and 203 tests are collected.",
+    "All public cached construction and audit surfaces return independent evidence: mutable molecular invariants are copied while immutable receipts retain identity; declared molecule collections do not expose cached instances. Element/formula ledgers, cross-scale closure, frozen boundary surfaces, quotient, nondegeneracy, refinement and probe reports use a private-cache/copy boundary. Twenty affected tests pass, including nested mutation and capstone propagation controls. The replay guide binds accepted UCNS 6eea182 and marks older receipts historical. Suite:205 tests."
   ],
   "schema": "epac.forge-continuation-handoff",
   "scope": "Preserve continued EPAC research and adapt imports for independent packaging; no completed authority transfer or domain ratification.",
