@@ -36,12 +36,12 @@ construction, evidence, provenance and visualization modules. The inventory cove
 | item | count |
 |---|---:|
 | declared operations classified | 136 |
-| boundary-relevant operations | 48 |
-| omitted boundary-relevant operations | 4 |
+| boundary-relevant operations | 58 |
+| omitted boundary-relevant operations | 14 |
 | omitted operations that distinguish same-B frozen states | 3 |
-| ambiguous operations | 49 |
+| ambiguous operations | 39 |
 
-Forty-nine public callable addresses, including the representation, probe-relativity, minimal-refinement and probe-completeness audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
+Thirty-nine public callable addresses, including the representation, probe-relativity, minimal-refinement and probe-completeness audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
 
 ## Partition Result
 
@@ -76,7 +76,8 @@ Examples:
 - `quaternion_structure_readout` also refines the quotient from 16 to 21
   classes through existing quaternion component structure.
 
-Ten additional structural operations remain `hmmm` because this audit has no
+Ten additional operations remain known structural observers and known omissions.
+Their quotient effects are `hmmm` because this audit has no
 declared argument mapping and actual result/error normalization for them:
 `degree_relations`, `geometry_from_declared_couplings`,
 `structure_from_charged_couplings`, `oriented_instance_couplings`,
@@ -84,6 +85,11 @@ declared argument mapping and actual result/error normalization for them:
 `quaternions_from_declared_couplings`, `has_declared_coupling`,
 `instances_missing_oriented_hub_coupling`, and
 `require_every_instance_has_oriented_hub_coupling`.
+
+The aggregate `compare_after_construction` operation remains a known boundary
+observer and omission, but also has no declared
+per-state probe mapping. Its effect is unknown, rather than inferred to make no
+partition change merely because the effect table has no entry.
 
 Earlier counts attributed synthetic structure-derived proxies to these operations.
 Those ten effects are withdrawn from measured operation counts. In particular, a
@@ -131,7 +137,7 @@ uv sync --locked --extra test
 The minimal-refinement audit is recorded in
 [`boundary_minimal_refinement.md`](boundary_minimal_refinement.md). It finds
 that the 21-class partition can be reproduced by a singleton existing
-structural observable, but the minimum is not unique: eight singleton
+structural observable, but the minimum is not unique: two singleton
 observables reproduce the same finite partition. Descriptor promotion remains
 UNRESOLVED because EPAC has not selected a canonical semantic representative or
 declared a cross-scale aggregation law for the refined structural observable.

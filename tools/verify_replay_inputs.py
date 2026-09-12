@@ -164,7 +164,7 @@ def verify_inputs(repo, dist, output, *, final=False):
     manifest_path = dist / "release-manifest.json"
     manifest_digest = None
     if manifest_path.exists():
-        manifest = json.loads(manifest_path.read_text())
+        manifest = json.loads(manifest_path.read_text(), object_pairs_hook=contract["reject_duplicate_keys"])
         require(manifest["source_commit"] == commit and manifest["source_tree"] == tree,
                 "release manifest source differs from candidate Git")
         require(manifest["artifacts_sha256"] == hashes, "release manifest artifact hashes differ")
@@ -173,6 +173,17 @@ def verify_inputs(repo, dist, output, *, final=False):
         require(json.dumps(manifest, sort_keys=True) == json.dumps(expected_manifest, sort_keys=True),
                 "release manifest fields differ from source release contract")
         manifest_digest = digest(manifest_path.read_bytes())
+    expected_files = {wheel.name, sdist.name}
+    if manifest_digest is not None:
+        expected_files.update({"release-manifest.json", "SHA256SUMS"})
+    require({path.name for path in dist.iterdir()} == expected_files
+            and all(path.is_file() and not path.is_symlink() for path in dist.iterdir()),
+            "distribution file set differs from candidate contract")
+    if manifest_digest is not None:
+        checksum_hashes = {**hashes, "release-manifest.json": manifest_digest}
+        expected_sums = "".join(f"{value}  {name}\n" for name, value in sorted(checksum_hashes.items())).encode()
+        require((dist / "SHA256SUMS").read_bytes() == expected_sums,
+                "SHA256SUMS differs from actual candidate digests")
     require(git("rev-parse", "HEAD").decode().strip() == commit
             and not git("status", "--porcelain", "--untracked-files=all"), "candidate source changed during input verification")
     require(wheel.read_bytes() == wheel_bytes and sdist.read_bytes() == sdist_bytes, "artifacts changed during input verification")

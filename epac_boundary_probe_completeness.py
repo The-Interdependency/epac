@@ -353,13 +353,13 @@ def _declared_operations() -> tuple[dict[str, str], ...]:
 
 
 def _classify_operation(module: str, name: str) -> str:
-    if name in _UNMAPPED_OPERATION_PROBES:
-        return AMBIGUOUS
     if module in {"epac_atomic", "epac_ucns_provenance", "epac_viz", "epac_viz.spiral_viz", "epac_viz.cli"}:
         return AMBIGUOUS
 
     if name in OmittedButNomenclature.NAMES:
         return PROVENANCE_IDENTITY
+    if name == "compare_after_construction":
+        return BOUNDARY_OBSERVING
     if name in STRUCTURAL_OBSERVER_NAMES:
         return BOUNDARY_OBSERVING
     if name in BOUNDARY_CAPACITY_OPERATION_NAMES:
@@ -381,8 +381,6 @@ def _classify_operation(module: str, name: str) -> str:
         return PROVENANCE_IDENTITY
     if name in {"get_compositional_local_steps", "generate_compositional_paths"}:
         return BOUNDARY_TRANSFORMING
-    if name in {"compare_after_construction"}:
-        return BOUNDARY_OBSERVING
     return AMBIGUOUS
 
 
@@ -399,9 +397,7 @@ class OmittedButNomenclature:
 def _is_currently_probed(module: str, name: str, relevance: str) -> bool | None:
     if relevance not in {BOUNDARY_OBSERVING, BOUNDARY_TRANSFORMING}:
         return None
-    if name in OMITTED_OBSERVABLE_OPERATION_NAMES:
-        return False
-    if name == "compare_after_construction":
+    if name in OMITTED_OBSERVABLE_OPERATION_NAMES or name == "compare_after_construction":
         return False
     return True
 
@@ -509,7 +505,7 @@ OMITTED_OBSERVABLES: Mapping[str, ObservableFn] = {
     "topology_structure_readout": _identity_excluded_topology,
     "quaternion_structure_readout": _identity_excluded_quaternion_structure,
 }
-_UNMAPPED_OPERATION_PROBES = OMITTED_OBSERVABLE_OPERATION_NAMES - OMITTED_OBSERVABLES.keys()
+_UNMAPPED_OPERATION_PROBES = (OMITTED_OBSERVABLE_OPERATION_NAMES - OMITTED_OBSERVABLES.keys()) | {"compare_after_construction"}
 
 
 def _classes_by_signature(signatures: Mapping[str, Any]) -> dict[Any, tuple[str, ...]]:
@@ -642,7 +638,7 @@ def declared_operation_ledger() -> tuple[OperationRecord, ...]:
         currently_probed = _is_currently_probed(raw["module"], raw["name"], relevance)
         effect = effects.get(raw["name"])
         can_distinguish_same_b = (
-            None if relevance == AMBIGUOUS else
+            None if relevance == AMBIGUOUS or raw["name"] in _UNMAPPED_OPERATION_PROBES else
             bool(effect and effect["same_B_distinguished_pair_count"] > 0)
             if currently_probed is False
             else False
@@ -657,6 +653,7 @@ def declared_operation_ledger() -> tuple[OperationRecord, ...]:
                 "can_distinguish_same_B_states": can_distinguish_same_b,
                 "effect_on_quotient": (
                     "unresolved_boundary_relevance" if relevance == AMBIGUOUS else
+                    "unresolved_quotient_effect" if raw["name"] in _UNMAPPED_OPERATION_PROBES else
                     "refines_quotient_partition"
                     if can_distinguish_same_b
                     else (

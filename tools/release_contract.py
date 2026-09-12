@@ -108,3 +108,13 @@ def expected_release_manifest(source, commit, tree, epoch, artifacts):
         "acceptance": "candidate; clean replay and stack acceptance required",
         "empirical_status_transfer": False,
     }
+
+
+def reject_duplicate_keys(pairs):
+    """Decode every JSON object without silently accepting repeated names."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate release-manifest key: " + key)
+        result[key] = value
+    return result

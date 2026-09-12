@@ -2203,7 +2203,7 @@ def epac_probe_relativity_formalization() -> dict[str, Any]:
       - O_B            : B alone (empty addition) — baseline from quotient test
       - O_admissible   : the admissible set used for the sealed 19-class partition
                          (b + ligand_contribution_K + affix_Ks + attachment_profile + transition_deltas)
-      - O_struct       : the 13 omitted distinguishing structural observables identified
+      - O_struct       : the three measured omitted structural observables identified
                          by the sealed probe-completeness audit (plus B)
 
     Properties tested (on the immutable 27-state surface only):
@@ -2268,7 +2268,7 @@ def epac_probe_relativity_formalization() -> dict[str, Any]:
         "b", "ligand_contribution_K", "affix_Ks", "attachment_profile", "transition_deltas"
     ])
 
-    # O_struct: the 13 omitted distinguishing + B (from sealed probe-completeness + minimal refinement)
+    # O_struct: the three measured omitted readouts + B (from sealed probe-completeness + minimal refinement)
     O_struct_names = None
     try:
         from epac_boundary_probe_completeness import OMITTED_OBSERVABLES as _OMITTED
@@ -2365,7 +2365,7 @@ def epac_probe_relativity_formalization() -> dict[str, Any]:
         surface_class_count[sname] = len(Q)
 
     # --- D_min computation: smallest S from the already-declared candidate pool ---
-    # Candidate pool = the 4 used in the sealed minimal refinement audit + the 13 structural names
+    # Candidate pool = the 4 used in the sealed minimal refinement audit + the 3 measured structural names
     # (all already declared; we never invent new names).
     candidate_pool: list[str] = ["ligand_contribution_K", "affix_Ks", "attachment_profile", "transition_deltas"]
     if O_struct_names:

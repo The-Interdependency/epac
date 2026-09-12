@@ -15,12 +15,12 @@ The finite partition result is stronger:
 
 - minimal refinement size: `1`
 - full refined quotient class count: `21`
-- singleton refinements reproducing the full partition: `8`
+- singleton refinements reproducing the full partition: `2`
 - minimum unique: `false`
 
 ## Scope
 
-The audit uses only the 13 existing omitted observables that the
+The audit uses only the three measured omitted observables that the
 probe-completeness audit already found to distinguish same-`B` frozen states.
 It does not add a new operation, probe, coordinate, descriptor component,
 PCEA mapping, UCNS claim, runtime encoding, or external physics assertion.
@@ -39,12 +39,6 @@ Each of these singleton sets reproduces the full 21-class partition:
 |---|---:|---|
 | `charged_structure_readout` | 21 | yes |
 | `quaternion_structure_readout` | 21 | yes |
-| `geometry_from_declared_couplings` | 21 | yes |
-| `structure_from_charged_couplings` | 21 | yes |
-| `degree_relations` | 21 | yes |
-| `oriented_instance_couplings` | 21 | yes |
-| `quaternion_of_local_three` | 21 | yes |
-| `quaternions_from_declared_couplings` | 21 | yes |
 
 The remaining distinguishing observables are not minimal singleton
 refinements for this partition:
@@ -52,18 +46,19 @@ refinements for this partition:
 | singleton | class count |
 |---|---:|
 | `topology_structure_readout` | 17 |
-| `local_three_structures` | 17 |
-| `has_declared_coupling` | 17 |
-| `instances_missing_oriented_hub_coupling` | 17 |
-| `require_every_instance_has_oriented_hub_coupling` | 17 |
+
+Earlier counts of 13 candidates and eight singleton refinements included
+unsupported proxies. They are historical, not current measured effects. Ten
+structural operations and the aggregate comparison have no declared per-state
+argument mapping and remain `hmmm`; they are excluded from this finite search.
+Full declared-surface coverage is not established.
 
 ## Canonicality
 
 Canonicality is **UNRESOLVED**.
 
 Minimality does not select a unique semantic representative. The surviving
-singletons include charge/degree structure, quaternion representations,
-oriented instance-coupling views, and aggregate geometry envelopes. Current
+singletons are the charged-structure and quaternion readouts. Current
 EPAC canon does not state which of those should become the canonical refined
 descriptor component.
 

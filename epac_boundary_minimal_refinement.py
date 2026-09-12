@@ -1,6 +1,6 @@
 """Minimal-refinement search for the EPAC boundary descriptor.
 
-This module asks which smallest subset of the 13 existing omitted boundary
+This module asks which smallest subset of the three measured omitted boundary
 observables from the probe-completeness audit reproduces the full 21-class
 partition. It does not add a descriptor component, operation, probe, coordinate,
 PCEA bridge, UCNS claim, runtime encoding, or external physics assertion.
@@ -50,12 +50,12 @@ from epac_cross_scale_closure import BLOCKED, FALSIFIED, SURVIVED, UNRESOLVED
 # === CONTRACTS ===
 # id: minimal_refinement_uses_only_existing_omitted_distinguishers
 #   given: the minimal-refinement audit is run
-#   then: candidate components are exactly the 13 existing omitted observables that the probe-completeness audit found distinguishing same-B frozen states
+#   then: candidate components are exactly the three measured omitted observables that the probe-completeness audit found distinguishing same-B frozen states
 #   class: safety
 #
 # id: minimal_refinement_searches_by_partition_equality
 #   given: a candidate observable subset is evaluated
-#   then: it is accepted only when B plus that subset reproduces the full 21-class partition induced by all 13 omitted observables, not merely the same class count
+#   then: it is accepted only when B plus that subset reproduces the full 21-class partition induced by the three measured omitted observables, not merely the same class count
 #   class: correctness
 #
 # id: minimal_refinement_reports_all_minimum_sets
@@ -101,45 +101,7 @@ STRUCTURAL_SEMANTICS: Mapping[str, str] = {
         "4-component representations of local 3-structures induced by declared "
         "hub-first binary couplings"
     ),
-    "geometry_from_declared_couplings": (
-        "aggregate declared coupling geometry envelope after identity fields are "
-        "excluded"
-    ),
-    "structure_from_charged_couplings": (
-        "combination of declared oriented couplings, arity charge states, degree, "
-        "and local quaternion representations"
-    ),
-    "degree_relations": (
-        "boundary incidence degree and ordered slot-degree profile for "
-        "participating dimensions"
-    ),
-    "oriented_instance_couplings": (
-        "declared hub-first instance coupling availability with arity and "
-        "charge-state shape"
-    ),
-    "local_three_structures": (
-        "count and occurrence pattern of local 3-structures represented by "
-        "pairs of hub-first binary couplings"
-    ),
-    "quaternion_of_local_three": (
-        "single local-3 quaternion representation semantics applied to every "
-        "declared local 3"
-    ),
-    "quaternions_from_declared_couplings": (
-        "all local-3 quaternion representations derivable from declared "
-        "couplings"
-    ),
-    "has_declared_coupling": (
-        "whether declared coupling structure exists, plus the boundary coupling "
-        "part count used by the existing observer"
-    ),
-    "instances_missing_oriented_hub_coupling": (
-        "oriented hub-coupling availability for declared boundary instances"
-    ),
-    "require_every_instance_has_oriented_hub_coupling": (
-        "fail-closed oriented hub-coupling availability for declared boundary "
-        "instances"
-    ),
+
 }
 
 
@@ -406,7 +368,9 @@ def boundary_minimal_refinement_report() -> dict[str, Any]:
             "candidate_source": "probe-completeness omitted distinguishing operations",
             "candidate_observable_count": len(names),
             "candidate_observables": names,
-            "uses_only_existing_omitted_distinguishers": len(names) == 13,
+            "uses_only_existing_omitted_distinguishers": bool(names) and set(names).issubset(OMITTED_OBSERVABLES),
+            "unmapped_operations_excluded_from_search": tuple(sorted(completeness["unmapped_operation_probes"])),
+            "full_declared_surface_coverage": "hmmm",
             "B_descriptor_modified": False,
         },
         "partitions": {

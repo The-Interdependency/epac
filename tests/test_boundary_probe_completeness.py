@@ -144,8 +144,15 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
     def test_declared_operations_preserve_unresolved_semantics(self) -> None:
         inventory = self.report["operation_inventory"]
         self.assertEqual(inventory["operation_count"], 136)
-        self.assertEqual(inventory["boundary_relevant_count"], 48)
-        self.assertEqual(inventory["ambiguous_count"], 49)
+        self.assertEqual(inventory["boundary_relevant_count"], 58)
+        self.assertEqual(inventory["ambiguous_count"], 39)
+        self.assertEqual(inventory["omitted_boundary_relevant_count"], 14)
+        for row in self.report["operation_ledger"]:
+            if row["name"] in self.report["unmapped_operation_probes"]:
+                self.assertEqual(row["boundary_relevance"], BOUNDARY_OBSERVING)
+                self.assertFalse(row["currently_probed"])
+                self.assertIsNone(row["can_distinguish_same_B_states"])
+                self.assertEqual(row["effect_on_quotient"], "unresolved_quotient_effect")
         ambiguous = [row for row in self.report["operation_ledger"] if row["boundary_relevance"] == AMBIGUOUS]
         for row in ambiguous:
             self.assertIsNone(row["currently_probed"])
@@ -223,13 +230,13 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
         effects = self.report["omitted_operation_effects"]
         self.assertEqual(set(effects), {"charged_structure_readout", "topology_structure_readout", "quaternion_structure_readout"})
         unmapped = self.report["unmapped_operation_probes"]
-        self.assertEqual(len(unmapped), 10)
+        self.assertEqual(len(unmapped), 11)
         for name, disposition in unmapped.items():
             self.assertIn("hmmm", disposition)
             self.assertNotIn(name, effects)
             for row in self.report["operation_ledger"]:
                 if row["name"] == name:
-                    self.assertEqual(row["boundary_relevance"], AMBIGUOUS)
+                    self.assertEqual(row["boundary_relevance"], BOUNDARY_OBSERVING)
                     self.assertIsNone(row["can_distinguish_same_B_states"])
         for effect in effects.values():
             self.assertEqual(len(effect["same_B_collision_group_results"]), 6)

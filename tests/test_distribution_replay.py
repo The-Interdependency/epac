@@ -247,7 +247,8 @@ def test_replay_validates_complete_release_manifest(tmp_path):
     import copy
     cases = (None, "license_sha256", "ucns_source_lock_sha256", "build_toolchain", "acceptance",
              "empirical_status_transfer", "python_runtime", "compressor", "source_date_epoch",
-             "license_expression", "schema", "version", "extra field", "unresolved status", "zero empirical flag", "boolean version")
+             "license_expression", "schema", "version", "extra field", "unresolved status", "zero empirical flag", "boolean version", "duplicate root key", "duplicate nested key",
+             "missing sums", "forged sums", "duplicate sums", "missing checksum entry", "extra checksum entry", "extra asset")
     for case in cases:
         caller, dist, output, trace, environment, command, contents, wheel_payload = _replay_fixture(tmp_path / str(case))
         info = "interdependency_epac-0.1.0.dist-info/"
@@ -287,9 +288,28 @@ def test_replay_validates_complete_release_manifest(tmp_path):
             corrupted["empirical_status_transfer"] = 0
         elif case == "boolean version":
             corrupted["version"] = True
-        elif case and case != "unresolved status":
+        elif case and case not in {"unresolved status", "duplicate root key", "duplicate nested key", "missing sums", "forged sums", "duplicate sums", "missing checksum entry", "extra checksum entry", "extra asset"}:
             corrupted[case] = True if case == "empirical_status_transfer" else "false declaration"
-        (dist / "release-manifest.json").write_text(json.dumps(corrupted))
+        manifest_text = json.dumps(corrupted)
+        if case == "duplicate root key":
+            manifest_text = manifest_text.replace('{', '{"empirical_status_transfer": true, ', 1)
+        elif case == "duplicate nested key":
+            manifest_text = manifest_text.replace('"implementation": "cpython"', '"implementation": "forged", "implementation": "cpython"')
+        (dist / "release-manifest.json").write_text(manifest_text)
+        checksums = "".join(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}\n"
+                            for path in sorted(dist.iterdir()))
+        if case == "forged sums":
+            checksums = "0" * 64 + checksums[64:]
+        elif case == "duplicate sums":
+            checksums += checksums.splitlines(keepends=True)[0]
+        elif case == "missing checksum entry":
+            checksums = "".join(checksums.splitlines(keepends=True)[1:])
+        elif case == "extra checksum entry":
+            checksums += "0" * 64 + "  undeclared.txt\n"
+        if case != "missing sums":
+            (dist / "SHA256SUMS").write_text(checksums)
+        if case == "extra asset":
+            (dist / "undeclared.txt").write_text("unapproved release attachment")
         result = subprocess.run(command, env=environment, capture_output=True, text=True)
         if case is None:
             assert result.returncode == 73 and trace.exists(), result.stderr
@@ -297,5 +317,11 @@ def test_replay_validates_complete_release_manifest(tmp_path):
             assert binding["release_manifest_sha256"] == hashlib.sha256((dist / "release-manifest.json").read_bytes()).hexdigest()
         else:
             expected = "remove the unresolved LICENSE_STATUS.md" if case == "unresolved status" else "release manifest fields differ"
+            if case.startswith("duplicate ") and case.endswith("key"):
+                expected = "duplicate release-manifest key"
+            elif case in {"missing sums", "extra asset"}:
+                expected = "distribution file set differs"
+            elif case in {"forged sums", "duplicate sums", "missing checksum entry", "extra checksum entry"}:
+                expected = "SHA256SUMS differs"
             assert result.returncode not in (0, 73) and expected in result.stderr, (case, result.stderr)
             assert not trace.exists(), case

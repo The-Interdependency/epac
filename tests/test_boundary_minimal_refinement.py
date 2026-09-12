@@ -3,7 +3,7 @@
 # === CHECKS ===
 # id: check_minimal_refinement_uses_only_existing_omitted_distinguishers
 #   proves: minimal_refinement_uses_only_existing_omitted_distinguishers
-#   call: self::test_scope_uses_only_the_13_existing_distinguishing_observables
+#   call: self::test_scope_uses_only_the_measured_distinguishing_observables
 #   mutates: none
 #   cleanup: none
 #
@@ -65,21 +65,9 @@ from epac_boundary_minimal_refinement import (  # noqa: E402
 EXPECTED_MINIMAL_SETS = (
     ("charged_structure_readout",),
     ("quaternion_structure_readout",),
-    ("geometry_from_declared_couplings",),
-    ("structure_from_charged_couplings",),
-    ("degree_relations",),
-    ("oriented_instance_couplings",),
-    ("quaternion_of_local_three",),
-    ("quaternions_from_declared_couplings",),
 )
 
-EXPECTED_NONMINIMAL_SINGLETONS = {
-    "topology_structure_readout": 17,
-    "local_three_structures": 17,
-    "has_declared_coupling": 17,
-    "instances_missing_oriented_hub_coupling": 17,
-    "require_every_instance_has_oriented_hub_coupling": 17,
-}
+EXPECTED_NONMINIMAL_SINGLETONS = {"topology_structure_readout": 17}
 
 
 class BoundaryMinimalRefinementTest(unittest.TestCase):
@@ -89,11 +77,14 @@ class BoundaryMinimalRefinementTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.report = boundary_minimal_refinement_report()
 
-    def test_scope_uses_only_the_13_existing_distinguishing_observables(self) -> None:
+    def test_scope_uses_only_the_measured_distinguishing_observables(self) -> None:
         scope = self.report["scope"]
         self.assertEqual(self.report["surface"]["state_count"], 27)
-        self.assertEqual(scope["candidate_observable_count"], 13)
+        self.assertEqual(scope["candidate_observable_count"], 3)
         self.assertTrue(scope["uses_only_existing_omitted_distinguishers"])
+        self.assertEqual(scope["full_declared_surface_coverage"], "hmmm")
+        self.assertEqual(len(scope["unmapped_operations_excluded_from_search"]), 11)
+        self.assertFalse(set(scope["candidate_observables"]) & set(scope["unmapped_operations_excluded_from_search"]))
         self.assertFalse(scope["B_descriptor_modified"])
         self.assertEqual(
             self.report["partitions"]["baseline_B_class_count"],
@@ -128,7 +119,7 @@ class BoundaryMinimalRefinementTest(unittest.TestCase):
         minimum = self.report["minimal_refinement"]
         self.assertEqual(minimum["minimum_size"], 1)
         self.assertFalse(minimum["minimum_unique"])
-        self.assertEqual(minimum["minimal_set_count"], 8)
+        self.assertEqual(minimum["minimal_set_count"], 2)
         self.assertEqual(minimum["minimal_equivalent_sets"], EXPECTED_MINIMAL_SETS)
 
     def test_minimal_candidates_are_intrinsic_and_not_label_history_codes(self) -> None:

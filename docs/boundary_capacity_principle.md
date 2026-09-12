@@ -188,7 +188,7 @@ for the full presently declared EPAC operational surface.
 
 The boundary minimal-refinement audit is recorded in
 [`boundary_minimal_refinement.md`](boundary_minimal_refinement.md). It searches
-only the 13 omitted observables that already distinguished same-`B` frozen
+only the three measured omitted observables that already distinguished same-`B` frozen
 states in the probe-completeness audit.
 
 Aggregate statuses from `epac_boundary_minimal_refinement.py`:
@@ -203,12 +203,11 @@ Aggregate statuses from `epac_boundary_minimal_refinement.py`:
 - descriptor_sufficiency: UNRESOLVED
 - pcea_mapping: BLOCKED
 
-The minimal subset size is `1`, but it is not unique. Eight singleton
+The minimal subset size is `1`, but it is not unique. Two singleton
 observables independently reproduce the 21-class partition:
-`charged_structure_readout`, `quaternion_structure_readout`,
-`geometry_from_declared_couplings`, `structure_from_charged_couplings`,
-`degree_relations`, `oriented_instance_couplings`,
-`quaternion_of_local_three`, and `quaternions_from_declared_couplings`.
+`charged_structure_readout` and `quaternion_structure_readout`.
+The earlier eight-singleton claim included unmeasured proxies; those effects
+are withdrawn. Full declared-surface coverage remains `hmmm`.
 No singleton is promoted as canonical because EPAC has not declared a semantic
 priority rule or a cross-scale aggregation law for a refined structural
 descriptor component.
