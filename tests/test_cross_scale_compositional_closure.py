@@ -62,6 +62,31 @@ from epac_subatomic.subatomic_gonol import construct_subatomic_gonol
 
 
 class CrossScaleCompositionalClosureTest(unittest.TestCase):
+    def test_source_refinement_is_independent_of_element_field_compatibility(self) -> None:
+        from unittest.mock import patch
+        import epac_cross_scale_closure as closure
+        bare = construct_element_gonol("C")
+        original_carried = closure._carried
+        for mismatched_field in ("Z", "harmonic-surviving"):
+            def carried(receipt):
+                result = dict(original_carried(receipt))
+                if receipt is bare:
+                    result[mismatched_field] = "mismatching evidence"
+                return result
+            with patch.object(closure, "construct_element_gonol", return_value=bare), patch.object(closure, "_carried", side_effect=carried):
+                ledger = element_closure_ledger.__wrapped__("C")
+            self.assertEqual(ledger["source_refinement_status"], SURVIVED)
+            self.assertEqual(ledger["status"], closure.FALSIFIED)
+            with patch.object(closure, "required_element_symbols", return_value=("C",)), patch.object(closure, "element_closure_ledger", return_value=ledger), patch.object(closure, "MOLECULE_COMPOSITIONS", {}), patch.object(closure, "control_like_partition_failure_disposition", return_value={"compositional_counterexample": False}):
+                statuses = cross_scale_compositional_closure.__wrapped__()["statuses"]
+            self.assertEqual(statuses["subatomic_to_element_closure"], SURVIVED)
+            self.assertEqual(statuses["element_state_compatibility"], closure.FALSIFIED)
+            self.assertEqual(statuses["boundary_capacity_compositionality"], closure.FALSIFIED)
+        with patch.object(closure, "_refinement_path_variants", return_value={"first": ("a",), "second": ("b",)}):
+            ledger = element_closure_ledger.__wrapped__("C")
+        self.assertEqual(ledger["source_refinement_status"], closure.FALSIFIED)
+        self.assertTrue(all(ledger["compatibility"]["common_field_matches"].values()))
+
     def test_required_elements_are_exactly_the_locked_formula_inputs(self) -> None:
         self.assertEqual(
             tuple(MOLECULE_COMPOSITIONS),

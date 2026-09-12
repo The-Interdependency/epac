@@ -57,6 +57,13 @@ participant and shell electron children, with no target descriptor input.
 Declared, reversed-shell, reversed-electron, and reversed-both traversal
 variants all derive the same element axes.
 
+The element ledger records `source_refinement_status` separately from its
+combined `status`. A mismatch in a shared carried field or harmonic value fails
+element-state compatibility without changing a successful source refinement.
+The aggregate `subatomic_to_element_closure` follows the source-refinement
+status; the separate compatibility status and combined closure retain that
+mismatch as FALSIFIED.
+
 ## Per-Formula Ledger
 
 | formula | local paths | composed B | locked direct B | status |

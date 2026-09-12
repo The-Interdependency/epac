@@ -342,14 +342,26 @@ def recurrence_test(candidate: HarmonicCandidate) -> dict:
         return abs(facts["BE_per_A_MeV"] - he4["BE_per_A_MeV"]) / he4["BE_per_A_MeV"]
 
     if candidate.candidate_id == "alpha_cluster_recurrence":
-        # Li-7 = alpha + triton; C-12 = 3 x alpha; heavier alpha-conjugates survive.
-        out = {}
-        for p in candidate.participants:
-            if p == "Li-7":
-                out[p] = True
-            else:
-                out[p] = True  # all listed alpha-conjugates satisfy the declared recurrence
-        return out
+        # Only the decompositions declared on the sealed candidate are mapped.
+        # Entries are (alpha count, residual protons, residual neutrons).
+        # This checks their recorded nucleon accounting, not physical clustering.
+        decompositions = {
+            "He-4": (1, 0, 0), "Li-7": (1, 1, 2), "C-12": (3, 0, 0),
+            "O-16": (4, 0, 0), "Ne-20": (5, 0, 0), "Mg-24": (6, 0, 0),
+            "Si-28": (7, 0, 0), "S-32": (8, 0, 0), "Ar-36": (9, 0, 0),
+            "Ca-40": (10, 0, 0),
+        }
+        unsupported = set(candidate.participants) - (decompositions.keys() & NUCLIDE_FACTS.keys())
+        if unsupported:
+            raise ValueError(f"no declared alpha-cluster decomposition for {sorted(unsupported)}")
+        return {
+            p: (he4["Z"] == he4["N"] == 2 and he4["A"] == 4 and he4["J_pi"] == "0+"
+                and NUCLIDE_FACTS[p]["Z"] == count * he4["Z"] + residual_z
+                and NUCLIDE_FACTS[p]["N"] == count * he4["N"] + residual_n
+                and NUCLIDE_FACTS[p]["A"] == count * he4["A"] + residual_z + residual_n)
+            for p in candidate.participants
+            for count, residual_z, residual_n in (decompositions[p],)
+        }
     if candidate.candidate_id == "n_z_ratio_commensurability":
         out = {}
         for p in candidate.participants:

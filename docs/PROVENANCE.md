@@ -53,4 +53,11 @@ qualification and license selection remain pending.
 
 The carried binding-energy commensurability prose overstated its own recorded outcomes. Its current receipt now describes a tested hypothesis and explicitly retains the failures from O-16 through Ca-40; the prior prose-bound receipt is preserved under `subatomic/receipts/history/`. No numerical outcome or empirical standing was promoted. Standing partitions now compare the same frozen preregistered formulas on both sides; later experimental additions do not make the SURVIVED branch unreachable.
 
+Alpha-cluster recurrence accepts only the candidate's explicitly declared
+decompositions and checks their recorded nucleon accounting. Unsupported inputs
+raise an error; this mapping does not establish physical clustering. Source
+refinement and element-field compatibility now retain separate statuses.
+Comparison callers receive independent records so annotations cannot overwrite
+cached evidence. Element and subatomic SVG wrappers preserve custom titles.
+
 The graduation candidate now binds accepted UCNS source `6eea1828a34ed8ec99879f8090ea5d48352d8c2d` at tree `41a5207600b8b5eaeef907199e48d841362cc934`. Its source archive SHA-256 is `1665ae06921a0a425ef1c99ce9d811cf8b52c20e4873edea53c4cdecaf2895d9`; the complete installed Python source map is in `data/ucns-source-lock.json`. Earlier pin-specific receipts remain historical evidence. This dependency update transfers no geometry, proof, or empirical standing.

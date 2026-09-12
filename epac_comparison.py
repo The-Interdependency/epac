@@ -15,6 +15,7 @@ Usage guidance
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from importlib.resources import files
 from collections import defaultdict
 from functools import lru_cache
@@ -647,7 +648,7 @@ def _quantify_distinguishing_power(
 
 
 @lru_cache(maxsize=4)
-def compare_after_construction(root: Path = EPAC_ROOT) -> dict[str, Any]:
+def _compare_after_construction_cached(root: Path = EPAC_ROOT) -> dict[str, Any]:
     """Construct first, then open the sealed shapes, then score standings.
 
     The comparison record is deterministic for a given root, so tests share a
@@ -1046,6 +1047,17 @@ def compare_after_construction(root: Path = EPAC_ROOT) -> dict[str, Any]:
             "exact UCNS geometric operation of each Public Gonol function position",
         ),
     }
+
+
+def compare_after_construction(root: Path = EPAC_ROOT) -> dict[str, Any]:
+    """Return an independent comparison record; caller edits cannot alter the cache."""
+    return deepcopy(_compare_after_construction_cached(root))
+
+
+# Retain the uncached execution and cache controls used by audit callers.
+compare_after_construction.__wrapped__ = _compare_after_construction_cached.__wrapped__
+compare_after_construction.cache_clear = _compare_after_construction_cached.cache_clear
+compare_after_construction.cache_info = _compare_after_construction_cached.cache_info
 
 
 __all__ = [

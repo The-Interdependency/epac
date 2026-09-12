@@ -33,6 +33,20 @@
 # === END CHECKS ===
 
 from epac_subatomic import nuclear_harmonic_candidates as m
+from dataclasses import replace
+from unittest.mock import patch
+import pytest
+
+
+def test_alpha_recurrence_rejects_undeclared_participants():
+    candidate = next(c for c in m.CANDIDATES if c.candidate_id == "alpha_cluster_recurrence")
+    assert all(m.recurrence_test(candidate).values())
+    for participant in ("H-1", "H-2", "unknown"):
+        with pytest.raises(ValueError, match="no declared alpha-cluster decomposition"):
+            m.recurrence_test(replace(candidate, participants=candidate.participants + (participant,)))
+    assert m.recurrence_test(replace(candidate, participants=("Li-7",))) == {"Li-7": True}
+    with patch.dict(m.NUCLIDE_FACTS, {"Li-7": {**m.NUCLIDE_FACTS["Li-7"], "N": 3}}):
+        assert m.recurrence_test(replace(candidate, participants=("Li-7",))) == {"Li-7": False}
 
 
 def test_every_candidate_declares_six_evidence_fields():

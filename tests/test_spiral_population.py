@@ -72,6 +72,18 @@ from epac_viz.spiral_viz import (
 
 
 class SpiralPopulationTest(unittest.TestCase):
+    def test_element_and_subatomic_wrappers_preserve_custom_titles(self) -> None:
+        from epac_viz.spiral_viz import render_element_spiral_svg, render_subatomic_spiral_svg
+        for renderer, receipt, scale in (
+            (render_element_spiral_svg, construct_element_gonol("H"), "element"),
+            (render_subatomic_spiral_svg, subatomic_gonol.construct_subatomic_gonol("H"), "subatomic"),
+        ):
+            for title in (None, "custom <title> & evidence"):
+                options = {} if title is None else {"title": title}
+                root = ET.fromstring(renderer(receipt, width=640, height=400, **options))
+                texts = [node.text for node in root.findall(".//{http://www.w3.org/2000/svg}text")]
+                self.assertIn(title if title is not None else f"Lifted Spiral — {scale} {receipt.source_id}", texts)
+
     def test_subatomic_scene_preserves_carried_frames_and_axes(self) -> None:
         receipt = SimpleNamespace(source_id="subatomic:fixture", relation="epac.subatomic", structure={},
                                   gonol=SimpleNamespace(carried_options=(("lifted-spiral", "left|left|right;axis:b,axis:a;0"),)))

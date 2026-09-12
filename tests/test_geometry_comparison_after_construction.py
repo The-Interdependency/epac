@@ -47,6 +47,17 @@ from epac_comparison import SEALED_PATH as SEALED
 
 
 class GeometryComparisonAfterConstructionTest(unittest.TestCase):
+    def test_comparison_callers_cannot_mutate_cached_evidence(self) -> None:
+        from copy import deepcopy
+        first = compare_after_construction()
+        expected = deepcopy(first)
+        first["standings"].clear()
+        first["quantify_distinguishing_power"]["exact_partition_match"].clear()
+        second = compare_after_construction()
+        self.assertEqual(second, expected)
+        second["standings"]["caller annotation"] = "not evidence"
+        self.assertEqual(compare_after_construction(), expected)
+
     def test_transition_prediction_uses_sources_without_target_invariants(self) -> None:
         from dataclasses import replace
         from unittest.mock import patch

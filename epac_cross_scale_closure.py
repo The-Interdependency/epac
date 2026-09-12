@@ -280,7 +280,7 @@ def element_closure_ledger(symbol: str, occurrence: int = 0) -> dict[str, Any]:
     path_independent = len(unique_variant_axes) == 1
     source_reproducible = bool(derived["source_attachment_count_zero"])
     field_compatible = all(common_field_matches.values()) and harmonic_survival_matches
-    status = (
+    source_refinement_status = (
         SURVIVED
         if (
             boundary_matches
@@ -288,11 +288,11 @@ def element_closure_ledger(symbol: str, occurrence: int = 0) -> dict[str, Any]:
             and frames_match
             and path_independent
             and source_reproducible
-            and field_compatible
             and not derived["descriptor_injected"]
         )
         else FALSIFIED
     )
+    status = SURVIVED if source_refinement_status == SURVIVED and field_compatible else FALSIFIED
 
     return {
         "symbol": symbol,
@@ -336,6 +336,7 @@ def element_closure_ledger(symbol: str, occurrence: int = 0) -> dict[str, Any]:
             "variant_axes": path_variants,
             "path_independent": path_independent,
         },
+        "source_refinement_status": source_refinement_status,
         "status": status,
     }
 
@@ -537,7 +538,7 @@ def cross_scale_compositional_closure() -> dict[str, Any]:
 
     subatomic_to_element_status = (
         SURVIVED
-        if all(ledger["status"] == SURVIVED for ledger in element_ledgers.values())
+        if all(ledger["source_refinement_status"] == SURVIVED for ledger in element_ledgers.values())
         else FALSIFIED
     )
     element_state_compatibility_status = (

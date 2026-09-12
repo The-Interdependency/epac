@@ -608,13 +608,15 @@ def render_molecule_spiral_svg(construction: Any, **kwargs: Any) -> str:
 def render_element_spiral_svg(receipt: Any, **kwargs: Any) -> str:
     """Convenience wrapper for an element PublicGonolReceipt."""
     scene = extract_spiral_scene(receipt)
-    return render_scene_svg(scene, title=f"Lifted Spiral — element {getattr(receipt, 'source_id', '?')}", **kwargs)
+    kwargs.setdefault("title", f"Lifted Spiral — element {getattr(receipt, 'source_id', '?')}")
+    return render_scene_svg(scene, **kwargs)
 
 
 def render_subatomic_spiral_svg(receipt: Any, **kwargs: Any) -> str:
     """Convenience wrapper for a subatomic PublicGonolReceipt (lifted spiral)."""
     scene = extract_spiral_scene(receipt)
-    return render_scene_svg(scene, title=f"Lifted Spiral — subatomic {getattr(receipt, 'source_id', '?')}", **kwargs)
+    kwargs.setdefault("title", f"Lifted Spiral — subatomic {getattr(receipt, 'source_id', '?')}")
+    return render_scene_svg(scene, **kwargs)
 
 
 # ---------------------------------------------------------------------
