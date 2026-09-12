@@ -16,7 +16,7 @@
     },
     {
       "forge_sha256": "d82623ef38378fbff856a9a4a4fd75e7ca50a4ea59959158a867f4a1fbe3326d",
-      "handoff_sha256": "1551375cd897aa880f9ecdbab0b3e0cd40e14fe6bef05157452dea81f649a9c7",
+      "handoff_sha256": "67018e521d85b8d797d9cb2dbecbd4b4036b57dd7fb94517ef690591615450ab",
       "source_path": "research/epac/docs/boundary_capacity_principle.md",
       "target_path": "docs/boundary_capacity_principle.md"
     },
@@ -34,13 +34,13 @@
     },
     {
       "forge_sha256": "bba6e05440b1bc9db9c8a6285a6dd13592df0c941d20de9a31d526bb5bd7db9b",
-      "handoff_sha256": "f4282d73eb59f6a5aba3ce6f672edaa0741b9584264d1f583bbdb8d45afe8adf",
+      "handoff_sha256": "39a03c4ab69e833d8fda0dd1ad2f397d3b4f235788a7cdeacff327bdcfd544eb",
       "source_path": "research/epac/docs/boundary_minimal_refinement.md",
       "target_path": "docs/boundary_minimal_refinement.md"
     },
     {
       "forge_sha256": "bcb1db06672deb0703f0aa0afb0e41db1da3e7476e602322897662e9ce9a8043",
-      "handoff_sha256": "2d341255fd42e1036a1d43a37b88b4f3ea76bc4842d331688a6835a5851a52c6",
+      "handoff_sha256": "a622705ac3352fa7d0e2922ea2c6333b59d4afd658a5820b699c5c8bd2e45f76",
       "source_path": "research/epac/docs/boundary_probe_completeness.md",
       "target_path": "docs/boundary_probe_completeness.md"
     },
@@ -52,7 +52,7 @@
     },
     {
       "forge_sha256": "5c04ca8a6f1de3a4ee0b18ac687ae5344ece6404649afc3259c9d97338fd7fec",
-      "handoff_sha256": "7e6d830b3a231b25e22ae00339884758010f11edcbd9e34edcdf1826a4b14d36",
+      "handoff_sha256": "168943a1d198147d5e91c21069c06d343366979b6dffacf1e2ee664d3b6edce8",
       "source_path": "research/epac/epac_boundary_minimal_refinement.py",
       "target_path": "epac_boundary_minimal_refinement.py"
     },
@@ -64,7 +64,7 @@
     },
     {
       "forge_sha256": "cb1d9e4e2e1339123eab2775509e9604c6a25482d21c77e158cd4514bd5b743e",
-      "handoff_sha256": "0ac0f59d1129ef7fae80186815231df1f0881f547185ae2532b8e331eec179c4",
+      "handoff_sha256": "8dad10b3ac9d3873f134af131488463511b8e66ecefc7fdb82609e92fa328eb9",
       "source_path": "research/epac/epac_boundary_probe_completeness.py",
       "target_path": "epac_boundary_probe_completeness.py"
     },
@@ -88,7 +88,7 @@
     },
     {
       "forge_sha256": "df121c18b37b4c2f1acf58a879b5f4f02974408cc91a5747a74b2e6cf42d726a",
-      "handoff_sha256": "3d2fe07480cdc7cab634644ac6a820958aff6cd1aa3722c83b43ae945d1a2838",
+      "handoff_sha256": "0fce13c83ea65a21ad81acd206927dedbaae336d7d980bd1dbd0858f58537108",
       "source_path": "research/epac/epac_molecular.py",
       "target_path": "epac_molecular.py"
     },
@@ -190,13 +190,13 @@
     },
     {
       "forge_sha256": "9744c2b513ec92375334c5f06e65e2f1b01e0fbf7e720346025d7187d9ca894c",
-      "handoff_sha256": "d7f6f2dc39e82034f26a576f27278581cd9da56202b1fac86e09f43347eb2a56",
+      "handoff_sha256": "476136fe2af33f45b7cef4d7b8c8f86c6d61920bb87ba1820203debb753d886b",
       "source_path": "research/epac/tests/test_boundary_minimal_refinement.py",
       "target_path": "tests/test_boundary_minimal_refinement.py"
     },
     {
       "forge_sha256": "f279644854c703679ae6097bd269d09ec9e1aec73e091b1613f5a6504d17ea59",
-      "handoff_sha256": "9717acee17df1603fb9edcbe6a2d3929fa8ac45ba1992be0cb54f0208f549383",
+      "handoff_sha256": "8a45855a4489893fab46ad60477ab50170d63a84eed7ec88d65ca51f9b9068c5",
       "source_path": "research/epac/tests/test_boundary_probe_completeness.py",
       "target_path": "tests/test_boundary_probe_completeness.py"
     },
@@ -329,7 +329,7 @@
       "status": "passed",
       "version": 1
     },
-    "final_dependency_pin_and_clean_package_matrix": "Four review findings repaired. Replay derives all core metadata from TOML source and validates every release-manifest field, including typed non-transfer flags, license/UCNS digests, source epoch, runtime, compressor, toolchain and candidate disposition. Python 3.10 bootstraps tomli 2.4.1 from a source-owned hashed wheel requirement. Builder and replay execute Git-bound helper bytes directly. Release qualification requires owner-selected LICENSE, explicit SPDX/license-files metadata and removal of unresolved LICENSE_STATUS. Thirteen targeted gate/audit tests pass in 69.91 seconds; four gate tests also pass on Python 3.10.20 in 21.76 seconds. Seventeen mismatched-input scenarios and fifteen invalid complete-manifest/license cases reject; a complete fixture passes. A synthetic license fixture builds identical bytes across umasks 022/077 and passes both source gates and independent checks; it grants no actual EPAC release qualification. The operation inventory retains136 addresses, with49 ambiguous,48 known boundary-relevant,4 known omitted and3 measured distinguishing readouts. Ten unsupported proxies now remain hmmm; the three actual readouts still falsify completeness. Real canonical build/Twine/input checks pass at d7b8f81a635cd28a05722eb31b3c1c18f46ed112 (189 Git,196 archived,64 wheel files). The suite collects209 tests; final exact-head CI/review and owner license choice remain pending.",
+    "final_dependency_pin_and_clean_package_matrix": "The four caadc review findings are repaired. Known structural observers remain boundary-relevant omissions; only their unmapped quotient effects are unknown. The inventory has 136 callable addresses, 39 ambiguous, 58 known boundary-relevant, 14 known omissions and 3 measured distinguishing readouts. Eleven unmeasured effects are excluded from the three-candidate minimal-refinement search, which finds two singleton refinements of the 21-class partition. Dependent tests, capstone prose and result documents now agree. Duplicate manifest keys reject recursively. Release replay requires exactly four assets and byte-exact canonical SHA256SUMS for wheel, sdist and manifest; private replay requires exactly two package assets. Twenty-one targeted tests pass in 77.51 seconds, including 17 mismatched-input scenarios and 23 invalid manifest/license/checksum cases. Four gate tests also pass on Python 3.10.20 in 37.77 seconds. Real private build/Twine/source and independent gates pass at 5e29ccbf6f483fb6029219edbda8ead8b7c8fd36 (189 Git/196 archived/64 wheel files). Synthetic license fixture builds byte-identically across umasks022/077; it grants no actual license or release qualification. The complete 209-test matrix and exact-head review remain pending. Owner license choice is unanswered; stable publication and authority transfer remain incomplete.",
     "post_review_comparison": {
       "elapsed_seconds": 420.43129057303304,
       "report_sha256": "7b4f8d3ebec78210086a346b3198bba191b36a94306796bf5cdd4b694388a0f6",
