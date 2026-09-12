@@ -38,8 +38,9 @@ The extraction preserves the stack research artifacts and their epistemic status
 The package gate executes:
 
 - all repository and subatomic tests against separate clean wheel and source installs;
-- installed-byte, import-origin, and exact UCNS source-map checks;
-- the preregistered molecular comparison, requiring all four current standings to remain `FALSIFIED`;
+- complete installed-distribution byte maps, import origins, exact UCNS source maps,
+  and complete source snapshots before and after each replay;
+- the preregistered molecular comparison, requiring all 14 current standings (including the original four) to remain `FALSIFIED`;
 - deterministic work-graph digest verification.
 
 CI resolves UCNS through the source URL and SHA-256 in `pyproject.toml` and `uv.lock`. Python 3.10, 3.11, and 3.12 are the declared verification matrix. Package tests establish reproducibility; exact candidate stack verification, licensing, stable release, and reconsumption remain separate gates.
@@ -75,7 +76,9 @@ assert replay_public_gonol(receipt).receipt_digest == receipt.receipt_digest
 
 GitHub release assets are the selected distribution surface. Once the owner
 records the license, install `requirements-build.txt` and run
-`python tools/build_release.py /tmp/epac-candidate` from a clean commit. Test
+`python tools/build_release.py /tmp/epac-candidate` from a clean commit using
+uv-managed CPython 3.11.15 and `requirements-build.txt`. The builder enforces
+zlib 1.3.1 at compile time and runtime and records both identities. Test
 those exact hashes in both the clean installation and stack before publishing.
 Download the published assets and verify `SHA256SUMS` before reconsumption.
 `LICENSE_STATUS.md` retains the current license gate; package builds alone do
@@ -91,3 +94,26 @@ Do not treat successful execution as empirical validation. Constructors establis
 - clean package/install dependency contract for UCNS
 - downstream forge reconsumption and authority-transition receipt
 - whether standing-wave language earns a stronger domain claim after explicit external-physics comparison
+
+## Continued forge research
+
+The handoff also preserves the EPAC research present in stack commit
+`0e8384bbb60e4c2189016a212bdd0030d04aed7d`: nine declared molecular
+formulas, subatomic coverage through krypton, boundary-capacity and refinement
+audits, and carried spiral visualization. These remain research constructions
+and scoped internal evidence; packaging does not promote their empirical status.
+
+- [Cross-scale closure](docs/cross_scale_compositional_closure.md)
+- [Boundary capacity](docs/boundary_capacity_principle.md)
+- [Descriptor non-degeneracy](docs/boundary_descriptor_nondegeneracy.md)
+- [Capacity quotient](docs/boundary_capacity_quotient.md)
+- [Probe completeness](docs/boundary_probe_completeness.md)
+- [Minimal refinement](docs/boundary_minimal_refinement.md)
+- [Spiral visualization](viz/README.md)
+
+After installing the package, run a scoped audit through its public module:
+
+```bash
+python -c "from epac_cross_scale_closure import cross_scale_compositional_closure; print(cross_scale_compositional_closure()['statuses'])"
+python -m epac_viz --help
+```

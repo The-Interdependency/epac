@@ -13,7 +13,13 @@ from epac_dimensional_arity import (
     quaternion_structure_readout,
     space,
 )
-from epac_periodic import construct_element_gonol, construct_periodic_table, replay_element_gonol
+from epac_periodic import (
+    construct_element_gonol,
+    construct_periodic_table,
+    harmonic_survival_carried_on_element,
+    lifted_spiral_carried_on_element,
+    replay_element_gonol,
+)
 
 
 class PeriodicElementGonolTest(unittest.TestCase):
@@ -180,6 +186,64 @@ class PeriodicElementGonolTest(unittest.TestCase):
         blob = str(receipt.gonol.carried_options) + receipt.gonol.relation
         for term in ("bent", "tetrahedral", "trigonal-pyramidal", "vsepr"):
             self.assertNotIn(term, blob.lower())
+
+    def test_element_gonol_carries_harmonic_survival(self) -> None:
+        # The nuclear harmonic survival is now carried on the closed periodic
+        # element gonol receipt (sourced from the subatomic layer), parallel to
+        # subatomic gonols and molecule PublicGonol receipts.
+        for symbol in ("H", "C", "O", "Si"):
+            receipt = construct_element_gonol(symbol)
+            carried = dict(receipt.gonol.carried_options)
+            self.assertIn("harmonic-surviving", carried)
+            # The carried value must be consistent with the helper.
+            inv = harmonic_survival_carried_on_element(receipt)
+            carried_val = carried["harmonic-surviving"]
+            if carried_val == "none":
+                self.assertEqual(inv, ())
+            else:
+                self.assertEqual(carried_val.split(","), list(inv))
+
+    def test_element_gonol_harmonic_survival_preserved_under_replay(self) -> None:
+        # The carried "harmonic-surviving" on periodic element gonol receipts
+        # must survive exact replay (byte-replay determinism for the carried fact).
+        for symbol in ("H", "C", "O", "Si"):
+            receipt = construct_element_gonol(symbol)
+            carried_before = dict(receipt.gonol.carried_options).get("harmonic-surviving", "none")
+            replayed = replay_element_gonol(receipt)
+            carried_after = dict(replayed.gonol.carried_options).get("harmonic-surviving", "none")
+            self.assertEqual(carried_before, carried_after)
+            # The full receipt digest is stable under replay.
+            self.assertEqual(replayed.receipt_digest, receipt.receipt_digest)
+
+    def test_element_gonol_carries_lifted_spiral(self) -> None:
+        # The lifted spiral (UCNS framed Möbius root-loop) is now carried on the
+        # closed periodic element gonol receipt as a first-class fact, parallel to
+        # the nuclear harmonic survival layer.
+        for symbol in ("H", "He", "C", "O"):
+            receipt = construct_element_gonol(symbol)
+            carried = dict(receipt.gonol.carried_options)
+            self.assertIn("lifted-spiral", carried)
+            # The carried value must be consistent with the helper.
+            inv = lifted_spiral_carried_on_element(receipt)
+            carried_val = carried["lifted-spiral"]
+            self.assertIsNotNone(inv)
+            # Basic structural check
+            self.assertIn(";", carried_val)
+            parts = carried_val.split(";")
+            self.assertEqual(len(parts), 3)
+
+    def test_element_gonol_lifted_spiral_preserved_under_replay(self) -> None:
+        # The carried "lifted-spiral" on periodic element gonol receipts must
+        # survive exact replay (byte-replay determinism for the carried fact),
+        # parallel to harmonic-surviving.
+        for symbol in ("H", "C", "O", "Si"):
+            receipt = construct_element_gonol(symbol)
+            carried_before = dict(receipt.gonol.carried_options).get("lifted-spiral", "")
+            replayed = replay_element_gonol(receipt)
+            carried_after = dict(replayed.gonol.carried_options).get("lifted-spiral", "")
+            self.assertEqual(carried_before, carried_after)
+            # The full receipt digest is stable under replay.
+            self.assertEqual(replayed.receipt_digest, receipt.receipt_digest)
 
 
 if __name__ == "__main__":

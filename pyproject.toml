@@ -17,13 +17,14 @@ test = ["pytest==9.1.1"]
 build = ["build==1.5.0", "twine==7.0.0", "setuptools==84.0.0", "wheel==0.48.0"]
 
 [tool.setuptools]
-py-modules = ["epac_atomic", "epac_comparison", "epac_dimensional_arity", "epac_molecular", "epac_periodic", "epac_public_gonol", "epac_ucns_provenance"]
-packages = ["epac_data", "epac_subatomic"]
-package-dir = {epac_data = "data", epac_subatomic = "subatomic"}
+py-modules = ["epac_atomic", "epac_comparison", "epac_dimensional_arity", "epac_molecular", "epac_periodic", "epac_public_gonol", "epac_ucns_provenance", "epac_boundary_minimal_refinement", "epac_boundary_nondegeneracy", "epac_boundary_probe_completeness", "epac_boundary_quotient", "epac_cross_scale_closure"]
+packages = ["epac_data", "epac_subatomic", "epac_viz"]
+package-dir = {epac_data = "data", epac_subatomic = "subatomic", epac_viz = "viz"}
 
 [tool.setuptools.package-data]
 epac_data = ["*.json"]
 epac_subatomic = ["receipts/*.json", "receipts/*/*.json"]
+epac_viz = ["*.svg"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

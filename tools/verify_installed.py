@@ -37,27 +37,75 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 
-import pytest
+
+
+EXPECTED_STANDINGS = {
+    "atomic_shells_as_sealed_shape_prediction": "FALSIFIED",
+    "boundary_capacity_as_sealed_shape_prediction": "FALSIFIED",
+    "charged_3_structure_as_sealed_shape_prediction": "FALSIFIED",
+    "harmonic_survival_as_sealed_shape_prediction": "FALSIFIED",
+    "lifted_spiral_as_sealed_shape_prediction": "FALSIFIED",
+    "per_symbol_harmonic_survival_as_sealed_shape_prediction": "FALSIFIED",
+    "periodic_element_boundary_capacity_as_sealed_shape_prediction": "FALSIFIED",
+    "periodic_element_harmonic_survival_as_sealed_shape_prediction": "FALSIFIED",
+    "periodic_element_lifted_spiral_as_sealed_shape_prediction": "FALSIFIED",
+    "subatomic_boundary_capacity_as_sealed_shape_prediction": "FALSIFIED",
+    "subatomic_harmonic_survival_as_sealed_shape_prediction": "FALSIFIED",
+    "subatomic_lifted_spiral_as_sealed_shape_prediction": "FALSIFIED",
+    "topology_3_structure_as_sealed_shape_prediction": "FALSIFIED",
+    "ucns_mobius_as_sealed_shape_prediction": "FALSIFIED"
+}
+
+
+def source_snapshot(root):
+    entries = tuple(root.rglob("*"))
+    assert not root.is_symlink() and not any(path.is_symlink() for path in entries)
+    return {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in entries if path.is_file() and "__pycache__" not in path.relative_to(root).parts}
 
 
 def main() -> None:
+    if sys.argv[1] in {"snapshot", "verify-snapshot"}:
+        root, output = map(Path, sys.argv[2:])
+        current = source_snapshot(root)
+        if sys.argv[1] == "snapshot":
+            output.write_text(json.dumps(current, indent=2, sort_keys=True) + "\n")
+        else:
+            assert current == json.loads(output.read_text()), "archived source changed during replay"
+        return
+    import pytest
     source, wheel, receipt_path = (Path(value).resolve() for value in sys.argv[1:])
     assert not Path.cwd().is_relative_to(source), "run outside the extracted source tree"
     assert not receipt_path.is_relative_to(source), "write receipts outside source"
     sys.path[:] = [path for path in sys.path if not Path(path or ".").resolve().is_relative_to(source)]
     with zipfile.ZipFile(wheel) as archive:
         expected = {name: hashlib.sha256(archive.read(name)).hexdigest() for name in archive.namelist()
-                    if name.startswith("epac_") and not name.endswith("/")}
+                    if not name.endswith("/")}
     assert expected
     distribution = metadata.distribution("interdependency-epac")
 
-    def payload():
-        files = {str(path): Path(distribution.locate_file(path)).resolve() for path in distribution.files or ()
-                 if str(path).startswith("epac_") and "__pycache__" not in path.parts}
-        assert all(path.is_relative_to(Path(sys.prefix)) for path in files.values())
-        return {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in files.items()}
+    record_name, = [name for name in expected if name.endswith(".dist-info/RECORD")]
+    info = record_name.rsplit("/", 1)[0]
+    generated = {info + "/" + name for name in ("RECORD", "INSTALLER", "REQUESTED", "direct_url.json", "uv_cache.json")}
+    immutable = {name: digest for name, digest in expected.items() if name != record_name}
 
-    assert payload() == expected, "installed payload differs from candidate wheel"
+    def payload():
+        files = {str(path): Path(distribution.locate_file(path)) for path in distribution.files or ()
+                 if "__pycache__" not in path.parts}
+        assert all(not path.is_symlink() and path.resolve().is_relative_to(Path(sys.prefix)) and not Path(name).is_absolute() and ".." not in Path(name).parts for name, path in files.items())
+        base = Path(distribution.locate_file(""))
+        for entry in base.iterdir():
+            if entry.name.startswith("epac_") or entry.name == info:
+                entries = tuple(entry.rglob("*")) if entry.is_dir() else (entry,)
+                assert not entry.is_symlink() and not any(path.is_symlink() for path in entries)
+                assert all(path.relative_to(base).as_posix() in files for path in entries if path.is_file() and "__pycache__" not in path.parts)
+        actual = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in files.items()}
+        assert not set(actual) - set(expected) - generated
+        assert all(actual.get(name) == digest for name, digest in immutable.items()), "installed distribution differs from candidate wheel"
+        assert (base / info / "INSTALLER").read_bytes() == b"uv"
+        return actual
+
+    before = payload()
     import epac_public_gonol
     import ucns
     from epac_comparison import compare_after_construction
@@ -67,19 +115,19 @@ def main() -> None:
                                         dependencies=(ucns.public_gonol_function, ucns.native_mobius_state))
     assert identity == epac_public_gonol.PINNED_UCNS_COMMIT
     xml_path = receipt_path.with_suffix(".xml")
-    result = pytest.main([str(source / "tests"), "--junitxml=" + str(xml_path), "-q"])
+    result = pytest.main([str(source / "tests"), "--junitxml=" + str(xml_path), "-q", "-x", "-p", "no:cacheprovider", "-o", "xfail_strict=true"])
     assert result == 0, result
     cases = list(ET.parse(xml_path).getroot().iter("testcase"))
-    assert cases and not any(c.find(tag) is not None for c in cases for tag in ("skipped", "failure", "error"))
-    assert payload() == expected
+    assert len(cases) == 180 and not any(c.find(tag) is not None for c in cases for tag in ("skipped", "failure", "error"))
+    assert payload() == before
     origins = {name: str(Path(module.__file__).resolve()) for name, module in sys.modules.items()
                if name.startswith("epac_") and getattr(module, "__file__", None)}
     assert all(Path(path).is_relative_to(Path(sys.prefix)) for path in origins.values()), origins
     standings = compare_after_construction()["standings"]
-    assert len(standings) == 4 and set(standings.values()) == {"FALSIFIED"}, standings
+    assert standings == EXPECTED_STANDINGS, standings
     receipt = {"schema": "epac.installed-replay", "version": 1, "status": "passed", "python": sys.version,
                "wheel_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(), "ucns_source_commit": identity,
-               "installed_payload_sha256": expected, "imported_origins": origins, "tests": len(cases),
+               "installed_payload_sha256": immutable, "installed_distribution_sha256": before, "imported_origins": origins, "tests": len(cases),
                "skips": 0, "comparison_standings": standings, "empirical_status_transfer": False}
     receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
 

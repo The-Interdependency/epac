@@ -3,24 +3,38 @@
   "equivalence_condition": "N == Z (self-mirror under p <-> n exchange).",
   "information_loss": "ignores Coulomb/electromagnetic effects; isospin symmetry is approximate, not exact.",
   "ordered_parameter": {
-    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12",
+    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12, O-16, Ne-20, Mg-24, Si-28, S-32, Ar-36, Ca-40 (alpha-conjugate extension for Z=1..36 coverage)",
     "kind": "nucleon-content-sequence",
     "time_agnostic": true
   },
   "participants": [
     "He-4",
-    "C-12"
+    "C-12",
+    "O-16",
+    "Ne-20",
+    "Mg-24",
+    "Si-28",
+    "S-32",
+    "Ar-36",
+    "Ca-40"
   ],
   "physical_provenance": [
     "isospin symmetry; standard nuclear physics (Wigner)",
     "hmmm: exact citation not web-pinned this session"
   ],
-  "receipt": "9ac380f43069bf69d2eaaa238070dfa8caa40f5029fdb34136310b5877aa52f9",
+  "receipt": "ecc40be53648959215945dd35a402927e944ea4d9336a23844bdb96c4c0fd3de",
   "recurrence": {
+    "Ar-36": true,
     "C-12": true,
-    "Li-7": false
+    "Ca-40": true,
+    "He-4": true,
+    "Mg-24": true,
+    "Ne-20": true,
+    "O-16": true,
+    "S-32": true,
+    "Si-28": true
   },
-  "recurrence_mapping": "Proton <-> neutron inversion (isospin mirror symmetry): N=Z nuclei He-4 and C-12 map to themselves under p <-> n exchange. H-1 inverts to the free neutron, which is unbound \u2014 a declared asymmetry, not a phase.",
+  "recurrence_mapping": "Proton <-> neutron inversion (isospin mirror symmetry): N=Z nuclei He-4, C-12, O-16, Ne-20, Mg-24, Si-28, S-32, Ar-36, Ca-40 map to themselves under p <-> n exchange. H-1 inverts to the free neutron (unbound) \u2014 a declared asymmetry, not a phase.",
   "relation_kind": "inversion",
   "status": "CROSS-DOMAIN-HYPOTHESIS"
 }

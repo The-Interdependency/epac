@@ -1,11 +1,11 @@
 {
   "schema": "the-interdependency.stack-manifest",
   "version": "1.0.0",
-  "work_graph_sha256": "9f7c5cbe0840d1748fd6b23e7ef7fc91b898f8c2cde60b77432c262126a57a61",
+  "work_graph_sha256": "a058dd8290daf5986f4d40ea49bf10c5173bab3bee90ef2f1c7ddade3d5237ab",
   "repositories": [
     {
       "repository": "The-Interdependency/stack",
-      "commit": "ef51f2e8f32ccfd5394525dad72475a61a505bc1",
+      "commit": "0e8384bbb60e4c2189016a212bdd0030d04aed7d",
       "authority": "forge/provenance authority for the extracted candidate state",
       "relation": "extraction source"
     },

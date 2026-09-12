@@ -3,7 +3,7 @@
   "equivalence_condition": "J^pi == \"0+\" for the even-even symmetry class.",
   "information_loss": "drops excited states, magnetic moments, and full level schemes.",
   "ordered_parameter": {
-    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12",
+    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12, O-16, Ne-20, Mg-24, Si-28, S-32, Ar-36, Ca-40 (alpha-conjugate extension for Z=1..36 coverage)",
     "kind": "nucleon-content-sequence",
     "time_agnostic": true
   },
@@ -12,17 +12,34 @@
     "H-2",
     "He-4",
     "Li-7",
-    "C-12"
+    "C-12",
+    "O-16",
+    "Ne-20",
+    "Mg-24",
+    "Si-28",
+    "S-32",
+    "Ar-36",
+    "Ca-40"
   ],
   "physical_provenance": [
     "compiled nuclear data; web-pinned 2026-08-22"
   ],
-  "receipt": "b0d5eded85102d8c57a33a8360e47aaa98e67e625f5cdee04469d796561dd77a",
+  "receipt": "25ed793cb1584a38c0d2185451e389068b0622990054729efb7b3e178bf31680",
   "recurrence": {
+    "Ar-36": true,
     "C-12": true,
-    "Li-7": false
+    "Ca-40": true,
+    "H-1": false,
+    "H-2": false,
+    "He-4": true,
+    "Li-7": false,
+    "Mg-24": true,
+    "Ne-20": true,
+    "O-16": true,
+    "S-32": true,
+    "Si-28": true
   },
-  "recurrence_mapping": "Ground-state spin-parity J^pi: H-1 1/2+, H-2 1+, He-4 0+, Li-7 3/2-, C-12 0+. The value 0+ recurs for even-even, paired, closed-shell nuclei He-4 and C-12; odd-mass nuclei take half-integer spins.",
+  "recurrence_mapping": "Ground-state spin-parity J^pi: H-1 1/2+, H-2 1+, He-4 0+, Li-7 3/2-, C-12 0+, O-16 0+, Ne-20 0+, Mg-24 0+, Si-28 0+, S-32 0+, Ar-36 0+, Ca-40 0+. The value 0+ recurs for even-even, paired, closed-shell N=Z nuclei (He-4 through Ca-40); odd-mass nuclei take half-integer spins.",
   "relation_kind": "symmetry",
   "status": "CROSS-DOMAIN-HYPOTHESIS"
 }

@@ -43,6 +43,15 @@ import tarfile
 import tempfile
 import time
 import zipfile
+import zlib
+
+
+def check_compressor() -> dict[str, str]:
+    expected = "1.3.1"
+    actual = {"implementation": "zlib", "compile_version": zlib.ZLIB_VERSION, "runtime_version": zlib.ZLIB_RUNTIME_VERSION}
+    if actual["compile_version"] != expected or actual["runtime_version"] != expected:
+        raise RuntimeError(f"release builds require zlib {expected} at compile time and runtime: {actual}")
+    return actual
 
 
 def normalize_sdist(path: Path, destination: Path, epoch: int) -> None:
@@ -86,6 +95,7 @@ def main() -> None:
         return subprocess.check_output(("git", "-C", str(root), *arguments), text=True).strip()
     if git("status", "--porcelain"):
         raise ValueError("release source must be clean")
+    compressor = check_compressor()
     commit = git("rev-parse", "HEAD")
     def source_bytes(path):
         return subprocess.check_output(("git", "-C", str(root), "show", f"{commit}:{path}"))
@@ -107,7 +117,9 @@ def main() -> None:
             for member in contents:
                 if not (member.isfile() or member.isdir()) or member.name.startswith("/") or ".." in Path(member.name).parts:
                     raise ValueError("unsupported source archive member")
-            contents.extractall(source)
+            if not hasattr(tarfile, "data_filter"):
+                raise SystemExit("release builds require tarfile.data_filter support")
+            contents.extractall(source, filter="data")
         environment = dict(os.environ, SOURCE_DATE_EPOCH=epoch, PYTHONHASHSEED="0")
         environment.pop("PYTHONPATH", None)
         subprocess.run((sys.executable, "-m", "build", "--no-isolation", "--outdir", str(out), str(source)), check=True, env=environment)
@@ -125,7 +137,7 @@ def main() -> None:
         raise ValueError("expected one wheel and one sdist")
     manifest = {"schema": "epac.release-candidate", "version": 1, "source_commit": commit,
                 "source_tree": git("rev-parse", f"{commit}^{{tree}}"), "build_toolchain": versions,
-                "python": sys.version, "source_date_epoch": epoch,
+                "python": sys.version, "source_date_epoch": epoch, "compressor": compressor,
                 "license_sha256": hashlib.sha256(license_bytes).hexdigest(),
                 "ucns_source_lock_sha256": hashlib.sha256(source_bytes("data/ucns-source-lock.json")).hexdigest(),
                 "artifacts_sha256": artifacts, "acceptance": "candidate; clean replay and stack acceptance required",

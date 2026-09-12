@@ -1,8 +1,8 @@
-"""Extended atomic quantum layer Z=1..26 for subatomic gonols.
+"""Extended atomic quantum layer Z=1..36 for subatomic gonols (broader coverage).
 
 Delegates Z<=18 to ``epac_atomic`` (byte-identical electron records, so
-existing H/He/Li/C receipts do not move). Adds Z=19..26 from declared
-ground-state configurations with a standard Aufbau extension through 4s/3d and
+existing H/He/Li/C receipts do not move). Adds Z=19..36 from declared
+ground-state configurations with a standard Aufbau extension through 4s/3d/4p and
 a Slater-screening extension for d electrons.
 
 Candidate rules declared here (consistent with the sibling ``epac_atomic``):
@@ -26,7 +26,7 @@ Usage guidance:
 # id: epac_subatomic_extended_atomic
 #   module_name: extended_atomic
 #   module_kind: schema
-#   summary: atomic quantum-layer records Z=1..26 for subatomic gonols; Z<=18 delegates to epac_atomic, Z=19..26 from declared ground-state configurations with Aufbau/Slater extension
+#   summary: atomic quantum-layer records Z=1..36 for subatomic gonols; Z<=18 delegates to epac_atomic, Z=19..36 from declared ground-state configurations with Aufbau/Slater extension (through Kr)
 #   owner: The Interdependency
 #   public_surface: EXTENDED_SYMBOLS, SYMBOL_TO_Z, atomic_record, iter_table
 #   internal_surface: _config_occupancy, _fill_from_config, _slater_zeff_extended
@@ -40,7 +40,7 @@ Usage guidance:
 #   rollback: remove module; subatomic_gonol returns to Z<=18 epac_atomic delegation
 #   requires: epac_atomic
 #   since: 2026-08-22
-#   unresolved: configurations beyond Z=26; full f-block Aufbau; Slater rules are candidate extensions, not exact physics
+#   unresolved: configurations beyond Z=36; full f-block Aufbau; Slater rules are candidate extensions, not exact physics
 # === END MODULE_BUILD ===
 
 # === CONTRACTS ===
@@ -50,8 +50,8 @@ Usage guidance:
 #   class: correctness
 #
 # id: extended_atomic_uses_declared_configurations
-#   given: atomic_record(Z) for 19 <= Z <= 26
-#   then: electron occupancy matches the declared ground-state configuration, including the Cr 4s1.3d5 exception
+#   given: atomic_record(Z) for 19 <= Z <= 36
+#   then: electron occupancy matches the declared ground-state configuration, including the Cr 4s1.3d5 and Cu 4s1.3d10 exceptions
 #   class: correctness
 #
 # id: extended_atomic_stays_candidate
@@ -72,20 +72,27 @@ EXTENDED_SYMBOLS: tuple[str, ...] = (
     "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
     "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
     "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe",
+    "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr",
 )
 SYMBOL_TO_Z: dict[str, int] = {symbol: index + 1 for index, symbol in enumerate(EXTENDED_SYMBOLS)}
 
-ISOTOPE_DEFAULTS_19_26: dict[int, int] = {
+ISOTOPE_DEFAULTS_19_36: dict[int, int] = {
     19: 39, 20: 40, 21: 45, 22: 48, 23: 51, 24: 52, 25: 55, 26: 56,
+    27: 59, 28: 58, 29: 63, 30: 64, 31: 69, 32: 74, 33: 75, 34: 80,
+    35: 79, 36: 84,
 }
 
-PERIOD_GROUP_19_26: dict[int, tuple[int, int]] = {
+PERIOD_GROUP_19_36: dict[int, tuple[int, int]] = {
     19: (4, 1), 20: (4, 2), 21: (4, 3), 22: (4, 4),
     23: (4, 5), 24: (4, 6), 25: (4, 7), 26: (4, 8),
+    27: (4, 9), 28: (4, 10), 29: (4, 11), 30: (4, 12),
+    31: (4, 13), 32: (4, 14), 33: (4, 15), 34: (4, 16),
+    35: (4, 17), 36: (4, 18),
 }
 
-# Declared ground-state configurations (standard Aufbau with the Cr exception).
-CONFIGURATIONS_19_26: dict[int, str] = {
+# Declared ground-state configurations (standard Aufbau with known exceptions).
+# Z=19..36 (K through Kr). Cu exception (4s1 3d10) is explicit.
+CONFIGURATIONS_19_36: dict[int, str] = {
     19: "1s2.2s2.2p6.3s2.3p6.4s1",
     20: "1s2.2s2.2p6.3s2.3p6.4s2",
     21: "1s2.2s2.2p6.3s2.3p6.4s2.3d1",
@@ -94,6 +101,16 @@ CONFIGURATIONS_19_26: dict[int, str] = {
     24: "1s2.2s2.2p6.3s2.3p6.4s1.3d5",
     25: "1s2.2s2.2p6.3s2.3p6.4s2.3d5",
     26: "1s2.2s2.2p6.3s2.3p6.4s2.3d6",
+    27: "1s2.2s2.2p6.3s2.3p6.4s2.3d7",
+    28: "1s2.2s2.2p6.3s2.3p6.4s2.3d8",
+    29: "1s2.2s2.2p6.3s2.3p6.4s1.3d10",
+    30: "1s2.2s2.2p6.3s2.3p6.4s2.3d10",
+    31: "1s2.2s2.2p6.3s2.3p6.4s2.3d10.4p1",
+    32: "1s2.2s2.2p6.3s2.3p6.4s2.3d10.4p2",
+    33: "1s2.2s2.2p6.3s2.3p6.4s2.3d10.4p3",
+    34: "1s2.2s2.2p6.3s2.3p6.4s2.3d10.4p4",
+    35: "1s2.2s2.2p6.3s2.3p6.4s2.3d10.4p5",
+    36: "1s2.2s2.2p6.3s2.3p6.4s2.3d10.4p6",
 }
 
 _SUBSHELL_NAME = "spdf"
@@ -197,13 +214,13 @@ def _configuration_string(electrons: tuple[ElectronState, ...]) -> str:
 
 
 def atomic_record(Z: int) -> AtomicRecord:
-    if not 1 <= Z <= 26:
-        raise ValueError("extended atomic table is Z=1..26")
+    if not 1 <= Z <= 36:
+        raise ValueError("extended atomic table is Z=1..36")
     if Z <= 18:
         return base_atomic_record(Z)
-    electrons = _fill_from_config(Z, CONFIGURATIONS_19_26[Z])
-    period, group = PERIOD_GROUP_19_26[Z]
-    A = ISOTOPE_DEFAULTS_19_26[Z]
+    electrons = _fill_from_config(Z, CONFIGURATIONS_19_36[Z])
+    period, group = PERIOD_GROUP_19_36[Z]
+    A = ISOTOPE_DEFAULTS_19_36[Z]
     unpaired = tuple(e for e in electrons if e.valence and not e.paired and e.m_s == 1)
     return AtomicRecord(
         Z=Z,
@@ -223,13 +240,13 @@ def atomic_record(Z: int) -> AtomicRecord:
 
 
 def iter_table():
-    for Z in range(1, 27):
+    for Z in range(1, 37):
         yield atomic_record(Z)
 
 
 __all__ = [
     "EXTENDED_SYMBOLS",
-    "ISOTOPE_DEFAULTS_19_26",
+    "ISOTOPE_DEFAULTS_19_36",
     "SYMBOL_TO_Z",
     "atomic_record",
     "iter_table",

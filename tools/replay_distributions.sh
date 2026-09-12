@@ -36,9 +36,10 @@ case "$output/" in "$repo/"*) echo 'OUTPUT must be outside source' >&2; exit 2;;
 test ! -e "$output"
 mkdir -p "$output"
 uv export --project "$repo" --locked --extra test --extra build --no-emit-project --no-dev --format requirements.txt --output-file "$output/dependencies.txt" >/dev/null
-sha256sum "$dist"/*.whl "$dist"/*.tar.gz > "$output/archives.sha256"
+(cd "$dist"; sha256sum ./*.whl ./*.tar.gz) > "$output/archives.sha256"
 mkdir "$output/source"
-python3 - "$dist" "$output/source" <<'PY'
+uv venv --python "$runtime" "$output/verification-venv"
+"$output/verification-venv/bin/python" - "$dist" "$output/source" <<'PY'
 from pathlib import Path, PurePosixPath
 import sys, tarfile
 dist, output = map(Path, sys.argv[1:])
@@ -52,10 +53,12 @@ with tarfile.open(archives[0]) as archive:
         assert member.isfile() or member.isdir()
         roots.add(parts[0])
     assert len(roots) == 1
-    archive.extractall(output)
+    archive.extractall(output, filter="data")
 PY
 source_root=$(find "$output/source" -mindepth 1 -maxdepth 1 -type d)
+"$output/verification-venv/bin/python" "$repo/tools/verify_installed.py" snapshot "$source_root" "$output/source-snapshot.json"
 for kind in wheel sdist; do
+  "$output/verification-venv/bin/python" "$repo/tools/verify_installed.py" verify-snapshot "$source_root" "$output/source-snapshot.json"
   environment="$output/$kind-venv"
   uv venv --python "$runtime" "$environment"
   uv pip sync --python "$environment/bin/python" --require-hashes "$output/dependencies.txt"
@@ -66,5 +69,6 @@ for kind in wheel sdist; do
     env -u PYTHONPATH -u PYTHONHOME -u PYTEST_ADDOPTS -u PYTEST_PLUGINS PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
       "$environment/bin/python" "$repo/tools/verify_installed.py" "$source_root" "$dist"/*.whl "$output/$kind-receipt.json"
   )
+  "$output/verification-venv/bin/python" "$repo/tools/verify_installed.py" verify-snapshot "$source_root" "$output/source-snapshot.json"
 done
-sha256sum -c "$output/archives.sha256"
+(cd "$dist"; sha256sum -c "$output/archives.sha256")

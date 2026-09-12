@@ -3,7 +3,7 @@
   "equivalence_condition": "|BE/A(x) - BE/A(He-4)| / BE/A(He-4) <= 0.10 (declared tolerance).",
   "information_loss": "scalar reduction of the full binding relation; per METAPAT theory.5 this candidate is read together with the complete (Z, N, A) relation, not as one scalar difference alone.",
   "ordered_parameter": {
-    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12",
+    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12, O-16, Ne-20, Mg-24, Si-28, S-32, Ar-36, Ca-40 (alpha-conjugate extension for Z=1..36 coverage)",
     "kind": "nucleon-content-sequence",
     "time_agnostic": true
   },
@@ -11,17 +11,33 @@
     "H-2",
     "He-4",
     "Li-7",
-    "C-12"
+    "C-12",
+    "O-16",
+    "Ne-20",
+    "Mg-24",
+    "Si-28",
+    "S-32",
+    "Ar-36",
+    "Ca-40"
   ],
   "physical_provenance": [
     "compiled nuclear data; web-pinned 2026-08-22"
   ],
-  "receipt": "6a888f65e541363abb220351b9f539b0d0124e4812fe770cfc4eda0b1c3c54e9",
+  "receipt": "ba93ccda9da20f9184d5db87c0d83c3b610bd48699a6c4886c790e89651f3e33",
   "recurrence": {
+    "Ar-36": false,
     "C-12": true,
-    "Li-7": false
+    "Ca-40": false,
+    "H-2": false,
+    "He-4": true,
+    "Li-7": false,
+    "Mg-24": false,
+    "Ne-20": false,
+    "O-16": false,
+    "S-32": false,
+    "Si-28": false
   },
-  "recurrence_mapping": "Binding energy per nucleon (MeV): H-2 1.11, He-4 7.07, Li-7 5.6, C-12 7.68. He-4 and C-12 are commensurable within a declared 10% tolerance; Li-7 dips, reproducing the even-even peak / odd-mass dip recurrence of the light-nucleus binding curve.",
+  "recurrence_mapping": "Binding energy per nucleon (MeV): H-2 1.11, He-4 7.07, Li-7 5.6, C-12 7.68, O-16 7.98, Ne-20 8.03, Mg-24 8.26, Si-28 8.45, S-32 8.49, Ar-36 8.52, Ca-40 8.55. Even-even N=Z nuclei cluster near the peak; He-4 and heavier alpha-conjugates are commensurable within the declared 10% tolerance; Li-7 dips.",
   "relation_kind": "commensurability",
   "status": "CROSS-DOMAIN-HYPOTHESIS"
 }

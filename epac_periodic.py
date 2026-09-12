@@ -36,6 +36,11 @@ from epac_public_gonol import (
     replay_public_gonol,
 )
 
+# Subatomic gonol supplies the carried "harmonic-surviving" for the element symbol.
+# We attach the identical value on the periodic (native element) gonol so the
+# nuclear harmonic layer is a first-class carried fact on the primary element
+# construction path, parallel to subatomic_gonol.
+from epac_subatomic import subatomic_gonol as _subatomic_gonol
 # Elementary charge in units of e. Nuclear Z is the proton-count sum.
 PROTON_CHARGE = 1
 NEUTRON_CHARGE = 0
@@ -253,6 +258,25 @@ def construct_element_gonol(symbol: str, *, occurrence: int = 0) -> PublicGonolR
     nucleus = _construct_nucleus(record, atom_occurrence=occurrence)
     unpaired = record.unpaired_valence
     promoted = record.promoted_unpaired_valence
+
+    # Nuclear harmonic survival carried from the subatomic layer (first-class
+    # fact on the primary periodic element gonol, parallel to subatomic_gonol
+    # and to the molecule PublicGonol carry).
+    sub_rec = _subatomic_gonol.construct_subatomic_gonol(record.symbol)
+    harmonic_survival = dict(sub_rec.gonol.carried_options).get("harmonic-surviving", "none")
+
+    # Lifted spiral (UCNS framed Möbius root-loop) carried as a first-class fact
+    # on the native periodic element gonol (parallel to harmonic-surviving).
+    # Pure projection of the framed root-loop evidence witnessed by the gonol.
+    # For bare elements: standard double-cover frames, axes = element participants,
+    # attachment count 0 (attachments are declared at molecule valence sites).
+    element_axes = [_nucleus_dimension_id(record.symbol, occurrence)]
+    for e in record.electrons:
+        element_axes.append(_electron_dimension_id(record.symbol, occurrence, e.index))
+    ls_axes = tuple(sorted(element_axes))
+    ls_frames = ("positive-local-frame", "reversed-local-frame", "positive-local-frame")
+    lifted_spiral_value = "|".join(ls_frames) + ";" + ",".join(ls_axes) + ";0"
+
     carried = (
         ("symbol", record.symbol),
         ("Z", str(record.Z)),
@@ -267,10 +291,19 @@ def construct_element_gonol(symbol: str, *, occurrence: int = 0) -> PublicGonolR
         ("promoted-unpaired-count", str(len(promoted))),
         ("promoted-unpaired-lm", ",".join(f"{e.l}:{e.m_l}" for e in promoted) or "none"),
         ("valence-angular-ids", ",".join(e.angular_id for e in record.electrons if e.valence)),
+        ("harmonic-surviving", harmonic_survival or "none"),
+        ("lifted-spiral", lifted_spiral_value),
     )
     geometry = geometry_from_declared_couplings(
         _declared_atomic_space(record, atom_occurrence=occurrence)
     )
+    # After minimal-refinement audit showed singleton value, carry one of the
+    # distinguishing boundary-structure observables (charged_structure_readout)
+    # as a first-class fact on the element gonol (parallel to harmonic/lifted).
+    # This is the "maximal" surface: the minimal signal made durable and addressable.
+    from epac_dimensional_arity import charged_structure_readout as _csr
+    bstruct = _csr(geometry["structure"])
+    carried = carried + (("boundary-charged-structure", repr(bstruct)),)
     return construct_public_gonol(
         source_id=f"epac.periodic:{symbol}#{occurrence}",
         relation="epac.atomic.element",
@@ -281,6 +314,54 @@ def construct_element_gonol(symbol: str, *, occurrence: int = 0) -> PublicGonolR
         couplings=geometry["couplings"],
         structure=geometry["structure"],
     )
+
+
+def harmonic_survival_carried_on_element(receipt: PublicGonolReceipt) -> tuple[str, ...]:
+    """Return the nuclear harmonic survival carried on a periodic element gonol receipt.
+
+    Sources exclusively from the "harmonic-surviving" carried_option (the
+    single source of truth attached at construction from the subatomic layer).
+    """
+    carried = dict(receipt.gonol.carried_options)
+    hs = carried.get("harmonic-surviving", "none")
+    if hs and hs != "none":
+        return tuple(hs.split(","))
+    return ()
+
+
+def lifted_spiral_carried_on_element(receipt: PublicGonolReceipt) -> tuple:
+    """Return the lifted spiral (UCNS framed Möbius) canonical signature carried on an element gonol receipt.
+
+    Sources exclusively from the "lifted-spiral" carried_option (pure projection
+    of the framed root-loop evidence witnessed at construction).
+    Returns (frames_tuple, sorted_axes_tuple, attachment_count) or ((), (), 0).
+    Parallel to harmonic_survival_carried_on_element.
+    """
+    carried = dict(receipt.gonol.carried_options)
+    val = carried.get("lifted-spiral", "")
+    if not val:
+        return ((), (), 0)
+    try:
+        frames_part, axes_part, ac_part = val.split(";", 2)
+        frames = tuple(frames_part.split("|")) if frames_part else ()
+        axes = tuple(sorted(a for a in axes_part.split(",") if a)) if axes_part else ()
+        ac = int(ac_part) if ac_part else 0
+        return (frames, axes, ac)
+    except Exception:
+        return ((), (), 0)
+
+
+def boundary_capacity_from_element_receipt(receipt: PublicGonolReceipt) -> tuple:
+    """Pure projection of boundary capacity for a bare periodic element gonol.
+
+    Interior modes fixed at 3 (canonical double cover). Boundary dim = len(axes)
+    from the carried lifted-spiral. Boundary coupling capacity = 0 (bare element).
+    """
+    ls = lifted_spiral_carried_on_element(receipt)
+    if ls and len(ls) == 3:
+        _frames, axes, _ac = ls
+        return (3, len(axes) if axes else 0, 0)
+    return (3, 0, 0)
 
 
 def construct_periodic_table() -> dict[str, PublicGonolReceipt]:
@@ -312,3 +393,16 @@ def carried(gonol: ClosedPublicGonol, key: str) -> str:
         if item_key == key:
             return value
     raise KeyError(key)
+
+
+__all__ = [
+    "construct_element_gonol",
+    "construct_periodic_table",
+    "replay_element_gonol",
+    "atomic_of",
+    "symbol_of",
+    "carried",
+    "harmonic_survival_carried_on_element",
+    "lifted_spiral_carried_on_element",
+    "boundary_capacity_from_element_receipt",
+]

@@ -3,25 +3,40 @@
   "equivalence_condition": "constituent decomposition contains one or more He-4 closed-shell clusters, each 2p2n with J^pi=0+; equivalence is cluster decomposition, not full state equality.",
   "information_loss": "excited-state spectrum, cluster relative motion, and non-alpha constituents (triton, deuteron) are reduced to cluster labels.",
   "ordered_parameter": {
-    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12",
+    "declaration": "ordered by increasing (A, Z): H-1, H-2, He-4, Li-7, C-12, O-16, Ne-20, Mg-24, Si-28, S-32, Ar-36, Ca-40 (alpha-conjugate extension for Z=1..36 coverage)",
     "kind": "nucleon-content-sequence",
     "time_agnostic": true
   },
   "participants": [
     "He-4",
     "Li-7",
-    "C-12"
+    "C-12",
+    "O-16",
+    "Ne-20",
+    "Mg-24",
+    "Si-28",
+    "S-32",
+    "Ar-36",
+    "Ca-40"
   ],
   "physical_provenance": [
-    "standard nuclear cluster models; Hoyle (1954) prediction of the C-12 7.65 MeV 0+ state",
-    "hmmm: exact literature citation not web-pinned this session"
+    "standard nuclear cluster models; Hoyle (1954) prediction of the C-12 7.65 MeV 0+ state; alpha-conjugate systematics",
+    "hmmm: exact literature citations not web-pinned this session"
   ],
-  "receipt": "212fd1bfd57f921d76706bcb28b2e3bde272857f102ede870767237b8fd7e5ad",
+  "receipt": "97d22578d93558e89e5b947c61aec199fd80146f75edf134ce7dcd5ae87d8887",
   "recurrence": {
+    "Ar-36": true,
     "C-12": true,
-    "Li-7": true
+    "Ca-40": true,
+    "He-4": true,
+    "Li-7": true,
+    "Mg-24": true,
+    "Ne-20": true,
+    "O-16": true,
+    "S-32": true,
+    "Si-28": true
   },
-  "recurrence_mapping": "The closed-shell He-4 cluster (2p2n, J^pi=0+, doubly magic) recurs as a constituent: Li-7 ~ alpha + triton; C-12 ~ 3 x alpha (3-alpha cluster model; Hoyle 0+ state near 7.65 MeV excitation).",
+  "recurrence_mapping": "The closed-shell He-4 cluster (2p2n, J^pi=0+, doubly magic) recurs as a constituent: Li-7 ~ alpha + triton; C-12 ~ 3 x alpha; O-16 ~ 4 x alpha; Ne-20 ~ 5 x alpha; Mg-24 ~ 6 x alpha; Si-28 ~ 7 x alpha; S-32 ~ 8 x alpha; Ar-36 ~ 9 x alpha; Ca-40 ~ 10 x alpha (alpha-conjugate nuclei; 3-alpha / 4-alpha cluster models through Ca-40).",
   "relation_kind": "recurrence",
   "status": "CROSS-DOMAIN-HYPOTHESIS"
 }

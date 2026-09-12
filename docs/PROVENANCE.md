@@ -33,3 +33,20 @@ The current repo-local operational skill files match canonical
 doctrine identity above records the earlier origin. Package qualification also
 uses the cross-repository closure's explicit `skill-lib@8de4f12d0f31ff94f41e4a0196c447c0cbe20faf`
 work-graph, test, and ratio discipline without replacing the local snapshot.
+
+## Continued forge handoff — 2026-09-12
+
+The package preparation additionally carries the EPAC research from
+`The-Interdependency/stack@0e8384bbb60e4c2189016a212bdd0030d04aed7d`,
+relative to the previously compared forge state
+`030022948fb7c749961ae65743a4448c4bb6cbbe`.
+[The handoff inventory](forge-handoff-20260912.json) records the 45 originating
+files and their initial package adaptations. Earlier extraction identities and
+pin-specific receipts remain historical evidence.
+
+The new boundary/closure audits, nine-molecule construction, krypton-range
+subatomic coverage, and spiral visualization remain research with their original
+scoped standing. Existing immutable input checks and installed resource loading
+are retained. This source handoff does not complete graduation or transfer
+scientific, theorem, proof, measurement, or empirical validity. Final clean-package
+qualification and license selection remain pending.

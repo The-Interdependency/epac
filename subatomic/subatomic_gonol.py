@@ -49,7 +49,7 @@ from epac_subatomic import nuclear_harmonic_candidates as harmonics
 # id: epac_subatomic_gonol
 #   module_name: subatomic_gonol
 #   module_kind: experiment
-#   summary: closes one subatomic element gonol per symbol from subatomic nucleus identity, nuclear harmonic relations, and quantum-layer electron shells via the EPAC Public Gonol constructor
+#   summary: closes one subatomic element gonol per symbol (Z=1..36) from subatomic nucleus identity, nuclear harmonic relations, and quantum-layer electron shells via the EPAC Public Gonol constructor
 #   owner: The Interdependency
 #   public_surface: SUPPORTED_SYMBOLS, construct_subatomic_gonol, replay_subatomic_gonol, subatomic_receipt_record
 #   internal_surface: _carrier_glyph, _nucleus_participant, _shell_participants, _electron_options, _harmonic_rows
@@ -217,6 +217,22 @@ def construct_subatomic_gonol(symbol: str, *, occurrence: int = 0) -> PublicGono
         for candidate in _harmonic_rows(symbol)
         if _harmonic_survives_symbol(candidate, symbol)
     )
+
+    # Lifted spiral (UCNS framed Möbius root-loop) carried as a first-class fact
+    # on the subatomic gonol (parallel to harmonic-surviving). Pure projection
+    # from the mobius-t* frames already present on the nucleus participant.
+    # For bare subatomic element gonols: attachment count = 0.
+    nucleus_carried = dict(nucleus.carried_options)
+    ls_frames = (
+        nucleus_carried.get("mobius-t0-frame", ""),
+        nucleus_carried.get("mobius-t1-frame", ""),
+        nucleus_carried.get("mobius-t2-frame", ""),
+    )
+    ls_frames = tuple(f for f in ls_frames if f)
+    ls_axes_list = [nucleus.source_id] + [p.source_id for p in shells]
+    ls_axes = tuple(sorted(ls_axes_list))
+    lifted_spiral_value = "|".join(ls_frames) + ";" + ",".join(ls_axes) + ";0"
+
     carried = [
         ("symbol", symbol),
         ("Z", str(record.Z)),
@@ -226,6 +242,7 @@ def construct_subatomic_gonol(symbol: str, *, occurrence: int = 0) -> PublicGono
         ("electron-configuration", record.configuration),
         ("valence-electrons", str(record.valence_electrons)),
         ("harmonic-surviving", harmonic_surviving or "none"),
+        ("lifted-spiral", lifted_spiral_value),
         ("status", "CROSS-DOMAIN-HYPOTHESIS"),
     ]
     return construct_public_gonol(
@@ -241,6 +258,42 @@ def construct_subatomic_gonol(symbol: str, *, occurrence: int = 0) -> PublicGono
 def replay_subatomic_gonol(receipt: PublicGonolReceipt) -> str:
     """Replay a completed subatomic gonol receipt; returns its digest."""
     return replay_public_gonol(receipt).receipt_digest
+
+
+def lifted_spiral_carried_on_subatomic(receipt: PublicGonolReceipt) -> tuple:
+    """Return the lifted spiral (UCNS framed Möbius) canonical signature carried on a subatomic gonol receipt.
+
+    Sources exclusively from the "lifted-spiral" carried_option (pure projection
+    of the framed root-loop evidence witnessed at construction).
+    Returns (frames_tuple, sorted_axes_tuple, attachment_count) or ((), (), 0).
+    Parallel to harmonic-surviving and to lifted_spiral_carried_on_element.
+    """
+    carried = dict(receipt.gonol.carried_options)
+    val = carried.get("lifted-spiral", "")
+    if not val:
+        return ((), (), 0)
+    try:
+        frames_part, axes_part, ac_part = val.split(";", 2)
+        frames = tuple(frames_part.split("|")) if frames_part else ()
+        axes = tuple(sorted(a for a in axes_part.split(",") if a)) if axes_part else ()
+        ac = int(ac_part) if ac_part else 0
+        return (frames, axes, ac)
+    except Exception:
+        return ((), (), 0)
+
+
+def boundary_capacity_from_subatomic_receipt(receipt: PublicGonolReceipt) -> tuple:
+    """Pure projection of boundary capacity for a subatomic gonol.
+
+    Interior modes fixed at 3 (canonical double cover). Boundary dim from carried
+    lifted-spiral axes. Boundary coupling capacity = 0 (bare subatomic gonol).
+    Parallel to the element and molecule views.
+    """
+    ls = lifted_spiral_carried_on_subatomic(receipt)
+    if ls and len(ls) == 3:
+        _frames, axes, _ac = ls
+        return (3, len(axes) if axes else 0, 0)
+    return (3, 0, 0)
 
 
 def subatomic_receipt_record(receipt: PublicGonolReceipt) -> dict:
@@ -270,4 +323,6 @@ __all__ = [
     "construct_subatomic_gonol",
     "replay_subatomic_gonol",
     "subatomic_receipt_record",
+    "lifted_spiral_carried_on_subatomic",
+    "boundary_capacity_from_subatomic_receipt",
 ]

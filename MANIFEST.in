@@ -6,3 +6,4 @@ recursive-include docs *.md *.json
 recursive-include data *.json
 recursive-include subatomic *.md *.json
 recursive-include .agents/skills *.md *.json *.py *.ts
+recursive-include viz *.py *.md *.svg

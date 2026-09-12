@@ -1,4 +1,4 @@
-"""Executable witnesses for the extended atomic quantum layer Z=1..26."""
+"""Executable witnesses for the extended atomic quantum layer Z=1..36 (broader subatomic coverage through Kr)."""
 
 # === CHECKS ===
 # id: check_extended_atomic_preserves_z_le_18
@@ -44,9 +44,26 @@ def test_extended_atomic_uses_declared_configurations():
     assert potassium.configuration == "1s2.2s2.2p6.3s2.3p6.4s1"
     assert potassium.symbol == "K"
 
+    # Broader coverage Z=27..36
+    krypton = m.atomic_record(36)
+    assert krypton.symbol == "Kr"
+    assert krypton.Z == 36
+    assert krypton.A == 84
+    assert krypton.configuration.endswith("4p6")
+    assert sum(1 for e in krypton.electrons) == 36
+
+    copper = m.atomic_record(29)
+    assert copper.configuration == "1s2.2s2.2p6.3s2.3p6.4s1.3d10"
+
+    zinc = m.atomic_record(30)
+    assert zinc.configuration == "1s2.2s2.2p6.3s2.3p6.4s2.3d10"
+
+    # Table shape
     assert m.SYMBOL_TO_Z["Fe"] == 26
+    assert m.SYMBOL_TO_Z["Kr"] == 36
     assert m.EXTENDED_SYMBOLS[25] == "Fe"
-    assert len(m.EXTENDED_SYMBOLS) == 26
+    assert m.EXTENDED_SYMBOLS[35] == "Kr"
+    assert len(m.EXTENDED_SYMBOLS) == 36
 
 
 def test_extended_atomic_stays_candidate():

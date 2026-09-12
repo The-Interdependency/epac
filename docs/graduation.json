@@ -12,7 +12,8 @@
   "forge": {
     "repository": "The-Interdependency/stack",
     "source_commit": "ef51f2e8f32ccfd5394525dad72475a61a505bc1",
-    "source_path": "research/epac"
+    "source_path": "research/epac",
+    "handoff_source_commit": "0e8384bbb60e4c2189016a212bdd0030d04aed7d"
   },
   "future_authority": {
     "repository": "The-Interdependency/epac"
@@ -60,6 +61,14 @@
   "hmmm": [
     "repository license not selected by owner",
     "final exact candidate build/install matrix remains pending",
-    "stack has not reconsumed a released immutable EPAC artifact"
-  ]
+    "stack has not reconsumed a released immutable EPAC artifact",
+    "continued forge handoff requires new independent package validation"
+  ],
+  "source_test_evidence": {
+    "tests": 180,
+    "subtests": 23,
+    "skips": 0,
+    "handoff": "docs/forge-handoff-20260912.json",
+    "final_pinned_artifact_matrix": "hmmm"
+  }
 }
