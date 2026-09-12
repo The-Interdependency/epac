@@ -10,9 +10,9 @@
   },
   "source": {
     "branch": "graduate/package-release-20260912",
-    "commit": "6ed4b82dba355af323f7b2636a83c06dbfbf487a",
+    "commit": "6b392486695f4e8411d68f0238b1bc241df9db78",
     "generated_at": "2026-09-12",
-    "note": "Describes the implementation commit preceding the final report-only refresh. Private packaging evidence does not qualify an unlicensed candidate or transfer implementation or empirical authority."
+    "note": "Describes the preceding implementation commit. Source tests and preliminary installed payload smoke pass; final UCNS pin, license, immutable candidate matrix, pre-publication stack acceptance, publication, and authority transfer remain separate gates."
   },
   "authority": {
     "owns": [
@@ -41,7 +41,7 @@
   },
   "status": {
     "state": "extracted candidate; package preparation implemented; graduation incomplete",
-    "current_claim": "EPAC packages its public modules, subatomic package, and data resources with installed UCNS provenance verification. Private wheel and source-install replay exercised supported Python versions while retaining all four FALSIFIED standings. An owner-selected license, final immutable candidate, pre-publication stack verification, public reconsumption, and scoped authority receipt remain required."
+    "current_claim": "The independent package preserves the 45-file continued forge handoff at stack 0e8384bbb60e4c2189016a212bdd0030d04aed7d. All 180 source tests and 23 subtests pass; all 14 comparison standings remain FALSIFIED. A preliminary wheel imports all 14 checked public/support modules and preserves 51 payload files including visualization resources. The final accepted UCNS pin, owner-selected license, immutable artifact matrix, exact candidate stack verification, publication, and scoped authority transition remain open."
   },
   "delivered": [
     {
