@@ -1,0 +1,24 @@
+{
+  "authority_transfer": false,
+  "empirical_status_transfer": false,
+  "license_expression": "MPL-2.0",
+  "license_sha256": "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04",
+  "license_source": "https://www.mozilla.org/media/MPL/2.0/index.txt",
+  "organization_convention": {
+    "path": "STACK_MANIFEST.md",
+    "repository": "The-Interdependency/stack",
+    "rows": [
+      "skill-lib",
+      "metapat",
+      "edcm"
+    ],
+    "skill_lib_description": "MPL-2.0; weak/file-level copyleft",
+    "source_commit": "0e8384bbb60e4c2189016a212bdd0030d04aed7d"
+  },
+  "owner_instruction": "epac is weak copyleft",
+  "resolution": "MPL-2.0 applies the owner-requested weak-copyleft family using the existing skill-lib, metapat and edcm convention; the exact interpretation was disclosed before execution.",
+  "schema": "epac.license-selection",
+  "scope": "EPAC-owned source; upstream rights and scientific standing do not transfer",
+  "upstream_license_transfer": false,
+  "version": 1
+}

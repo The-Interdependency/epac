@@ -1,4 +1,4 @@
-include AGENTS.md LICENSE LICENSE_STATUS.md uv.lock
+include AGENTS.md LICENSE uv.lock
 include .gitignore
 recursive-include .github *
 recursive-include tools *.py *.sh
