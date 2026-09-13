@@ -60,7 +60,6 @@
     }
   ],
   "hmmm": [
-    "All 14 comparison standings remain FALSIFIED.",
     "Geometry ratification, canonicality/compositionality, PCEA application, and unmeasured operation effects remain unresolved.",
     "No PostgreSQL fresh-making acceptance is asserted."
   ],
@@ -93,13 +92,13 @@
   "repository": "The-Interdependency/epac",
   "schema": "the-interdependency.repository-plan-report",
   "source": {
-    "branch": "v0.1.0",
-    "commit": "949cb1cb304927942966c9fb396caf6227120e7f",
-    "generated_at": "2026-09-12",
-    "note": "Release source identity; the subsequent documentation records the completed lifecycle event without rewriting immutable qualification-time bytes."
+    "branch": "graduate/record-authority-transition-20260912",
+    "commit": "4f4d386840c795936ceb3ae49ea9370223668af0",
+    "generated_at": "2026-09-13",
+    "note": "Completed lifecycle documentation source; immutable release source 949cb1cb304927942966c9fb396caf6227120e7f is separately pinned in docs/graduation.json."
   },
   "status": {
-    "current_claim": "EPAC v0.1.0 is published immutably under MPL-2.0 from source 949cb1cb304927942966c9fb396caf6227120e7f. The same reproducible wheel/sdist passed six clean 209-test installs on Python 3.10\u20133.12 and pre-publication Stack verification. Public Stack reconsumption and clean retired-source verification passed; all 37 forge Python files were retired, with 28 historical files retained. The scoped authority-transition receipt at Stack c81d807142d3f0fe3968a6879888afa00352eaff records independent EPAC implementation/public-contract ownership. All 14 comparison standings remain FALSIFIED; no scientific, upstream-license, or freshness authority transfers.",
+    "current_claim": "EPAC v0.1.0 is published immutably under MPL-2.0 from source 949cb1cb304927942966c9fb396caf6227120e7f. The same reproducible wheel/sdist passed six clean 209-test installs on Python 3.10\u20133.12 and pre-publication Stack verification. Public Stack reconsumption and clean retired-source verification passed; all 37 forge Python files were retired, with 28 historical files retained. The scoped authority-transition receipt at Stack 1c6ec9fb85d2ead58b13d806a5c4a9bc3803c936 records independent EPAC implementation/public-contract ownership. All 14 comparison standings remain FALSIFIED; no scientific, upstream-license, or freshness authority transfers.",
     "state": "graduated; immutable v0.1.0 released and reconsumed"
   },
   "version": "1.0.0"

@@ -44,7 +44,7 @@ Usage guidance (after installing EPAC and its pinned dependencies):
 #   rollback: remove module, tests, and generated receipts
 #   requires: ucns_public_gonol_geometry, ucns_native_mobius_geometry
 #   since: 2026-08-22
-#   unresolved: Public Gonol position operations; harmonic notation; isotope defaults are instance-resolved; release/reconsumption graduation remains incomplete
+#   unresolved: Public Gonol position operations; harmonic notation; isotope defaults are instance-resolved
 # === END MODULE_BUILD ===
 
 # === CONTRACTS ===

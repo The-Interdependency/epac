@@ -5,14 +5,17 @@
   "candidate": "EPAC",
   "evidence": {
     "integration/epac/evidence/candidate-matrix.json": "b7c17232e5286227b0b027fa0e1337d9b04e12243cffa5a80467e166077581ca",
+    "integration/epac/evidence/graduation-release-lock.json": "ba28b7e2f72c639c4b5604d673141cef7bcda1712a881972c579e9d02da64953",
     "integration/epac/evidence/public-release.json": "3913e3852676efbb6571c5455f3b82dee1e6edb6852693ef4ac5c808973c8173",
     "integration/epac/evidence/reproducibility.json": "17159a5c4bf85f9ccddfe11fc31086176b6694f858295cc2588338763fa9c066",
     "integration/epac/evidence/retirement-inventory.json": "a6503035fe1749bfb07e8432c3b5b7df63c825eda424c43d9cdad896791a6aef",
     "integration/epac/evidence/stack-candidate.json": "fb891326a7b81b0cda0ef8cc103a0f4b5c8c710b9f33a2079e5e2425b5456498",
     "integration/epac/evidence/stack-graduated.json": "3a5f622384694531e29a0861e40728d5bf5de08230ffea6543d375525abd8c54",
-    "integration/epac/evidence/stack-reconsumed.json": "d6c510c76e54c5974a2834b25e7ba9a90dbf6d4cb7112eb4d7e9f2089cd727eb"
+    "integration/epac/evidence/stack-reconsumed.json": "d6c510c76e54c5974a2834b25e7ba9a90dbf6d4cb7112eb4d7e9f2089cd727eb",
+    "integration/epac/evidence/transition-after-manifest.json": "f0c74f43e2768cde2e45a68cc4e3d63e03b886171a145bc564d8255d92fadb6b",
+    "integration/epac/evidence/transition-before-manifest.json": "c14d5cb7732e216a99fb5907540fd05a00b8c057b251c4934284724f7f7d8258"
   },
-  "evidence_interpretation": "Receipts bind their own exact source commits and verifier hashes. The final receipt adds authority/provenance records after the clean retirement commit and the launcher additionally enables the built-in data extraction filter; CI reconsumes the same public bytes again at the final PR head. Earlier reproducibility metadata records the build checkpoint before matrix/consumer acceptance; the later matrix and consumption receipts supply those completed gates.",
+  "evidence_interpretation": "The before/after manifest snapshots and archived graduation release lock preserve the original v0.1.0 event at their exact Git source identities. Current Stack participant graphs and release pins may advance independently; historical qualification and consumer evidence is checked against the graduation-time lock and upstream. Current release acceptance additionally requires the public consumer at the exact current source. Receipts bind their own source commits and verifier hashes; no freshness or scientific status is inferred.",
   "forge_role_after": "consumer of the hash-pinned immutable public release; historical documents retain their actual Stack BASE",
   "from": {
     "authority": "incubated implementation and public contract",
@@ -33,12 +36,16 @@
     "release_ownership_authority": "pass",
     "stable_release": "pass"
   },
+  "graduation_release_lock": "integration/epac/evidence/graduation-release-lock.json",
   "hmmm": [
-    "All 14 comparison standings remain FALSIFIED.",
     "Geometry ratification, canonicality/compositionality, PCEA application, and unmeasured operation effects remain unresolved.",
     "No PostgreSQL fresh-making acceptance is asserted."
   ],
   "lifecycle_state": "graduated",
+  "preserved_evidence": {
+    "comparison_standings": "All 14 comparison standings remain FALSIFIED; the original five-formula comparison population and full nine-molecule raw evidence are preserved."
+  },
+  "recorded_transition_source_commit": "c81d807142d3f0fe3968a6879888afa00352eaff",
   "release_lock_sha256": "ba28b7e2f72c639c4b5604d673141cef7bcda1712a881972c579e9d02da64953",
   "retirement_source_commit": "89ed78e68c11c394d29e4a49e8b23c5dee5303b1",
   "retirement_source_tree": "1b02799144691f4e08f29efb04f45b7f7c7039e4",
@@ -61,6 +68,22 @@
     "release_tag": "v0.1.0",
     "repository": "The-Interdependency/epac",
     "source_commit": "949cb1cb304927942966c9fb396caf6227120e7f"
+  },
+  "transition_manifests": {
+    "after": {
+      "path": "integration/epac/evidence/transition-after-manifest.json",
+      "source_blob_sha": "f71ea935a23ebd7b8216c75accbaccb3f1496bda",
+      "source_commit": "c81d807142d3f0fe3968a6879888afa00352eaff",
+      "source_path": "stack-manifest.json",
+      "source_repository": "The-Interdependency/stack"
+    },
+    "before": {
+      "path": "integration/epac/evidence/transition-before-manifest.json",
+      "source_blob_sha": "e205464ecb4a78e536c35ce1b42426f3d935321c",
+      "source_commit": "0e8384bbb60e4c2189016a212bdd0030d04aed7d",
+      "source_path": "stack-manifest.json",
+      "source_repository": "The-Interdependency/stack"
+    }
   },
   "upstream": {
     "authority_transfer": false,

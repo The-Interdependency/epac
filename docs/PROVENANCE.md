@@ -100,11 +100,11 @@ reproduced candidate before publication.
 
 ## Completed v0.1.0 authority transition
 
-EPAC v0.1.0 is published immutably under MPL-2.0 from source 949cb1cb304927942966c9fb396caf6227120e7f. The same reproducible wheel/sdist passed six clean 209-test installs on Python 3.10–3.12 and pre-publication Stack verification. Public Stack reconsumption and clean retired-source verification passed; all 37 forge Python files were retired, with 28 historical files retained. The scoped authority-transition receipt at Stack c81d807142d3f0fe3968a6879888afa00352eaff records independent EPAC implementation/public-contract ownership. All 14 comparison standings remain FALSIFIED; no scientific, upstream-license, or freshness authority transfers.
+EPAC v0.1.0 is published immutably under MPL-2.0 from source 949cb1cb304927942966c9fb396caf6227120e7f. The same reproducible wheel/sdist passed six clean 209-test installs on Python 3.10–3.12 and pre-publication Stack verification. Public Stack reconsumption and clean retired-source verification passed; all 37 forge Python files were retired, with 28 historical files retained. The scoped authority-transition receipt at Stack 1c6ec9fb85d2ead58b13d806a5c4a9bc3803c936 records independent EPAC implementation/public-contract ownership. All 14 comparison standings remain FALSIFIED; no scientific, upstream-license, or freshness authority transfers.
 
 The original extraction and qualification records above are chronological evidence.
 The published source archive retains its qualification-time record; the completed
 event is recorded in [docs/graduation.json](graduation.json) and the byte-identical
-local copy of the [Stack-owned scoped receipt](https://github.com/The-Interdependency/stack/blob/c81d807142d3f0fe3968a6879888afa00352eaff/integration/epac/authority-transition.json).
+local copy of the [Stack-owned scoped receipt](https://github.com/The-Interdependency/stack/blob/1c6ec9fb85d2ead58b13d806a5c4a9bc3803c936/integration/epac/authority-transition.json).
 Use the release tag and SHA256SUMS to inspect the immutable bytes; use the
 current graduation record to inspect subsequent lifecycle standing.

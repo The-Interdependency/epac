@@ -3,24 +3,18 @@
     "agent_scope": "cross-repository-work-graph",
     "authority_transfer": false,
     "hmmm": [
-      "All 14 comparison standings remain FALSIFIED.",
       "Geometry ratification, canonicality/compositionality, PCEA application, and unmeasured operation effects remain unresolved.",
       "No PostgreSQL fresh-making acceptance is asserted."
     ],
     "measurement_status_transfer": false,
     "proof_status_transfer": false,
-    "scoped_epac_transition": {
-      "receipt": "docs/authority-transition.json",
-      "sha256": "be07a237af2b5c0fa3f263253958166624b9d3d62c73000424e24eb58894165e",
-      "source_url": "https://github.com/The-Interdependency/stack/blob/c81d807142d3f0fe3968a6879888afa00352eaff/integration/epac/authority-transition.json"
-    },
     "semantic_mapping": "external-provenance"
   },
   "repositories": [
     {
       "authority": "composition forge, historical provenance, and downstream release consumption",
-      "commit": "c81d807142d3f0fe3968a6879888afa00352eaff",
-      "relation": "former EPAC incubator; reconsumes the immutable public v0.1.0 artifact; the scoped transition receipt separately transfers only EPAC implementation/public-contract authority",
+      "commit": "1c6ec9fb85d2ead58b13d806a5c4a9bc3803c936",
+      "relation": "former EPAC incubator; reconsumes the immutable public v0.1.0 artifact; the scoped transition receipt separately transfers only EPAC implementation/public-contract authority; receipt docs/authority-transition.json SHA-256 20c33f747e41a571a1b142bb1a3a70c3ef3ae0967973b5025b9ae9b1b2361646 from https://github.com/The-Interdependency/stack/blob/1c6ec9fb85d2ead58b13d806a5c4a9bc3803c936/integration/epac/authority-transition.json",
       "repository": "The-Interdependency/stack"
     },
     {
@@ -44,5 +38,5 @@
   ],
   "schema": "the-interdependency.stack-manifest",
   "version": "1.0.0",
-  "work_graph_sha256": "56405bc31c6e250e42af22e08cbee5b7827115b3be081cf17011a468aa587436"
+  "work_graph_sha256": "9e079e25fa2021f83a17171db4be157b43aced0aa6fbbf4729fc9ce71ff4f4f3"
 }

@@ -7,7 +7,7 @@ EPAC is the independent repository for The Interdependency's elementary/particle
 ## Standing
 
 - Repository state: independently graduated; MPL-2.0 `v0.1.0` published and reconsumed by Stack.
-- Authority: EPAC owns its implementation and public contracts. The [scoped transition receipt](docs/graduation.json) binds qualification, public reconsumption and retirement of the forge implementation.
+- Authority: EPAC owns its implementation and public contracts. The [scoped transition receipt](docs/authority-transition.json) binds qualification, public reconsumption and retirement of the forge implementation.
 - Research status: provisional / cross-domain hypothesis unless a narrower artifact says otherwise.
 - Empirical status: no transfer. Repository independence does not make a physics or chemistry claim true.
 - Molecular-shape prediction: **FALSIFIED** for the preregistered comparison carried from the incubator; that negative result is preserved as evidence.
@@ -53,7 +53,7 @@ CI resolves UCNS through the source URL and SHA-256 in `pyproject.toml` and `uv.
 [EPAC v0.1.0](https://github.com/The-Interdependency/epac/releases/tag/v0.1.0) contains the exact candidate
 that passed six clean 209-test installations and pre-publication Stack verification.
 Public reconsumption passed, the 37 forge Python files were retired, and the
-[authority-transition receipt](https://github.com/The-Interdependency/stack/blob/c81d807142d3f0fe3968a6879888afa00352eaff/integration/epac/authority-transition.json) records the scoped ownership event.
+[authority-transition receipt](https://github.com/The-Interdependency/stack/blob/1c6ec9fb85d2ead58b13d806a5c4a9bc3803c936/integration/epac/authority-transition.json) records the scoped ownership event.
 The immutable release source is `949cb1cb304927942966c9fb396caf6227120e7f`. Its archived
 graduation record describes qualification time; the [current record](docs/graduation.json)
 records the later completed event without changing the published bytes.
