@@ -93,7 +93,7 @@
   "schema": "the-interdependency.repository-plan-report",
   "source": {
     "branch": "graduate/record-authority-transition-20260912",
-    "commit": "4f4d386840c795936ceb3ae49ea9370223668af0",
+    "commit": "17a0f8b849af5853940a484e923c1e45a7ce99ab",
     "generated_at": "2026-09-13",
     "note": "Completed lifecycle documentation source; immutable release source 949cb1cb304927942966c9fb396caf6227120e7f is separately pinned in docs/graduation.json."
   },
