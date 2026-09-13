@@ -1,42 +1,42 @@
 {
-  "schema": "the-interdependency.stack-manifest",
-  "version": "1.0.0",
-  "work_graph_sha256": "e0da233c6a7f51bfc56a1ef8c2e02e3a1096a8518e2acd712eed82ce8004b049",
+  "boundaries": {
+    "agent_scope": "cross-repository-work-graph",
+    "authority_transfer": false,
+    "hmmm": [
+      "Geometry ratification, canonicality/compositionality, PCEA application, and unmeasured operation effects remain unresolved.",
+      "No PostgreSQL fresh-making acceptance is asserted."
+    ],
+    "measurement_status_transfer": false,
+    "proof_status_transfer": false,
+    "semantic_mapping": "external-provenance"
+  },
   "repositories": [
     {
-      "repository": "The-Interdependency/stack",
-      "commit": "0e8384bbb60e4c2189016a212bdd0030d04aed7d",
-      "authority": "forge/provenance authority for the extracted candidate state",
-      "relation": "extraction source"
+      "authority": "composition forge, historical provenance, and downstream release consumption",
+      "commit": "1c6ec9fb85d2ead58b13d806a5c4a9bc3803c936",
+      "relation": "former EPAC incubator; reconsumes the immutable public v0.1.0 artifact; the scoped transition receipt separately transfers only EPAC implementation/public-contract authority; receipt docs/authority-transition.json SHA-256 20c33f747e41a571a1b142bb1a3a70c3ef3ae0967973b5025b9ae9b1b2361646 from https://github.com/The-Interdependency/stack/blob/1c6ec9fb85d2ead58b13d806a5c4a9bc3803c936/integration/epac/authority-transition.json",
+      "repository": "The-Interdependency/stack"
     },
     {
-      "repository": "The-Interdependency/skill-lib",
-      "commit": "c14ee9d500579a4b5d6821f62c9d82ca96e73608",
       "authority": "organization-wide build and evidence doctrine",
-      "relation": "current repo-local skill snapshot source; all 79 non-manifest files checked byte-for-byte"
+      "commit": "c14ee9d500579a4b5d6821f62c9d82ca96e73608",
+      "relation": "current repo-local skill snapshot source; all 79 non-manifest files checked byte-for-byte",
+      "repository": "The-Interdependency/skill-lib"
     },
     {
-      "repository": "The-Interdependency/metapat",
-      "commit": "d6699e21b11c8f8394998efc34a468e2d6efc8b0",
       "authority": "semantic authority for METAPAT application terms",
-      "relation": "semantic source consumed by EPAC"
+      "commit": "d6699e21b11c8f8394998efc34a468e2d6efc8b0",
+      "relation": "semantic source consumed by EPAC",
+      "repository": "The-Interdependency/metapat"
     },
     {
-      "repository": "The-Interdependency/ucns",
-      "commit": "6eea1828a34ed8ec99879f8090ea5d48352d8c2d",
       "authority": "geometry and mathematical representation",
-      "relation": "licensed source archive consumed by the package candidate; exact archive and runtime source hashes in data/ucns-source-lock.json"
+      "commit": "6eea1828a34ed8ec99879f8090ea5d48352d8c2d",
+      "relation": "licensed source archive consumed by the package candidate; exact archive and runtime source hashes in data/ucns-source-lock.json",
+      "repository": "The-Interdependency/ucns"
     }
   ],
-  "boundaries": {
-    "authority_transfer": false,
-    "proof_status_transfer": false,
-    "measurement_status_transfer": false,
-    "semantic_mapping": "external-provenance",
-    "agent_scope": "cross-repository-work-graph",
-    "hmmm": [
-      "EPAC stable release and stack reconsumption are not complete",
-      "EPAC MPL-2.0 recorded; immutable candidate, release and authority transition remain pending"
-    ]
-  }
+  "schema": "the-interdependency.stack-manifest",
+  "version": "1.0.0",
+  "work_graph_sha256": "9e079e25fa2021f83a17171db4be157b43aced0aa6fbbf4729fc9ce71ff4f4f3"
 }

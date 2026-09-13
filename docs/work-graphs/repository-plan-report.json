@@ -1,25 +1,8 @@
 {
-  "schema": "the-interdependency.repository-plan-report",
-  "version": "1.0.0",
-  "repository": "The-Interdependency/epac",
-  "contract": {
-    "repository": "The-Interdependency/skill-lib",
-    "path": "interdependent-work-graph/repository-plan-report.schema.json",
-    "version": "1.0.0",
-    "blob_sha": "9b347b2dff7692054b571602f30ee6d00c2e7265"
-  },
-  "source": {
-    "branch": "graduate/package-release-20260912",
-    "commit": "914fc6bf210d1daf4a0fe5f6926c45b3201924bc",
-    "generated_at": "2026-09-12",
-    "note": "MPL-2.0 is recorded from the owner\u2019s instruction that EPAC is weak copyleft, resolved using the existing organization convention and disclosed before execution. The unmodified official license, explicit project SPDX/license-files metadata, and source-selection provenance replace the unresolved license status. CI now builds normalized four-asset candidates with managed CPython3.11.15 and the exact release toolchain before wheel/sdist replay on Python3.10/3.11/3.12. Every matrix asset must match the independently reproduced local candidate before publication. Preceding625e537 passed exact review, six private209-test installs with no skips and private Stack consumption of all nine molecules and14 FALSIFIED standings; acceptance SHA2566e60f2bb969a331ba70f295fbd66c25146b0922ed9fe075629d48dae5f132b88. That evidence is historical after license/build-pipeline changes. Licensed exact-head review, reproducibility, all six same-candidate installs, prepublication Stack verification, immutable publication, public reconsumption and the authority transition remain pending. No upstream license or scientific authority transfers."
-  },
+  "active_frontier": [
+    "Retain explicit research standing and unresolved operation effects; scientific continuation is separate from the completed packaging/graduation program."
+  ],
   "authority": {
-    "owns": [
-      "independent extracted EPAC research repository state and repository-local executable candidate constructions",
-      "preservation of EPAC provenance, preregistered comparisons, and their scoped epistemic status",
-      "future EPAC implementation/public-contract authority once graduation gates are actually completed"
-    ],
     "does_not_own": [
       "UCNS geometry authority",
       "stack authority over other projects",
@@ -29,101 +12,94 @@
       "repository extraction does not transfer empirical, physics, chemistry, proof, or geometry standing",
       "UCNS geometry use does not transfer external-domain truth",
       "stack-origin research remains provenance and does not itself complete EPAC graduation"
+    ],
+    "owns": [
+      "EPAC implementation and public contracts",
+      "preservation of EPAC provenance, preregistered comparisons, and their scoped epistemic status"
     ]
   },
-  "portfolio_role": {
-    "summary": "Own the independently extracted EPAC candidate repository while preserving its stack provenance and keeping authority transition incomplete until release/reconsumption graduation gates pass.",
-    "reports_to": {
-      "repository": "The-Interdependency/skill-lib",
-      "skill": "interdependent-work-graph",
-      "relation": "repo-owned report consumed by the deterministic portfolio projection"
-    }
-  },
-  "status": {
-    "state": "extracted candidate; package preparation implemented; graduation incomplete",
-    "current_claim": "MPL-2.0 is recorded from the owner\u2019s instruction that EPAC is weak copyleft, resolved using the existing organization convention and disclosed before execution. The unmodified official license, explicit project SPDX/license-files metadata, and source-selection provenance replace the unresolved license status. CI now builds normalized four-asset candidates with managed CPython3.11.15 and the exact release toolchain before wheel/sdist replay on Python3.10/3.11/3.12. Every matrix asset must match the independently reproduced local candidate before publication. Preceding625e537 passed exact review, six private209-test installs with no skips and private Stack consumption of all nine molecules and14 FALSIFIED standings; acceptance SHA2566e60f2bb969a331ba70f295fbd66c25146b0922ed9fe075629d48dae5f132b88. That evidence is historical after license/build-pipeline changes. Licensed exact-head review, reproducibility, all six same-candidate installs, prepublication Stack verification, immutable publication, public reconsumption and the authority transition remain pending. No upstream license or scientific authority transfers."
-  },
-  "delivered": [
-    {
-      "surface": "independent EPAC repository extraction",
-      "status": "implemented and independently verified",
-      "boundary": "repository independence is not completion of authority transition"
-    },
-    {
-      "surface": "molecular comparison evidence",
-      "status": "preserved FALSIFIED result for preregistered scope",
-      "boundary": "negative result remains scoped; no broader chemistry claim follows"
-    },
-    {
-      "surface": "subatomic and standing-wave candidate constructions",
-      "status": "implemented research candidates/witnesses",
-      "boundary": "modeling direction is not established external physics merely by execution"
-    },
-    {
-      "surface": "independent package and artifact replay preparation",
-      "status": "implemented; final release candidate qualification pending",
-      "boundary": "clean installed-code checks and private replay do not pass the unresolved license gate or establish external physics"
-    }
-  ],
-  "active_frontier": [
-    "qualify final pinned EPAC artifacts with recorded MPL-2.0",
-    "verify the same candidate in stack before publication, then publish and reconsume those bytes",
-    "retire the forge implementation and record the scoped authority-transition receipt after successful reconsumption"
-  ],
-  "next_actions": [
-    {
-      "action": "qualify the exact licensed final artifact",
-      "owner": "The-Interdependency/epac",
-      "dependency": "MPL-2.0 and the accepted exact UCNS source are now recorded; publication qualification remains pending"
-    },
-    {
-      "action": "verify the candidate in stack before publication",
-      "owner": "The-Interdependency/stack",
-      "dependency": "same immutable EPAC artifact already tested independently"
-    },
-    {
-      "action": "publish, reconsume, retire the forge path and record the transition",
-      "owner": "The-Interdependency/stack",
-      "dependency": "verified public artifact identity and completed graduation gates"
-    }
-  ],
   "blocked": [],
+  "contract": {
+    "blob_sha": "9b347b2dff7692054b571602f30ee6d00c2e7265",
+    "path": "interdependent-work-graph/repository-plan-report.schema.json",
+    "repository": "The-Interdependency/skill-lib",
+    "version": "1.0.0"
+  },
   "cross_repository_relations": [
     {
-      "repository": "The-Interdependency/skill-lib",
+      "authority_transfer": false,
       "relation": "consumer of canonical build/evidence, graduation, and work-graph doctrine",
-      "authority_transfer": false
+      "repository": "The-Interdependency/skill-lib"
     },
     {
-      "repository": "The-Interdependency/stack",
-      "relation": "forge of origin; retains incubator research and must later reconsume released EPAC to complete graduation",
-      "authority_transfer": false
+      "authority_transfer": false,
+      "relation": "forge of origin and consumer of immutable released EPAC; scoped implementation/public-contract transition is recorded separately in docs/authority-transition.json",
+      "repository": "The-Interdependency/stack"
     },
     {
-      "repository": "The-Interdependency/ucns",
+      "authority_transfer": false,
       "relation": "pinned geometry dependency for EPAC candidate constructions; external-domain status does not transfer",
-      "authority_transfer": false
+      "repository": "The-Interdependency/ucns"
     }
   ],
+  "delivered": [
+    {
+      "boundary": "negative result remains scoped; no broader chemistry claim follows",
+      "status": "preserved FALSIFIED result for preregistered scope",
+      "surface": "molecular comparison evidence"
+    },
+    {
+      "boundary": "modeling direction is not established external physics merely by execution",
+      "status": "implemented research candidates/witnesses",
+      "surface": "subatomic and standing-wave candidate constructions"
+    },
+    {
+      "boundary": "Implementation/public-contract independence transfers no empirical, theorem, proof, measurement, semantic, upstream-license or freshness authority.",
+      "status": "published, reconsumed, forge implementation retired, authority receipt accepted",
+      "surface": "MPL-2.0 immutable EPAC v0.1.0 release and scoped graduation"
+    }
+  ],
+  "hmmm": [
+    "Geometry ratification, canonicality/compositionality, PCEA application, and unmeasured operation effects remain unresolved.",
+    "No PostgreSQL fresh-making acceptance is asserted."
+  ],
   "machine_entrypoints": {
+    "artifact_replay": "tools/replay_distributions.sh",
+    "authority_transition": "docs/authority-transition.json",
+    "ci": ".github/workflows/ci.yml",
+    "graduation": "docs/graduation.json",
+    "package": "pyproject.toml",
+    "provenance": "docs/",
+    "release_builder": "tools/build_release.py",
+    "release_contract": "tools/release_contract.py",
+    "replay_input_binding": "tools/verify_replay_inputs.py",
     "repo_report": "docs/work-graphs/repository-plan-report.json",
+    "subatomic": "subatomic/",
+    "subatomic_tests": "tests/subatomic/",
     "system_overview": "README.md",
     "tests": "tests/",
-    "subatomic": "subatomic/",
-    "provenance": "docs/",
-    "ci": ".github/workflows/ci.yml",
-    "package": "pyproject.toml",
-    "release_builder": "tools/build_release.py",
-    "artifact_replay": "tools/replay_distributions.sh",
-    "graduation": "docs/graduation.json",
-    "ucns_source_identity": "data/ucns-source-lock.json",
-    "subatomic_tests": "tests/subatomic/",
-    "replay_input_binding": "tools/verify_replay_inputs.py",
-    "release_contract": "tools/release_contract.py"
+    "ucns_source_identity": "data/ucns-source-lock.json"
   },
-  "hmmm": [
-    "final immutable release candidate and exact pre-publication stack acceptance remain pending",
-    "public artifact reconsumption and authority-transition receipt remain incomplete",
-    "stronger external-physics standing for standing-wave language remains unresolved"
-  ]
+  "next_actions": [],
+  "portfolio_role": {
+    "reports_to": {
+      "relation": "repo-owned report consumed by the deterministic portfolio projection",
+      "repository": "The-Interdependency/skill-lib",
+      "skill": "interdependent-work-graph"
+    },
+    "summary": "Independent EPAC implementation/public-contract owner; Stack is now a consumer of the immutable release."
+  },
+  "repository": "The-Interdependency/epac",
+  "schema": "the-interdependency.repository-plan-report",
+  "source": {
+    "branch": "graduate/record-authority-transition-20260912",
+    "commit": "17a0f8b849af5853940a484e923c1e45a7ce99ab",
+    "generated_at": "2026-09-13",
+    "note": "Completed lifecycle documentation source; immutable release source 949cb1cb304927942966c9fb396caf6227120e7f is separately pinned in docs/graduation.json."
+  },
+  "status": {
+    "current_claim": "EPAC v0.1.0 is published immutably under MPL-2.0 from source 949cb1cb304927942966c9fb396caf6227120e7f. The same reproducible wheel/sdist passed six clean 209-test installs on Python 3.10\u20133.12 and pre-publication Stack verification. Public Stack reconsumption and clean retired-source verification passed; all 37 forge Python files were retired, with 28 historical files retained. The scoped authority-transition receipt at Stack 1c6ec9fb85d2ead58b13d806a5c4a9bc3803c936 records independent EPAC implementation/public-contract ownership. All 14 comparison standings remain FALSIFIED; no scientific, upstream-license, or freshness authority transfers.",
+    "state": "graduated; immutable v0.1.0 released and reconsumed"
+  },
+  "version": "1.0.0"
 }
