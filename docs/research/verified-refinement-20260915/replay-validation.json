@@ -1,0 +1,12 @@
+{
+  "schema": "epac.external.refinement-replay-validation.v1",
+  "status": "SURVIVED",
+  "recorded_at": "2026-09-15T10:14:04.119485+00:00",
+  "command": "bash reproduce.sh",
+  "exit_code": 0,
+  "replay_directory": "/tmp/epac-refinement-replay.zzUxYC/results",
+  "result_comparison": "Both regenerated JSON documents equal archived JSON; only epac_source location excluded",
+  "independent_subsets_checked": 3072,
+  "locked_ucns_source_hashes_checked": 34,
+  "scope": "Reproduction only; no physical, canonicality or universal sufficiency transfer"
+}
