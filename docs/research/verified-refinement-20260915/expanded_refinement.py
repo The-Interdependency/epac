@@ -64,7 +64,7 @@ def observe(gonol, scale, b=None):
 
 
 def run(config):
-    assert config==plan(), 'Plan, script or inputs changed since freezing'
+    assert freeze(config)==freeze(plan()), 'Plan, script or inputs changed since freezing'
     prior=json.loads((HERE/'verified-refinement.json').read_text())
     rows, receipts, constructions, executions={},{},{},[]
     for i,(scale,name) in enumerate(config['states'],1):
