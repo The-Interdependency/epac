@@ -2,6 +2,11 @@
 
 Research against EPAC v0.1.0, not a change to its released representation.
 
+**Latest:** [the expanded 63-state test](expansion-results.md) falsifies the three
+A-based minimum pairs and retains six minimum pairs with zero collisions across
+1,953 pairs. All nine candidates fail the fixed repository shape-equivalence
+mapping. General composition and independent physical validation remain unresolved.
+
 **SURVIVED:** two named observers distinguish all 27 frozen constructions;
 `Z multiset + topology` is one of nine minimum pairs. Exact subset searches and
 independent direct enumeration check every pair and every candidate subset.
@@ -25,11 +30,12 @@ cd docs/research/verified-refinement-20260915
 sha256sum -c SHA256SUMS
 python3 verify_cached_refinement.py
 bash reproduce.sh
+bash reproduce-expansion.sh
 ```
 
-The last command clones the exact EPAC and UCNS commits into a new temporary
-directory, verifies the locked UCNS Python sources, then regenerates both
-results there. It needs Git, network access, and Python 3.10–3.12 with the
+The replay commands clone the exact EPAC and UCNS commits into new temporary
+directories, verify the locked UCNS Python sources, then regenerate and compare
+their corresponding results. They need Git, network access, and Python 3.10–3.12 with the
 release's runtime prerequisites. Errors fail the run; archived evidence is
 not overwritten. Temporary checkout paths naturally differ between runs.
 

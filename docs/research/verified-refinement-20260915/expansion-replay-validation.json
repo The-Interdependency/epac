@@ -1,0 +1,14 @@
+{
+  "schema": "epac.external.expansion-replay-validation.v1",
+  "recorded_at": "2026-09-15T10:30:29.513174+00:00",
+  "status": "SURVIVED",
+  "command": "bash reproduce-expansion.sh",
+  "exit_code": 0,
+  "replay_directory": "/tmp/epac-expansion-replay.iTZJxw/results",
+  "result_comparison": "Entire regenerated expansion JSON equals archive, including plan and composed receipt digests",
+  "state_count": 63,
+  "pair_count": 1953,
+  "independently_checked_subsets": 2048,
+  "locked_ucns_source_files": 34,
+  "scope": "Reproduction only; no physical or universal sufficiency transfer"
+}

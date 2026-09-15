@@ -1,5 +1,14 @@
 # Next tests and stop rules
 
+> Execution update: steps 1 and 2 have been run on the released supported
+> domain; see [expanded results](expansion-results.md). Six minimum pairs remain
+> collision-free over 63 states. A matched-parameter composition witness rejects
+> the three A-based pairs; general composition of the six survivors remains
+> unresolved because there are no nontrivial equal-descriptor inputs. Step 3's
+> explicit shape-equivalence mapping fails on repository labels; fresh physical
+> validation remains unresolved. The next work is a nonvacuous composition
+> contract and a derived physical observable, not further finite identity fields.
+
 Current decision: **SURVIVED** for finite observer-count minimum and collision
 closure on two declared domains; **UNRESOLVED** for canonicality, general state
 sufficiency, structural compositionality and physical correspondence.
