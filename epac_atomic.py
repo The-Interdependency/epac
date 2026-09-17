@@ -20,6 +20,9 @@ SUBSHELL_ORDER: tuple[tuple[int, int], ...] = (
     (2, 1),
     (3, 0),
     (3, 1),
+    (4, 0),
+    (3, 2),
+    (4, 1),
 )
 
 ISOTOPE_DEFAULTS: dict[int, int] = {
@@ -41,11 +44,31 @@ ISOTOPE_DEFAULTS: dict[int, int] = {
     16: 32,
     17: 35,
     18: 40,
+    19: 39,
+    20: 40,
+    21: 45,
+    22: 48,
+    23: 51,
+    24: 52,
+    25: 55,
+    26: 56,
+    27: 59,
+    28: 58,
+    29: 63,
+    30: 64,
+    31: 69,
+    32: 74,
+    33: 75,
+    34: 80,
+    35: 79,
+    36: 84,
 }
 
 SYMBOLS: tuple[str, ...] = (
     "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
     "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
+    "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni",
+    "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr",
 )
 
 
@@ -96,7 +119,9 @@ def _period_group(Z: int) -> tuple[int, int]:
         return 2, Z + 8
     if Z <= 12:
         return 3, Z - 10
-    return 3, Z
+    if Z <= 18:
+        return 3, Z
+    return 4, Z - 18
 
 
 def _ml_down(l: int) -> tuple[int, ...]:
@@ -118,17 +143,26 @@ def _slater_zeff(Z: int, n: int, l: int, occupied: tuple[tuple[int, int], ...]) 
     others.remove((n, l))
     sigma = 0.0
     same_group = 0
-    for on, ol in others:
-        if n == 1 and l == 0:
-            if on == 1 and ol == 0:
-                sigma += 0.30
-            continue
-        if on == n and ((l in {0, 1} and ol in {0, 1}) or ol == l):
-            same_group += 1
-        elif on == n - 1:
-            sigma += 0.85
-        elif on <= n - 2:
-            sigma += 1.00
+    if l == 2:
+        # d electrons: other d electrons in the same subshell screen 0.35;
+        # every other electron at or below the same n screens 1.0.
+        for on, ol in others:
+            if on == n and ol == l:
+                same_group += 1
+            elif on <= n:
+                sigma += 1.00
+    else:
+        for on, ol in others:
+            if n == 1 and l == 0:
+                if on == 1 and ol == 0:
+                    sigma += 0.30
+                continue
+            if on == n and ((l in {0, 1} and ol in {0, 1}) or ol == l):
+                same_group += 1
+            elif on == n - 1:
+                sigma += 0.85
+            elif on <= n - 2:
+                sigma += 1.00
     sigma += 0.35 * same_group
     return round(Z - sigma, 3)
 
@@ -257,8 +291,8 @@ def _promoted_unpaired(electrons: tuple[ElectronState, ...]) -> tuple[ElectronSt
 
 
 def atomic_record(Z: int) -> AtomicRecord:
-    if not 1 <= Z <= 18:
-        raise ValueError("this candidate table is Z=1-18")
+    if not 1 <= Z <= 36:
+        raise ValueError("this candidate table is Z=1-36")
     electrons = _fill_electrons(Z)
     valence_n = max(e.n for e in electrons)
     period, group = _period_group(Z)
@@ -281,5 +315,5 @@ def atomic_record(Z: int) -> AtomicRecord:
 
 
 def iter_table() -> Iterator[AtomicRecord]:
-    for Z in range(1, 19):
+    for Z in range(1, 37):
         yield atomic_record(Z)
