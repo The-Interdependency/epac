@@ -316,10 +316,19 @@ def freeze_b_derivation() -> dict[str, Any]:
         ],
         "transition_metal_failure": transition_failure,
         "missing_state_variable": _MISSING_STATE_VARIABLE,
+        "capacity_rule_status": "FALSIFIED",
+        "capacity_rule_falsification": (
+            "the six-equivalent-orbital capacity rule (4s+3d as one Hund "
+            "set) manufactured two unpaired electrons for Zn2+ d10 where "
+            "none stand; Hund applies per degenerate subshell only"
+        ),
         "hmmm": (
             "the rule knows how to measure a supplied topology; it does not "
-            "yet know how the topology forms. B evaluations are bounded "
-            "evidence, not bond predictions: bond state is an input."
+            "yet know how the topology forms. The active-orbital set "
+            "identifies possible rooms, but treating their floors as level "
+            "manufactured two electrons standing where none stand. "
+            "B evaluations are bounded evidence, not bond predictions: "
+            "bond state is an input."
         ),
     }
     payload["receipt_sha256"] = hashlib.sha256(
@@ -350,13 +359,28 @@ def replay_b_derivation(data: bytes) -> dict[str, Any]:
     return rebuilt
 
 
+def _hund_within_subshell(electron_count: int, orbital_count: int) -> tuple[int, int]:
+    """Hund's rule within one degenerate subshell.
+
+    Returns (unpaired, vacant). Applied per subshell only; never across
+    subshells of different degeneracy.
+    """
+
+    electron_count = max(electron_count, 0)
+    if electron_count <= orbital_count:
+        return electron_count, orbital_count - electron_count
+    return max(2 * orbital_count - electron_count, 0), 0
+
+
 def active_orbital_set(record: AtomicRecord, charge: int = 0) -> dict[str, Any]:
     """Derive the bond-context active-orbital set for a supplied atom.
 
     Main group: the outermost shell subshells as constructed.
-    Transition metals (Z=21..30): the 3d + 4s subshells, with charge
-    removing electrons from the active set (cation). Hund's rule gives the
-    unpaired count; empty orbitals are the acceptor capacity.
+    Transition metals (Z=21..30): the 4s and 3d subshells with subshell
+    identity preserved; charge removes electrons 4s first, then 3d. Hund's
+    rule applies within each degenerate subshell, never across them.
+    Coordination capacity is UNRESOLVED until ligand-field, orbital-energy
+    ordering, geometry, and 4p participation are represented.
     """
 
     if not 1 <= record.Z <= 36:
@@ -364,38 +388,75 @@ def active_orbital_set(record: AtomicRecord, charge: int = 0) -> dict[str, Any]:
     if isinstance(charge, bool) or not isinstance(charge, int):
         raise BDerivationError("charge must be an integer")
     if 21 <= record.Z <= 30:
-        orbitals = [(4, 0, 0)] + [(3, 2, m) for m in range(-2, 3)]
-        active_electrons = [
-            e for e in record.electrons if (e.n, e.l) in {(4, 0), (3, 2)}
-        ]
-        electron_count = len(active_electrons) - charge
-        if electron_count < 0 or electron_count > 12:
-            raise BDerivationError("charge leaves the active set outside 0..12 electrons")
-        orbital_count = len(orbitals)
-        unpaired = min(electron_count, 2 * orbital_count - electron_count)
-        empty = max(0, orbital_count - electron_count)
+        s_electrons = len([e for e in record.electrons if (e.n, e.l) == (4, 0)])
+        d_electrons = len([e for e in record.electrons if (e.n, e.l) == (3, 2)])
+        # Cation removal order: highest n first (4s), then 3d.
+        removed = charge
+        from_s = min(removed, s_electrons)
+        s_electrons -= from_s
+        removed -= from_s
+        d_electrons -= min(removed, d_electrons)
+        if d_electrons < 0:
+            raise BDerivationError("charge removes more d electrons than exist")
+        s_unpaired, s_vacant = _hund_within_subshell(s_electrons, 1)
+        d_unpaired, d_vacant = _hund_within_subshell(d_electrons, 5)
         return {
             "kind": "transition-metal",
-            "subshells": ["4s", "3d"],
-            "orbitals": ["4s"] + [f"3d_{m:+d}" for m in range(-2, 3)],
-            "orbital_count": orbital_count,
-            "electron_count": electron_count,
-            "unpaired_count": unpaired,
-            "empty_orbital_count": empty,
-            "coordination_capacity": unpaired + empty,
+            "subshells": [
+                {
+                    "subshell": "4s",
+                    "orbitals": 1,
+                    "electrons": s_electrons,
+                    "unpaired": s_unpaired,
+                    "vacant": s_vacant,
+                },
+                {
+                    "subshell": "3d",
+                    "orbitals": 5,
+                    "electrons": d_electrons,
+                    "unpaired": d_unpaired,
+                    "vacant": d_vacant,
+                },
+            ],
+            "unpaired_electrons": s_unpaired + d_unpaired,
+            "vacant_orbitals": s_vacant + d_vacant,
+            "coordination_capacity": "UNRESOLVED",
+            "capacity_rule_status": "FALSIFIED",
+            "capacity_unresolved_reasons": [
+                "ligand-field",
+                "orbital-energy ordering",
+                "geometry",
+                "4p participation",
+            ],
         }
     outermost = max(e.n for e in record.electrons)
     valence = [e for e in record.electrons if e.n == outermost]
     orbitals = sorted({(e.n, e.l, e.m_l) for e in valence})
+    subshells = []
+    for name in sorted({f"{e.n}{'spdf'[e.l]}" for e in valence}):
+        members = [e for e in valence if f"{e.n}{'spdf'[e.l]}" == name]
+        subshells.append(
+            {
+                "subshell": name,
+                "orbitals": len({(e.l, e.m_l) for e in members}),
+                "electrons": len(members),
+                "unpaired": None,
+                "vacant": None,
+            }
+        )
     return {
         "kind": "main-group",
-        "subshells": sorted({f"{e.n}{'spdf'[e.l]}" for e in valence}),
-        "orbitals": [f"{n}{'spdf'[l]}_{m:+d}" for n, l, m in orbitals],
-        "orbital_count": len(orbitals),
-        "electron_count": len(valence) - charge,
-        "unpaired_count": len(record.unpaired_valence),
-        "empty_orbital_count": max(0, len(orbitals) - (len(valence) - charge)),
-        "coordination_capacity": len(orbitals),
+        "subshells": subshells,
+        "unpaired_electrons": len(record.unpaired_valence),
+        "vacant_orbitals": max(0, len(orbitals) - (len(valence) - charge)),
+        "coordination_capacity": "UNRESOLVED",
+        "capacity_rule_status": "FALSIFIED",
+        "capacity_unresolved_reasons": [
+            "ligand-field",
+            "orbital-energy ordering",
+            "geometry",
+            "4p participation",
+        ],
     }
 
 
@@ -431,8 +492,11 @@ def evaluate_transition_metal_topology(
         "center_active_orbital_set": center_set,
         "ligand_ks": ligand_ks,
         "b_value": list(b_value),
-        "ligand_count_within_center_capacity": (
-            len(spec["ligands"]) <= center_set["coordination_capacity"]
+        "ligand_count_within_center_capacity": "UNRESOLVED",
+        "capacity_check_reason": (
+            "coordination capacity is UNRESOLVED until ligand-field, "
+            "orbital-energy ordering, geometry, and 4p participation are "
+            "represented"
         ),
         "status": "evaluation-only",
     }

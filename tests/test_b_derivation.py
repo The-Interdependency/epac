@@ -132,23 +132,40 @@ class BDerivationTest(unittest.TestCase):
         scandium = atomic_record(21)
         active = active_orbital_set(scandium, charge=3)
         self.assertEqual(active["kind"], "transition-metal")
-        self.assertEqual(active["subshells"], ["4s", "3d"])
-        self.assertEqual(active["orbital_count"], 6)
-        self.assertEqual(active["electron_count"], 0)  # 3 electrons - 3 charge
-        self.assertEqual(active["empty_orbital_count"], 6)
+        self.assertEqual(
+            [sub["subshell"] for sub in active["subshells"]],
+            ["4s", "3d"],
+        )
+        self.assertEqual(active["unpaired_electrons"], 0)
+        self.assertEqual(active["vacant_orbitals"], 6)  # 4s0 + 3d0
+        self.assertEqual(active["coordination_capacity"], "UNRESOLVED")
+        self.assertEqual(active["capacity_rule_status"], "FALSIFIED")
 
         sccl3 = evaluate_transition_metal_topology("ScCl3")
         self.assertEqual(sccl3["b_value"], [3, 4, 3])
-        self.assertTrue(sccl3["ligand_count_within_center_capacity"])
+        self.assertEqual(sccl3["ligand_count_within_center_capacity"], "UNRESOLVED")
 
         report = freeze_b_derivation()
+        self.assertEqual(report["capacity_rule_status"], "FALSIFIED")
         evaluations = report["transition_metal_topology_evaluations"]
         by_name = {entry["topology"]: entry for entry in evaluations}
         self.assertEqual(by_name["TiCl4"]["b_value"], [3, 5, 4])
         self.assertEqual(
-            by_name["FeCl3"]["center_active_orbital_set"]["unpaired_count"],
-            5,
+            by_name["FeCl3"]["center_active_orbital_set"]["unpaired_electrons"],
+            5,  # Fe3+: 3d5, five unpaired within the d subshell
         )
+
+    def test_zn2_plus_d10_has_zero_unpaired_regression(self) -> None:
+        from epac_b_derivation import active_orbital_set
+
+        zinc = atomic_record(30)
+        active = active_orbital_set(zinc, charge=2)
+        by_subshell = {sub["subshell"]: sub for sub in active["subshells"]}
+        self.assertEqual(by_subshell["3d"]["electrons"], 10)
+        self.assertEqual(by_subshell["3d"]["unpaired"], 0)
+        self.assertEqual(by_subshell["4s"]["electrons"], 0)
+        self.assertEqual(active["unpaired_electrons"], 0)
+        self.assertEqual(active["coordination_capacity"], "UNRESOLVED")
 
 
 if __name__ == "__main__":
