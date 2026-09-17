@@ -65,10 +65,27 @@ class BDerivationTest(unittest.TestCase):
         self.assertIn("electron_count", rule["bare_d"])
         self.assertEqual(rule["ion_electron_count"], "Z - charge")
         self.assertIn("unpaired valence", rule["ligand_K"])
+        self.assertIn("ligand K only", rule["molecule_c"])
+        self.assertIn("never counted", rule["molecule_c"])
+
+    def test_supported_domain_and_nh4_ligand_selection(self) -> None:
+        report = freeze_b_derivation()
+        self.assertEqual(
+            report["supported_domain"],
+            ["bare atoms", "ions", "diatomics", "singleton-center star topologies"],
+        )
+        nh4 = next(
+            entry
+            for entry in report["held_out_molecule_b_evaluations"]
+            if entry["formula"] == "NH4+"
+        )
+        # Only ligand K counts: H x 4 = 4; center N K = 3 is never counted.
+        self.assertEqual(nh4["evaluated_b"], [3, 5, 4])
+        self.assertEqual(nh4["status"], "evaluation-only")
 
     def test_reproduces_nine_locked_formulas(self) -> None:
         report = freeze_b_derivation()
-        for entry in report["locked_formula_reproduction"]:
+        for entry in report["locked_formula_b_evaluations"]:
             self.assertTrue(entry["matches"], entry["formula"])
 
     def test_reproduces_bare_element_b(self) -> None:
@@ -83,8 +100,11 @@ class BDerivationTest(unittest.TestCase):
         failure = report["transition_metal_failure"]
         self.assertTrue(failure)
         for entry in failure:
-            self.assertEqual(entry["missing_state_variable"], "(n-1)d valence participation")
-        self.assertIn("(n-1)d", report["missing_state_variable"])
+            self.assertEqual(
+                entry["missing_state_variable"],
+                "bond-context active-orbital set (may include (n-1)d)",
+            )
+        self.assertIn("bond-context active-orbital set", report["missing_state_variable"])
 
     def test_receipts_fail_closed(self) -> None:
         frozen = freeze_b_derivation()

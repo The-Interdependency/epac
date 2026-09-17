@@ -2,7 +2,7 @@
 # id: epac_b_derivation
 #   module_name: epac_b_derivation
 #   module_kind: construction
-#   summary: freeze the rule deriving B=(3,d,c) and ligand_contribution_K from orbital occupancy, charge, and bond state, then predict held-out Z=19..36, ion, radical, and bond-state cases
+#   summary: freeze the rule deriving B=(3,d,c) and ligand_contribution_K from orbital occupancy, charge, and bond state, then evaluate held-out Z=19..36, ion, radical, and bond-state cases
 #   owner: Erin Spencer
 #   public_surface: SCHEMA, VERSION, BDerivationError, bare_element_b, ion_b, ligand_contribution, molecule_b, freeze_b_derivation, replay_b_derivation
 #   internal_surface: charged electron removal, center/ligand resolution, canonical receipt
@@ -12,7 +12,7 @@
 #   user_data_boundary: none
 #   admin_only: false
 #   tests: tests.test_b_derivation
-#   rollout: frozen generative-carrier rule under test; held-out predictions are candidates, not empirical results
+#   rollout: frozen generative-carrier rule under test; held-out B evaluations are bounded evidence, not bond predictions
 #   rollback: remove this module and its tests
 #   requires: epac_atomic (Z=1..36)
 #   since: 2026-09-17
@@ -51,7 +51,7 @@
 #   since: 2026-09-17
 # === END CONTRACTS ===
 
-"""Freeze the B derivation rule and predict held-out cases.
+"""Freeze the B derivation rule and evaluate held-out cases.
 
 Rule (frozen):
 
@@ -59,11 +59,14 @@ Rule (frozen):
 * ion charge q: ``electron_count = Z - q``;
 * ligand contribution ``K = number of ground-state unpaired valence
   electrons`` (from the constructed electron states);
-* molecule: ``d = total atom instances``, ``c = sum of ligand K`` over the
-  contributing symbols (diatomic: all atoms; center-based: the non-center
-  ligands), with bond state carried as a declared input.
+* molecule: ``d = total atom instances``, ``c = sum of ligand K only`` over
+  the topology-selected ligands (diatomic: both atoms; singleton-center
+  star: the non-center ligands; the center K is never counted), with bond
+  state carried as a declared input.
 
-Element identity and periodic-table lookup are never consulted.
+Element identity and periodic-table lookup are never consulted. These are
+B evaluations, not bond predictions: the rule measures a supplied topology
+and does not yet know how the topology forms.
 """
 
 from __future__ import annotations
@@ -117,8 +120,9 @@ _HELD_OUT = {
 _MISSING_STATE_VARIABLE = (
     "the frozen Aufbau rule marks only the outermost principal shell as "
     "valence; transition metals therefore lose their (n-1)d electrons from "
-    "the valence count and unpaired contributions. The missing state "
-    "variable is (n-1)d valence participation."
+    "the valence count and unpaired contributions. (n-1)d participation is "
+    "necessary but insufficient: the missing variable is the bond-context "
+    "active-orbital set, which may include (n-1)d."
 )
 
 
@@ -173,8 +177,9 @@ def _contributing_symbols(composition: tuple[tuple[str, int], ...]) -> list[str]
         center = singletons[0]
         return [symbol for symbol in symbols if symbol != center]
     raise BDerivationError(
-        "no unique singleton center and not diatomic; the frozen rule does "
-        "not cover symmetric multi-center compositions"
+        "composition is outside the supported domain; the frozen rule "
+        "supports bare atoms, ions, diatomics, and singleton-center star "
+        "topologies only"
     )
 
 
@@ -198,28 +203,28 @@ def _symbol_z(symbol: str) -> int:
 def freeze_b_derivation() -> dict[str, Any]:
     locked = []
     for formula, composition in _LOCKED.items():
-        predicted = molecule_b(composition)
+        evaluated = molecule_b(composition)
         documented = _DOCUMENTED_MOLECULE_B[formula]
         locked.append(
             {
                 "formula": formula,
                 "composition": [list(row) for row in composition],
-                "predicted_b": list(predicted),
+                "evaluated_b": list(evaluated),
                 "documented_b": list(documented),
-                "matches": predicted == documented,
+                "matches": evaluated == documented,
             }
         )
 
     bare = []
     for Z in range(1, 37):
         record = atomic_record(Z)
-        predicted = bare_element_b(record)
+        evaluated = bare_element_b(record)
         bare.append(
             {
                 "Z": Z,
                 "symbol": record.symbol,
                 "configuration": record.configuration,
-                "predicted_b": list(predicted),
+                "evaluated_b": list(evaluated),
                 "unpaired_valence": len(record.unpaired_valence),
             }
         )
@@ -232,13 +237,13 @@ def freeze_b_derivation() -> dict[str, Any]:
         (30, 2, "Zn2+"),
     ):
         record = atomic_record(spec[0])
-        predicted = ion_b(record, spec[1])
+        evaluated = ion_b(record, spec[1])
         ions.append(
             {
                 "ion": spec[2],
                 "Z": spec[0],
                 "charge": spec[1],
-                "predicted_b": list(predicted),
+                "evaluated_b": list(evaluated),
             }
         )
 
@@ -246,19 +251,19 @@ def freeze_b_derivation() -> dict[str, Any]:
     for formula, spec in _HELD_OUT.items():
         composition = spec["composition"]
         try:
-            predicted = molecule_b(composition)
-            predicted_b = list(predicted)
-            status = "prediction-only"
+            evaluated = molecule_b(composition)
+            evaluated_b = list(evaluated)
+            status = "evaluation-only"
         except BDerivationError as exc:
-            predicted_b = None
-            status = f"rule-inapplicable: {exc}"
+            evaluated_b = None
+            status = f"outside-supported-domain: {exc}"
         held_out.append(
             {
                 "formula": formula,
                 "composition": [list(row) for row in composition],
                 "bond_state": spec["bond_state"],
                 "charge": spec["charge"],
-                "predicted_b": predicted_b,
+                "evaluated_b": evaluated_b,
                 "empirical_b": None,
                 "status": status,
             }
@@ -274,32 +279,43 @@ def freeze_b_derivation() -> dict[str, Any]:
                 "configuration": record.configuration,
                 "frozen_valence_electrons": record.valence_electrons,
                 "frozen_unpaired_valence": len(record.unpaired_valence),
-                "missing_state_variable": "(n-1)d valence participation",
+                "missing_state_variable": (
+                    "bond-context active-orbital set (may include (n-1)d)"
+                ),
             }
         )
 
     payload = {
         "schema": SCHEMA_SET,
         "version": VERSION,
+        "supported_domain": [
+            "bare atoms",
+            "ions",
+            "diatomics",
+            "singleton-center star topologies",
+        ],
         "rule": {
             "bare_d": "1 + electron_count",
             "bare_c": 0,
             "ion_electron_count": "Z - charge",
             "ligand_K": "ground-state unpaired valence count",
             "molecule_d": "total atom instances",
-            "molecule_c": "sum of ligand K over contributing symbols",
+            "molecule_c": (
+                "sum of ligand K only, over topology-selected ligands: "
+                "diatomic = both atoms, singleton-center star = non-center "
+                "ligands; the center K is never counted"
+            ),
         },
-        "locked_formula_reproduction": locked,
-        "bare_element_predictions": bare,
-        "ion_predictions": ions,
-        "held_out_molecule_predictions": held_out,
+        "locked_formula_b_evaluations": locked,
+        "bare_element_b_evaluations": bare,
+        "ion_b_evaluations": ions,
+        "held_out_molecule_b_evaluations": held_out,
         "transition_metal_failure": transition_failure,
         "missing_state_variable": _MISSING_STATE_VARIABLE,
         "hmmm": (
-            "the frozen rule reproduces the nine locked formulas and the "
-            "bare-element surface, but transition-metal bonding exposes the "
-            "missing (n-1)d valence participation; held-out predictions are "
-            "candidates until compared against empirical receipts"
+            "the rule knows how to measure a supplied topology; it does not "
+            "yet know how the topology forms. B evaluations are bounded "
+            "evidence, not bond predictions: bond state is an input."
         ),
     }
     payload["receipt_sha256"] = hashlib.sha256(
