@@ -310,6 +310,10 @@ def freeze_b_derivation() -> dict[str, Any]:
         "bare_element_b_evaluations": bare,
         "ion_b_evaluations": ions,
         "held_out_molecule_b_evaluations": held_out,
+        "transition_metal_topology_evaluations": [
+            evaluate_transition_metal_topology(name)
+            for name in _TRANSITION_METAL_TOPOLOGIES
+        ],
         "transition_metal_failure": transition_failure,
         "missing_state_variable": _MISSING_STATE_VARIABLE,
         "hmmm": (
@@ -346,6 +350,94 @@ def replay_b_derivation(data: bytes) -> dict[str, Any]:
     return rebuilt
 
 
+def active_orbital_set(record: AtomicRecord, charge: int = 0) -> dict[str, Any]:
+    """Derive the bond-context active-orbital set for a supplied atom.
+
+    Main group: the outermost shell subshells as constructed.
+    Transition metals (Z=21..30): the 3d + 4s subshells, with charge
+    removing electrons from the active set (cation). Hund's rule gives the
+    unpaired count; empty orbitals are the acceptor capacity.
+    """
+
+    if not 1 <= record.Z <= 36:
+        raise BDerivationError("active-orbital set is defined for Z=1..36")
+    if isinstance(charge, bool) or not isinstance(charge, int):
+        raise BDerivationError("charge must be an integer")
+    if 21 <= record.Z <= 30:
+        orbitals = [(4, 0, 0)] + [(3, 2, m) for m in range(-2, 3)]
+        active_electrons = [
+            e for e in record.electrons if (e.n, e.l) in {(4, 0), (3, 2)}
+        ]
+        electron_count = len(active_electrons) - charge
+        if electron_count < 0 or electron_count > 12:
+            raise BDerivationError("charge leaves the active set outside 0..12 electrons")
+        orbital_count = len(orbitals)
+        unpaired = min(electron_count, 2 * orbital_count - electron_count)
+        empty = max(0, orbital_count - electron_count)
+        return {
+            "kind": "transition-metal",
+            "subshells": ["4s", "3d"],
+            "orbitals": ["4s"] + [f"3d_{m:+d}" for m in range(-2, 3)],
+            "orbital_count": orbital_count,
+            "electron_count": electron_count,
+            "unpaired_count": unpaired,
+            "empty_orbital_count": empty,
+            "coordination_capacity": unpaired + empty,
+        }
+    outermost = max(e.n for e in record.electrons)
+    valence = [e for e in record.electrons if e.n == outermost]
+    orbitals = sorted({(e.n, e.l, e.m_l) for e in valence})
+    return {
+        "kind": "main-group",
+        "subshells": sorted({f"{e.n}{'spdf'[e.l]}" for e in valence}),
+        "orbitals": [f"{n}{'spdf'[l]}_{m:+d}" for n, l, m in orbitals],
+        "orbital_count": len(orbitals),
+        "electron_count": len(valence) - charge,
+        "unpaired_count": len(record.unpaired_valence),
+        "empty_orbital_count": max(0, len(orbitals) - (len(valence) - charge)),
+        "coordination_capacity": len(orbitals),
+    }
+
+
+_TRANSITION_METAL_TOPOLOGIES = {
+    "ScCl3": {"center": "Sc", "ligands": ("Cl", "Cl", "Cl"), "center_charge": 3},
+    "TiCl4": {"center": "Ti", "ligands": ("Cl", "Cl", "Cl", "Cl"), "center_charge": 4},
+    "FeCl3": {"center": "Fe", "ligands": ("Cl", "Cl", "Cl"), "center_charge": 3},
+    "ZnCl2": {"center": "Zn", "ligands": ("Cl", "Cl"), "center_charge": 2},
+}
+
+
+def evaluate_transition_metal_topology(
+    name: str,
+) -> dict[str, Any]:
+    """Evaluate a supplied transition-metal star topology.
+
+    Topology formation is downstream; this measures the supplied walls.
+    """
+
+    spec = _TRANSITION_METAL_TOPOLOGIES.get(name)
+    if spec is None:
+        raise BDerivationError(f"topology {name!r} is not in the supplied set")
+    center_record = atomic_record(_symbol_z(spec["center"]))
+    center_set = active_orbital_set(center_record, spec["center_charge"])
+    ligand_ks = [ligand_contribution(atomic_record(_symbol_z(s))) for s in spec["ligands"]]
+    atom_count = 1 + len(spec["ligands"])
+    b_value = (3, atom_count, sum(ligand_ks))
+    return {
+        "topology": name,
+        "center": spec["center"],
+        "ligands": list(spec["ligands"]),
+        "center_charge": spec["center_charge"],
+        "center_active_orbital_set": center_set,
+        "ligand_ks": ligand_ks,
+        "b_value": list(b_value),
+        "ligand_count_within_center_capacity": (
+            len(spec["ligands"]) <= center_set["coordination_capacity"]
+        ),
+        "status": "evaluation-only",
+    }
+
+
 __all__ = [
     "SCHEMA",
     "SCHEMA_SET",
@@ -355,6 +447,8 @@ __all__ = [
     "ion_b",
     "ligand_contribution",
     "molecule_b",
+    "active_orbital_set",
+    "evaluate_transition_metal_topology",
     "freeze_b_derivation",
     "replay_b_derivation",
 ]

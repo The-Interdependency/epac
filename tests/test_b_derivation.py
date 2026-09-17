@@ -123,6 +123,33 @@ class BDerivationTest(unittest.TestCase):
         self.assertEqual(ion_b(iron, 2), (3, 25, 0))  # 26 electrons -> 24 + 1 axis
         self.assertEqual(ion_b(iron, 3), (3, 24, 0))
 
+    def test_active_orbital_set_derives_for_supplied_topologies(self) -> None:
+        from epac_b_derivation import (
+            active_orbital_set,
+            evaluate_transition_metal_topology,
+        )
+
+        scandium = atomic_record(21)
+        active = active_orbital_set(scandium, charge=3)
+        self.assertEqual(active["kind"], "transition-metal")
+        self.assertEqual(active["subshells"], ["4s", "3d"])
+        self.assertEqual(active["orbital_count"], 6)
+        self.assertEqual(active["electron_count"], 0)  # 3 electrons - 3 charge
+        self.assertEqual(active["empty_orbital_count"], 6)
+
+        sccl3 = evaluate_transition_metal_topology("ScCl3")
+        self.assertEqual(sccl3["b_value"], [3, 4, 3])
+        self.assertTrue(sccl3["ligand_count_within_center_capacity"])
+
+        report = freeze_b_derivation()
+        evaluations = report["transition_metal_topology_evaluations"]
+        by_name = {entry["topology"]: entry for entry in evaluations}
+        self.assertEqual(by_name["TiCl4"]["b_value"], [3, 5, 4])
+        self.assertEqual(
+            by_name["FeCl3"]["center_active_orbital_set"]["unpaired_count"],
+            5,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
