@@ -143,9 +143,9 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
 
     def test_declared_operations_preserve_unresolved_semantics(self) -> None:
         inventory = self.report["operation_inventory"]
-        self.assertEqual(inventory["operation_count"], 136)
+        self.assertEqual(inventory["operation_count"], 153)
         self.assertEqual(inventory["boundary_relevant_count"], 58)
-        self.assertEqual(inventory["ambiguous_count"], 39)
+        self.assertEqual(inventory["ambiguous_count"], 56)
         self.assertEqual(inventory["omitted_boundary_relevant_count"], 14)
         for row in self.report["operation_ledger"]:
             if row["name"] in self.report["unmapped_operation_probes"]:
@@ -161,6 +161,9 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
             self.assertEqual(row["effect_on_quotient"], "unresolved_boundary_relevance")
         self.assertIn("epac_molecular.epac_representation_audit", {row["operation"] for row in ambiguous})
         self.assertIn("epac_molecular.epac_probe_relativity_formalization", {row["operation"] for row in ambiguous})
+        self.assertIn("epac_atomic_derivation.derive_period", {row["operation"] for row in ambiguous})
+        self.assertIn("epac_b_derivation.active_orbital_set", {row["operation"] for row in ambiguous})
+        self.assertIn("epac_b_derivation.ligand_field_spin_control", {row["operation"] for row in ambiguous})
         for operation in ("epac_boundary_minimal_refinement.boundary_minimal_refinement_report",
                           "epac_boundary_probe_completeness.boundary_probe_completeness_report",
                           "epac_boundary_probe_completeness.declared_operation_ledger",

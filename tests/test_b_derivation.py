@@ -38,6 +38,22 @@
 #   timeout: 10
 #   mutates: none
 #   cleanup: none
+#
+# id: check_active_orbital_basis_preserves_subshell_identity
+#   proves: active_orbital_basis_preserves_subshell_identity
+#   call: self::test_zn2_plus_d10_has_zero_unpaired_regression
+#   requires: python3
+#   timeout: 10
+#   mutates: none
+#   cleanup: none
+#
+# id: check_ligand_field_controls_require_explicit_regime
+#   proves: ligand_field_controls_require_explicit_regime
+#   call: self::test_ligand_field_controls_are_explicit_not_lookup
+#   requires: python3
+#   timeout: 10
+#   mutates: none
+#   cleanup: none
 # === END CHECKS ===
 
 from __future__ import annotations
@@ -134,10 +150,10 @@ class BDerivationTest(unittest.TestCase):
         self.assertEqual(active["kind"], "transition-metal")
         self.assertEqual(
             [sub["subshell"] for sub in active["subshells"]],
-            ["4s", "3d"],
+            ["4s", "3d", "4p"],
         )
         self.assertEqual(active["unpaired_electrons"], 0)
-        self.assertEqual(active["vacant_orbitals"], 6)  # 4s0 + 3d0
+        self.assertEqual(active["vacant_orbitals"], 9)  # 4s0 + 3d0 + 4p0
         self.assertEqual(active["coordination_capacity"], "UNRESOLVED")
         self.assertEqual(active["capacity_rule_status"], "FALSIFIED")
 
@@ -164,8 +180,59 @@ class BDerivationTest(unittest.TestCase):
         self.assertEqual(by_subshell["3d"]["electrons"], 10)
         self.assertEqual(by_subshell["3d"]["unpaired"], 0)
         self.assertEqual(by_subshell["4s"]["electrons"], 0)
+        self.assertEqual(by_subshell["4p"]["electrons"], 0)
+        self.assertEqual(by_subshell["4p"]["bond_context_participation"], "UNRESOLVED")
         self.assertEqual(active["unpaired_electrons"], 0)
+        self.assertEqual(active["vacant_orbitals"], 4)
         self.assertEqual(active["coordination_capacity"], "UNRESOLVED")
+
+    def test_ligand_field_controls_are_explicit_not_lookup(self) -> None:
+        from epac_b_derivation import ligand_field_spin_control
+
+        high = ligand_field_spin_control(5, "octahedral", "high")
+        low = ligand_field_spin_control(5, "octahedral", "low")
+        self.assertEqual(high["unpaired_electrons"], 5)
+        self.assertEqual(low["unpaired_electrons"], 1)
+        for control in (high, low):
+            self.assertFalse(control["ligand_identity_used"])
+            self.assertFalse(control["spectrochemical_lookup_used"])
+            self.assertEqual(control["ligand_field_regime_derivation"], "UNRESOLVED")
+            self.assertEqual(control["status"], "control-only")
+
+        report = freeze_b_derivation()
+        self.assertEqual(report["ligand_field_spin_controls"], [high, low])
+        self.assertEqual(report["ligand_field_regime_derivation"], "UNRESOLVED")
+        self.assertFalse(report["spectrochemical_lookup_used"])
+
+        expected_high = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
+        expected_low = [0, 1, 2, 3, 2, 1, 0, 1, 2, 1, 0]
+        for d_electrons in range(11):
+            self.assertEqual(
+                ligand_field_spin_control(
+                    d_electrons, "octahedral", "high"
+                )["unpaired_electrons"],
+                expected_high[d_electrons],
+            )
+            self.assertEqual(
+                ligand_field_spin_control(
+                    d_electrons, "octahedral", "low"
+                )["unpaired_electrons"],
+                expected_low[d_electrons],
+            )
+
+        with self.assertRaises(BDerivationError):
+            ligand_field_spin_control(5, "tetrahedral", "high")
+        with self.assertRaises(BDerivationError):
+            ligand_field_spin_control(5, "octahedral", "inferred")
+
+    def test_active_orbital_charge_fails_closed(self) -> None:
+        from epac_b_derivation import active_orbital_set
+
+        zinc = atomic_record(30)
+        with self.assertRaises(BDerivationError):
+            active_orbital_set(zinc, charge=-1)
+        with self.assertRaises(BDerivationError):
+            active_orbital_set(zinc, charge=13)
 
 
 if __name__ == "__main__":

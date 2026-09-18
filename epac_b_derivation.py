@@ -2,10 +2,10 @@
 # id: epac_b_derivation
 #   module_name: epac_b_derivation
 #   module_kind: construction
-#   summary: freeze the rule deriving B=(3,d,c) and ligand_contribution_K from orbital occupancy, charge, and bond state, then evaluate held-out Z=19..36, ion, radical, and bond-state cases
+#   summary: freeze the rule deriving B=(3,d,c) and ligand_contribution_K from orbital occupancy, charge, and bond state, preserve ns/(n-1)d/np subshell identity, and expose lookup-free ligand-field controls
 #   owner: Erin Spencer
-#   public_surface: SCHEMA, VERSION, BDerivationError, bare_element_b, ion_b, ligand_contribution, molecule_b, freeze_b_derivation, replay_b_derivation
-#   internal_surface: charged electron removal, center/ligand resolution, canonical receipt
+#   public_surface: SCHEMA, VERSION, BDerivationError, bare_element_b, ion_b, ligand_contribution, molecule_b, active_orbital_set, ligand_field_spin_control, freeze_b_derivation, replay_b_derivation
+#   internal_surface: charged electron removal, center/ligand resolution, subshell-resolved occupancy, explicit ligand-field controls, canonical receipt
 #   auth_boundary: none
 #   storage_boundary: immutable records only
 #   network_boundary: none
@@ -16,7 +16,7 @@
 #   rollback: remove this module and its tests
 #   requires: epac_atomic (Z=1..36)
 #   since: 2026-09-17
-#   unresolved: transition-metal valence participation and empirical held-out comparison
+#   unresolved: ligand-field regime derivation, coordination capacity, topology formation, and empirical held-out comparison
 # === END MODULE_BUILD ===
 
 # === CONTRACTS ===
@@ -49,6 +49,18 @@
 #   then: replay raises rather than accepting drift
 #   class: safety
 #   since: 2026-09-17
+#
+# id: active_orbital_basis_preserves_subshell_identity
+#   given: a constructed transition-metal electron state and nonnegative ionic charge
+#   then: ns, (n-1)d, and np remain distinct, cation removal consumes ns before (n-1)d, and Hund applies within each degenerate subshell only
+#   class: correctness
+#   since: 2026-09-18
+#
+# id: ligand_field_controls_require_explicit_regime
+#   given: a d-electron count plus supplied octahedral high-spin or low-spin regime
+#   then: the control derives the corresponding split-orbital occupancy without mapping ligand identity through a spectrochemical lookup
+#   class: doctrine
+#   since: 2026-09-18
 # === END CONTRACTS ===
 
 """Freeze the B derivation rule and evaluate held-out cases.
@@ -67,6 +79,19 @@ Rule (frozen):
 Element identity and periodic-table lookup are never consulted. These are
 B evaluations, not bond predictions: the rule measures a supplied topology
 and does not yet know how the topology forms.
+
+Usage::
+
+    from epac_atomic import atomic_record
+    from epac_b_derivation import active_orbital_set, ligand_field_spin_control
+
+    zn2 = active_orbital_set(atomic_record(30), charge=2)
+    high_spin_d5 = ligand_field_spin_control(5, "octahedral", "high")
+
+``ligand_field_spin_control`` receives the spin regime explicitly. It does
+not infer a regime from ligand identity and does not consult a spectrochemical
+series. Ligand-field regime derivation and coordination capacity remain
+``UNRESOLVED``.
 """
 
 from __future__ import annotations
@@ -322,11 +347,19 @@ def freeze_b_derivation() -> dict[str, Any]:
             "set) manufactured two unpaired electrons for Zn2+ d10 where "
             "none stand; Hund applies per degenerate subshell only"
         ),
+        "ligand_field_spin_controls": [
+            ligand_field_spin_control(5, "octahedral", "high"),
+            ligand_field_spin_control(5, "octahedral", "low"),
+        ],
+        "ligand_field_regime_derivation": "UNRESOLVED",
+        "spectrochemical_lookup_used": False,
         "hmmm": (
             "the rule knows how to measure a supplied topology; it does not "
             "yet know how the topology forms. The active-orbital set "
             "identifies possible rooms, but treating their floors as level "
             "manufactured two electrons standing where none stand. "
+            "The high/low-spin controls accept their ligand-field regime as "
+            "an explicit input; EPAC does not yet derive that regime. "
             "B evaluations are bounded evidence, not bond predictions: "
             "bond state is an input."
         ),
@@ -376,32 +409,42 @@ def active_orbital_set(record: AtomicRecord, charge: int = 0) -> dict[str, Any]:
     """Derive the bond-context active-orbital set for a supplied atom.
 
     Main group: the outermost shell subshells as constructed.
-    Transition metals (Z=21..30): the 4s and 3d subshells with subshell
+    Transition metals (Z=21..30): the 4s, 3d, and 4p subshell basis with
+    subshell
     identity preserved; charge removes electrons 4s first, then 3d. Hund's
     rule applies within each degenerate subshell, never across them.
     Coordination capacity is UNRESOLVED until ligand-field, orbital-energy
-    ordering, geometry, and 4p participation are represented.
+    ordering, geometry, and 4p participation are derived rather than merely
+    represented as candidate state.
     """
 
     if not 1 <= record.Z <= 36:
         raise BDerivationError("active-orbital set is defined for Z=1..36")
     if isinstance(charge, bool) or not isinstance(charge, int):
         raise BDerivationError("charge must be an integer")
+    if charge < 0:
+        raise BDerivationError("anion electron addition is not in the frozen rule")
     if 21 <= record.Z <= 30:
         s_electrons = len([e for e in record.electrons if (e.n, e.l) == (4, 0)])
         d_electrons = len([e for e in record.electrons if (e.n, e.l) == (3, 2)])
+        p_electrons = len([e for e in record.electrons if (e.n, e.l) == (4, 1)])
         # Cation removal order: highest n first (4s), then 3d.
         removed = charge
         from_s = min(removed, s_electrons)
         s_electrons -= from_s
         removed -= from_s
-        d_electrons -= min(removed, d_electrons)
-        if d_electrons < 0:
-            raise BDerivationError("charge removes more d electrons than exist")
+        from_d = min(removed, d_electrons)
+        d_electrons -= from_d
+        removed -= from_d
+        if removed:
+            raise BDerivationError("charge removes more active electrons than exist")
         s_unpaired, s_vacant = _hund_within_subshell(s_electrons, 1)
         d_unpaired, d_vacant = _hund_within_subshell(d_electrons, 5)
+        p_unpaired, p_vacant = _hund_within_subshell(p_electrons, 3)
         return {
             "kind": "transition-metal",
+            "basis_status": "construction-derived candidate; bond-context participation unresolved",
+            "source_configuration_model": "frozen Aufbau construction",
             "subshells": [
                 {
                     "subshell": "4s",
@@ -417,9 +460,17 @@ def active_orbital_set(record: AtomicRecord, charge: int = 0) -> dict[str, Any]:
                     "unpaired": d_unpaired,
                     "vacant": d_vacant,
                 },
+                {
+                    "subshell": "4p",
+                    "orbitals": 3,
+                    "electrons": p_electrons,
+                    "unpaired": p_unpaired,
+                    "vacant": p_vacant,
+                    "bond_context_participation": "UNRESOLVED",
+                },
             ],
-            "unpaired_electrons": s_unpaired + d_unpaired,
-            "vacant_orbitals": s_vacant + d_vacant,
+            "unpaired_electrons": s_unpaired + d_unpaired + p_unpaired,
+            "vacant_orbitals": s_vacant + d_vacant + p_vacant,
             "coordination_capacity": "UNRESOLVED",
             "capacity_rule_status": "FALSIFIED",
             "capacity_unresolved_reasons": [
@@ -457,6 +508,70 @@ def active_orbital_set(record: AtomicRecord, charge: int = 0) -> dict[str, Any]:
             "geometry",
             "4p participation",
         ],
+    }
+
+
+def ligand_field_spin_control(
+    d_electrons: int,
+    geometry: str,
+    spin_regime: str,
+) -> dict[str, Any]:
+    """Evaluate an explicit octahedral high-/low-spin control.
+
+    This is a control over a supplied field regime, not a derivation of that
+    regime from ligand identity. No spectrochemical series or ligand lookup is
+    used. The returned occupancy therefore demonstrates why d-electron count
+    alone cannot determine the unpaired count.
+    """
+
+    if isinstance(d_electrons, bool) or not isinstance(d_electrons, int):
+        raise BDerivationError("d_electrons must be an integer")
+    if not 0 <= d_electrons <= 10:
+        raise BDerivationError("d_electrons must be in 0..10")
+    if geometry != "octahedral":
+        raise BDerivationError("only the explicit octahedral control is implemented")
+    if spin_regime not in {"high", "low"}:
+        raise BDerivationError("spin_regime must be 'high' or 'low'")
+
+    # Each tuple is (field group, orbital index). The first pass places one
+    # electron in each listed orbital; the second pass pairs in the same order.
+    t2g = [("t2g", index) for index in range(3)]
+    eg = [("eg", index) for index in range(2)]
+    if spin_regime == "high":
+        fill_order = [*t2g, *eg, *t2g, *eg]
+    else:
+        fill_order = [*t2g, *t2g, *eg, *eg]
+
+    occupancy: dict[tuple[str, int], int] = {
+        orbital: 0 for orbital in [*t2g, *eg]
+    }
+    for orbital in fill_order[:d_electrons]:
+        occupancy[orbital] += 1
+
+    groups = []
+    for group_name, orbitals in (("t2g", t2g), ("eg", eg)):
+        counts = [occupancy[orbital] for orbital in orbitals]
+        groups.append(
+            {
+                "group": group_name,
+                "orbitals": len(orbitals),
+                "electrons": sum(counts),
+                "unpaired": sum(count == 1 for count in counts),
+                "occupancy": counts,
+            }
+        )
+
+    return {
+        "control": f"octahedral-d{d_electrons}-{spin_regime}-spin",
+        "geometry_input": geometry,
+        "spin_regime_input": spin_regime,
+        "d_electrons": d_electrons,
+        "field_groups": groups,
+        "unpaired_electrons": sum(group["unpaired"] for group in groups),
+        "ligand_identity_used": False,
+        "spectrochemical_lookup_used": False,
+        "ligand_field_regime_derivation": "UNRESOLVED",
+        "status": "control-only",
     }
 
 
@@ -512,6 +627,7 @@ __all__ = [
     "ligand_contribution",
     "molecule_b",
     "active_orbital_set",
+    "ligand_field_spin_control",
     "evaluate_transition_metal_topology",
     "freeze_b_derivation",
     "replay_b_derivation",

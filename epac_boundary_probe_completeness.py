@@ -118,6 +118,8 @@ OPERATION_SOURCE_FILES = (
     "subatomic/__init__.py",
     "data/__init__.py",
     "epac_atomic.py",
+    "epac_atomic_derivation.py",
+    "epac_b_derivation.py",
     "epac_ucns_provenance.py",
     "viz/spiral_viz.py",
     "viz/cli.py",
@@ -353,7 +355,15 @@ def _declared_operations() -> tuple[dict[str, str], ...]:
 
 
 def _classify_operation(module: str, name: str) -> str:
-    if module in {"epac_atomic", "epac_ucns_provenance", "epac_viz", "epac_viz.spiral_viz", "epac_viz.cli"}:
+    if module in {
+        "epac_atomic",
+        "epac_atomic_derivation",
+        "epac_b_derivation",
+        "epac_ucns_provenance",
+        "epac_viz",
+        "epac_viz.spiral_viz",
+        "epac_viz.cli",
+    }:
         return AMBIGUOUS
 
     if name in OmittedButNomenclature.NAMES:

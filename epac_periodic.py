@@ -355,7 +355,18 @@ def boundary_capacity_from_element_receipt(receipt: PublicGonolReceipt) -> tuple
 
 
 def construct_periodic_table() -> dict[str, PublicGonolReceipt]:
-    return {record.symbol: construct_element_gonol(record.symbol) for record in iter_table()}
+    """Construct the frozen public Z=1..18 element-gonol surface.
+
+    ``epac_atomic`` extends through Z=36 for bounded atomic/B research. That
+    extension does not silently widen the previously frozen public element
+    construction or its molecular comparison population.
+    """
+
+    return {
+        record.symbol: construct_element_gonol(record.symbol)
+        for record in iter_table()
+        if record.Z <= 18
+    }
 
 
 def replay_element_gonol(receipt: PublicGonolReceipt) -> PublicGonolReceipt:
