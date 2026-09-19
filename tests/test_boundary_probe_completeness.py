@@ -163,7 +163,10 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
         self.assertIn("epac_molecular.epac_probe_relativity_formalization", {row["operation"] for row in ambiguous})
         self.assertIn("epac_atomic_derivation.derive_period", {row["operation"] for row in ambiguous})
         self.assertIn("epac_b_derivation.active_orbital_set", {row["operation"] for row in ambiguous})
-        self.assertIn("epac_b_derivation.ligand_field_spin_control", {row["operation"] for row in ambiguous})
+        self.assertIn(
+            "epac_b_derivation.ligand_field_spin_from_energies",
+            {row["operation"] for row in ambiguous},
+        )
         for operation in ("epac_boundary_minimal_refinement.boundary_minimal_refinement_report",
                           "epac_boundary_probe_completeness.boundary_probe_completeness_report",
                           "epac_boundary_probe_completeness.declared_operation_ledger",

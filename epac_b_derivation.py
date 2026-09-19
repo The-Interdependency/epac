@@ -2,10 +2,10 @@
 # id: epac_b_derivation
 #   module_name: epac_b_derivation
 #   module_kind: construction
-#   summary: freeze the rule deriving B=(3,d,c) and ligand_contribution_K from orbital occupancy, charge, and bond state, preserve ns/(n-1)d/np subshell identity, and expose lookup-free ligand-field controls
+#   summary: freeze the rule deriving B=(3,d,c) and ligand_contribution_K from orbital occupancy, charge, and bond state, preserve ns/(n-1)d/np subshell identity, and select idealized octahedral spin occupancy by exact energy minimization
 #   owner: Erin Spencer
-#   public_surface: SCHEMA, VERSION, BDerivationError, bare_element_b, ion_b, ligand_contribution, molecule_b, active_orbital_set, ligand_field_spin_control, freeze_b_derivation, replay_b_derivation
-#   internal_surface: charged electron removal, center/ligand resolution, subshell-resolved occupancy, explicit ligand-field controls, canonical receipt
+#   public_surface: SCHEMA, VERSION, BDerivationError, bare_element_b, ion_b, ligand_contribution, molecule_b, active_orbital_set, ligand_field_spin_from_energies, freeze_b_derivation, replay_b_derivation
+#   internal_surface: charged electron removal, center/ligand resolution, subshell-resolved occupancy, exact idealized octahedral energy candidates, canonical receipt
 #   auth_boundary: none
 #   storage_boundary: immutable records only
 #   network_boundary: none
@@ -16,7 +16,7 @@
 #   rollback: remove this module and its tests
 #   requires: epac_atomic (Z=1..36)
 #   since: 2026-09-17
-#   unresolved: ligand-field regime derivation, coordination capacity, topology formation, and empirical held-out comparison
+#   unresolved: derivation of delta_o and pairing energy from bond context, coordination capacity, topology formation, and empirical held-out comparison
 # === END MODULE_BUILD ===
 
 # === CONTRACTS ===
@@ -56,11 +56,11 @@
 #   class: correctness
 #   since: 2026-09-18
 #
-# id: ligand_field_controls_require_explicit_regime
-#   given: a d-electron count plus supplied octahedral high-spin or low-spin regime
-#   then: the control derives the corresponding split-orbital occupancy without mapping ligand identity through a spectrochemical lookup
+# id: ligand_field_regime_minimizes_supplied_energy_model
+#   given: a d-electron count plus exact nonnegative octahedral splitting and pairing energies
+#   then: the lower-energy occupancy is selected, equal distinct candidates remain unresolved, and ligand identity or spectrochemical lookup is never used
 #   class: doctrine
-#   since: 2026-09-18
+#   since: 2026-09-19
 # === END CONTRACTS ===
 
 """Freeze the B derivation rule and evaluate held-out cases.
@@ -83,14 +83,18 @@ and does not yet know how the topology forms.
 Usage::
 
     from epac_atomic import atomic_record
-    from epac_b_derivation import active_orbital_set, ligand_field_spin_control
+    from epac_b_derivation import active_orbital_set, ligand_field_spin_from_energies
 
     zn2 = active_orbital_set(atomic_record(30), charge=2)
-    high_spin_d5 = ligand_field_spin_control(5, "octahedral", "high")
+    d5 = ligand_field_spin_from_energies(
+        5, "octahedral", delta_o="2", pairing_energy="1"
+    )
 
-``ligand_field_spin_control`` receives the spin regime explicitly. It does
-not infer a regime from ligand identity and does not consult a spectrochemical
-series. Ligand-field regime derivation and coordination capacity remain
+``ligand_field_spin_from_energies`` compares idealized octahedral crystal-field
+stabilization plus pairing cost using exact decimal inputs. It does not infer
+energies from ligand identity and does not consult a spectrochemical series.
+The selected regime is therefore conditional on supplied energies. Derivation
+of those energies from bond context and coordination capacity remain
 ``UNRESOLVED``.
 """
 
@@ -98,13 +102,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from epac_atomic import AtomicRecord, atomic_record
 
 SCHEMA = "epac.b-derivation"
 SCHEMA_SET = "epac.b-derivation-receipt-set"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 _LOCKED = {
     "H2": (("H", 2),),
@@ -347,19 +352,35 @@ def freeze_b_derivation() -> dict[str, Any]:
             "set) manufactured two unpaired electrons for Zn2+ d10 where "
             "none stand; Hund applies per degenerate subshell only"
         ),
-        "ligand_field_spin_controls": [
-            ligand_field_spin_control(5, "octahedral", "high"),
-            ligand_field_spin_control(5, "octahedral", "low"),
+        "ligand_field_energy_controls": [
+            ligand_field_spin_from_energies(
+                5, "octahedral", delta_o="1", pairing_energy="2"
+            ),
+            ligand_field_spin_from_energies(
+                5, "octahedral", delta_o="2", pairing_energy="1"
+            ),
+            ligand_field_spin_from_energies(
+                5, "octahedral", delta_o="1", pairing_energy="1"
+            ),
         ],
-        "ligand_field_regime_derivation": "UNRESOLVED",
+        "ligand_field_regime_derivation": "CONDITIONAL_ON_SUPPLIED_ENERGIES",
+        "ligand_field_energy_inputs_derivation": "UNRESOLVED",
+        "ligand_field_model_scope": (
+            "idealized octahedral crystal-field stabilization plus one "
+            "additive cost per paired electron pair; not an empirical "
+            "ground-state predictor"
+        ),
+        "spin_regime_input_used": False,
         "spectrochemical_lookup_used": False,
         "hmmm": (
             "the rule knows how to measure a supplied topology; it does not "
             "yet know how the topology forms. The active-orbital set "
             "identifies possible rooms, but treating their floors as level "
             "manufactured two electrons standing where none stand. "
-            "The high/low-spin controls accept their ligand-field regime as "
-            "an explicit input; EPAC does not yet derive that regime. "
+            "The idealized octahedral control now selects the lower-energy "
+            "occupancy from supplied delta_o and pairing energy, and exposes "
+            "a distinct-candidate equality as unresolved. EPAC does not yet "
+            "derive either energy from bond context. "
             "B evaluations are bounded evidence, not bond predictions: "
             "bond state is an input."
         ),
@@ -511,33 +532,37 @@ def active_orbital_set(record: AtomicRecord, charge: int = 0) -> dict[str, Any]:
     }
 
 
-def ligand_field_spin_control(
+def _exact_nonnegative_energy(value: Any, name: str) -> Decimal:
+    """Parse an exact finite decimal energy; binary floats fail closed."""
+
+    if isinstance(value, bool) or isinstance(value, float):
+        raise BDerivationError(f"{name} must be an exact decimal string, integer, or Decimal")
+    try:
+        energy = value if isinstance(value, Decimal) else Decimal(value)
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise BDerivationError(f"{name} is not an exact decimal energy") from exc
+    if not energy.is_finite() or energy < 0:
+        raise BDerivationError(f"{name} must be finite and nonnegative")
+    return energy
+
+
+def _decimal_text(value: Decimal) -> str:
+    if value == 0:
+        return "0"
+    return format(value.normalize(), "f")
+
+
+def _octahedral_candidate(
     d_electrons: int,
-    geometry: str,
-    spin_regime: str,
+    regime: str,
+    delta_o: Decimal,
+    pairing_energy: Decimal,
 ) -> dict[str, Any]:
-    """Evaluate an explicit octahedral high-/low-spin control.
+    """Build one idealized occupancy and its relative model energy."""
 
-    This is a control over a supplied field regime, not a derivation of that
-    regime from ligand identity. No spectrochemical series or ligand lookup is
-    used. The returned occupancy therefore demonstrates why d-electron count
-    alone cannot determine the unpaired count.
-    """
-
-    if isinstance(d_electrons, bool) or not isinstance(d_electrons, int):
-        raise BDerivationError("d_electrons must be an integer")
-    if not 0 <= d_electrons <= 10:
-        raise BDerivationError("d_electrons must be in 0..10")
-    if geometry != "octahedral":
-        raise BDerivationError("only the explicit octahedral control is implemented")
-    if spin_regime not in {"high", "low"}:
-        raise BDerivationError("spin_regime must be 'high' or 'low'")
-
-    # Each tuple is (field group, orbital index). The first pass places one
-    # electron in each listed orbital; the second pass pairs in the same order.
     t2g = [("t2g", index) for index in range(3)]
     eg = [("eg", index) for index in range(2)]
-    if spin_regime == "high":
+    if regime == "high":
         fill_order = [*t2g, *eg, *t2g, *eg]
     else:
         fill_order = [*t2g, *t2g, *eg, *eg]
@@ -548,7 +573,7 @@ def ligand_field_spin_control(
     for orbital in fill_order[:d_electrons]:
         occupancy[orbital] += 1
 
-    groups = []
+    groups: list[dict[str, Any]] = []
     for group_name, orbitals in (("t2g", t2g), ("eg", eg)):
         counts = [occupancy[orbital] for orbital in orbitals]
         groups.append(
@@ -561,17 +586,102 @@ def ligand_field_spin_control(
             }
         )
 
+    t2g_electrons = groups[0]["electrons"]
+    eg_electrons = groups[1]["electrons"]
+    pair_count = sum(count // 2 for count in occupancy.values())
+    crystal_field_energy = (
+        Decimal(-4 * t2g_electrons + 6 * eg_electrons) * delta_o / Decimal(10)
+    )
+    pairing_cost = Decimal(pair_count) * pairing_energy
+    total_energy = crystal_field_energy + pairing_cost
     return {
-        "control": f"octahedral-d{d_electrons}-{spin_regime}-spin",
-        "geometry_input": geometry,
-        "spin_regime_input": spin_regime,
-        "d_electrons": d_electrons,
+        "regime_candidate": regime,
         "field_groups": groups,
         "unpaired_electrons": sum(group["unpaired"] for group in groups),
+        "pair_count": pair_count,
+        "crystal_field_energy": _decimal_text(crystal_field_energy),
+        "pairing_cost": _decimal_text(pairing_cost),
+        "total_relative_energy": _decimal_text(total_energy),
+        "_total_energy": total_energy,
+    }
+
+
+def ligand_field_spin_from_energies(
+    d_electrons: int,
+    geometry: str,
+    delta_o: str | int | Decimal,
+    pairing_energy: str | int | Decimal,
+) -> dict[str, Any]:
+    """Select idealized octahedral occupancy by exact energy minimization.
+
+    The model compares crystal-field stabilization with an additive cost per
+    paired electron pair. It is conditional on supplied ``delta_o`` and
+    ``pairing_energy``; EPAC does not derive those energies from a ligand or
+    topology. Equal-energy distinct occupancies remain unresolved.
+    """
+
+    if isinstance(d_electrons, bool) or not isinstance(d_electrons, int):
+        raise BDerivationError("d_electrons must be an integer")
+    if not 0 <= d_electrons <= 10:
+        raise BDerivationError("d_electrons must be in 0..10")
+    if geometry != "octahedral":
+        raise BDerivationError("only the idealized octahedral model is implemented")
+    delta = _exact_nonnegative_energy(delta_o, "delta_o")
+    pairing = _exact_nonnegative_energy(pairing_energy, "pairing_energy")
+
+    candidates = [
+        _octahedral_candidate(d_electrons, regime, delta, pairing)
+        for regime in ("high", "low")
+    ]
+    high, low = candidates
+    same_occupancy = high["field_groups"] == low["field_groups"]
+    if same_occupancy:
+        selected_regime = "not-distinct"
+        selected = high
+        status = "unique-occupancy"
+        derivation = "NOT_APPLICABLE_SINGLE_OCCUPANCY"
+    elif high["_total_energy"] < low["_total_energy"]:
+        selected_regime = "high"
+        selected = high
+        status = "derived-from-supplied-energies"
+        derivation = "DERIVED_FROM_SUPPLIED_ENERGIES"
+    elif low["_total_energy"] < high["_total_energy"]:
+        selected_regime = "low"
+        selected = low
+        status = "derived-from-supplied-energies"
+        derivation = "DERIVED_FROM_SUPPLIED_ENERGIES"
+    else:
+        selected_regime = "UNRESOLVED_DEGENERATE"
+        selected = None
+        status = "degenerate-energy-boundary"
+        derivation = "UNRESOLVED_DEGENERATE"
+
+    for candidate in candidates:
+        candidate.pop("_total_energy")
+    return {
+        "control": (
+            f"octahedral-d{d_electrons}-delta-{_decimal_text(delta)}-"
+            f"pairing-{_decimal_text(pairing)}"
+        ),
+        "model": "idealized-octahedral-crystal-field-plus-pairing",
+        "model_scope": (
+            "conditional arithmetic over supplied energies; excludes "
+            "multiplet corrections and empirical ground-state prediction"
+        ),
+        "geometry_input": geometry,
+        "d_electrons": d_electrons,
+        "delta_o_input": _decimal_text(delta),
+        "pairing_energy_input": _decimal_text(pairing),
+        "candidates": candidates,
+        "selected_regime": selected_regime,
+        "field_groups": None if selected is None else selected["field_groups"],
+        "unpaired_electrons": None if selected is None else selected["unpaired_electrons"],
+        "spin_regime_input_used": False,
         "ligand_identity_used": False,
         "spectrochemical_lookup_used": False,
-        "ligand_field_regime_derivation": "UNRESOLVED",
-        "status": "control-only",
+        "ligand_field_regime_derivation": derivation,
+        "ligand_field_energy_inputs_derivation": "UNRESOLVED",
+        "status": status,
     }
 
 
@@ -627,7 +737,7 @@ __all__ = [
     "ligand_contribution",
     "molecule_b",
     "active_orbital_set",
-    "ligand_field_spin_control",
+    "ligand_field_spin_from_energies",
     "evaluate_transition_metal_topology",
     "freeze_b_derivation",
     "replay_b_derivation",

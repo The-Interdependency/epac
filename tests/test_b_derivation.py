@@ -47,9 +47,9 @@
 #   mutates: none
 #   cleanup: none
 #
-# id: check_ligand_field_controls_require_explicit_regime
-#   proves: ligand_field_controls_require_explicit_regime
-#   call: self::test_ligand_field_controls_are_explicit_not_lookup
+# id: check_ligand_field_regime_minimizes_supplied_energy_model
+#   proves: ligand_field_regime_minimizes_supplied_energy_model
+#   call: self::test_ligand_field_regime_comes_from_energy_minimum
 #   requires: python3
 #   timeout: 10
 #   mutates: none
@@ -186,44 +186,67 @@ class BDerivationTest(unittest.TestCase):
         self.assertEqual(active["vacant_orbitals"], 4)
         self.assertEqual(active["coordination_capacity"], "UNRESOLVED")
 
-    def test_ligand_field_controls_are_explicit_not_lookup(self) -> None:
-        from epac_b_derivation import ligand_field_spin_control
+    def test_ligand_field_regime_comes_from_energy_minimum(self) -> None:
+        from epac_b_derivation import ligand_field_spin_from_energies
 
-        high = ligand_field_spin_control(5, "octahedral", "high")
-        low = ligand_field_spin_control(5, "octahedral", "low")
+        high = ligand_field_spin_from_energies(5, "octahedral", "1", "2")
+        low = ligand_field_spin_from_energies(5, "octahedral", "2", "1")
+        boundary = ligand_field_spin_from_energies(5, "octahedral", "1", "1")
+        self.assertEqual(high["selected_regime"], "high")
+        self.assertEqual(low["selected_regime"], "low")
+        self.assertEqual(boundary["selected_regime"], "UNRESOLVED_DEGENERATE")
         self.assertEqual(high["unpaired_electrons"], 5)
         self.assertEqual(low["unpaired_electrons"], 1)
-        for control in (high, low):
+        self.assertIsNone(boundary["unpaired_electrons"])
+        for control in (high, low, boundary):
+            self.assertFalse(control["spin_regime_input_used"])
             self.assertFalse(control["ligand_identity_used"])
             self.assertFalse(control["spectrochemical_lookup_used"])
-            self.assertEqual(control["ligand_field_regime_derivation"], "UNRESOLVED")
-            self.assertEqual(control["status"], "control-only")
+            self.assertEqual(control["ligand_field_energy_inputs_derivation"], "UNRESOLVED")
 
         report = freeze_b_derivation()
-        self.assertEqual(report["ligand_field_spin_controls"], [high, low])
-        self.assertEqual(report["ligand_field_regime_derivation"], "UNRESOLVED")
+        self.assertEqual(report["ligand_field_energy_controls"], [high, low, boundary])
+        self.assertEqual(
+            report["ligand_field_regime_derivation"],
+            "CONDITIONAL_ON_SUPPLIED_ENERGIES",
+        )
+        self.assertEqual(report["ligand_field_energy_inputs_derivation"], "UNRESOLVED")
+        self.assertIn("not an empirical", report["ligand_field_model_scope"])
+        self.assertFalse(report["spin_regime_input_used"])
         self.assertFalse(report["spectrochemical_lookup_used"])
 
         expected_high = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
         expected_low = [0, 1, 2, 3, 2, 1, 0, 1, 2, 1, 0]
         for d_electrons in range(11):
+            high_result = ligand_field_spin_from_energies(
+                d_electrons, "octahedral", "1", "2"
+            )
+            low_result = ligand_field_spin_from_energies(
+                d_electrons, "octahedral", "2", "1"
+            )
             self.assertEqual(
-                ligand_field_spin_control(
-                    d_electrons, "octahedral", "high"
-                )["unpaired_electrons"],
+                high_result["unpaired_electrons"],
                 expected_high[d_electrons],
             )
             self.assertEqual(
-                ligand_field_spin_control(
-                    d_electrons, "octahedral", "low"
-                )["unpaired_electrons"],
+                low_result["unpaired_electrons"],
                 expected_low[d_electrons],
             )
+            if d_electrons in {4, 5, 6, 7}:
+                self.assertEqual(high_result["selected_regime"], "high")
+                self.assertEqual(low_result["selected_regime"], "low")
+            else:
+                self.assertEqual(high_result["selected_regime"], "not-distinct")
+                self.assertEqual(low_result["selected_regime"], "not-distinct")
 
         with self.assertRaises(BDerivationError):
-            ligand_field_spin_control(5, "tetrahedral", "high")
+            ligand_field_spin_from_energies(5, "tetrahedral", "1", "2")
         with self.assertRaises(BDerivationError):
-            ligand_field_spin_control(5, "octahedral", "inferred")
+            ligand_field_spin_from_energies(5, "octahedral", 1.0, "2")
+        with self.assertRaises(BDerivationError):
+            ligand_field_spin_from_energies(5, "octahedral", "NaN", "2")
+        with self.assertRaises(BDerivationError):
+            ligand_field_spin_from_energies(5, "octahedral", "-1", "2")
 
     def test_active_orbital_charge_fails_closed(self) -> None:
         from epac_b_derivation import active_orbital_set
