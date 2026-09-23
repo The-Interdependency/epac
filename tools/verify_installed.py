@@ -38,6 +38,44 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 
+class TestInventory:
+    """Bind successful calls and successful subtests to this pytest run."""
+
+    def __init__(self):
+        self.collected = []
+        self.passed = []
+        self.passed_subtests = 0
+
+    def pytest_collection_finish(self, session):
+        self.collected = [item.nodeid for item in session.items]
+
+    def pytest_runtest_logreport(self, report):
+        import pytest
+        if report.when != "call" or not report.passed:
+            return
+        if type(report) is pytest.TestReport:
+            self.passed.append(report.nodeid)
+        elif type(report).__name__ == "SubtestReport":
+            self.passed_subtests += 1
+
+
+def verify_test_evidence(xml_path, collected, passed, passed_subtests=0):
+    """Reject empty, partial, duplicate, skipped or contradictory test evidence."""
+    assert collected and len(set(collected)) == len(collected), "empty or duplicate test inventory"
+    assert passed == collected, "successful calls differ from complete test inventory"
+    root = ET.parse(xml_path).getroot()
+    cases = list(root.iter("testcase"))
+    assert len(cases) == len(collected), "JUnit inventory differs from collected tests"
+    assert not any(c.find(tag) is not None for c in cases for tag in ("skipped", "failure", "error"))
+    suites = list(root.iter("testsuite"))
+    leaf_suites = [suite for suite in suites if not any(child.tag == "testsuite" for child in suite)]
+    assert leaf_suites, "JUnit evidence contains no test suite"
+    reported_tests = sum(int(suite.attrib["tests"]) for suite in leaf_suites)
+    assert reported_tests == len(cases) + passed_subtests, "JUnit aggregate differs from parent tests plus successful subtests"
+    for suite in suites:
+        assert all(int(suite.attrib[tag]) == 0 for tag in ("failures", "errors", "skipped"))
+    return len(cases)
+
 
 EXPECTED_STANDINGS = {
     "atomic_shells_as_sealed_shape_prediction": "FALSIFIED",
@@ -123,10 +161,10 @@ def main() -> None:
                                         dependencies=(ucns.public_gonol_function, ucns.native_mobius_state))
     assert identity == epac_public_gonol.PINNED_UCNS_COMMIT
     xml_path = receipt_path.with_suffix(".xml")
-    result = pytest.main([str(source / "tests"), "--junitxml=" + str(xml_path), "-q", "-x", "-p", "no:cacheprovider", "-o", "xfail_strict=true"])
+    inventory = TestInventory()
+    result = pytest.main([str(source / "tests"), "--junitxml=" + str(xml_path), "-q", "-x", "-p", "no:cacheprovider", "-o", "xfail_strict=true"], plugins=[inventory])
     assert result == 0, result
-    cases = list(ET.parse(xml_path).getroot().iter("testcase"))
-    assert len(cases) == 209 and not any(c.find(tag) is not None for c in cases for tag in ("skipped", "failure", "error"))
+    test_count = verify_test_evidence(xml_path, inventory.collected, inventory.passed, inventory.passed_subtests)
     assert payload() == before
     origins = {name: str(Path(module.__file__).resolve()) for name, module in sys.modules.items()
                if name.startswith("epac_") and getattr(module, "__file__", None)}
@@ -139,8 +177,8 @@ def main() -> None:
     receipt = {"artifact_kind": artifact_kind, "artifact_sha256": artifact_digest, "artifact_name": artifact.name, "schema": "epac.installed-replay", "version": 1, "status": "passed", "python": sys.version,
                "verifier_sha256": hashlib.sha256(verifier_bytes).hexdigest(), "source_files_sha256": archived_inputs, "outcomes_xml_sha256": hashlib.sha256(xml_path.read_bytes()).hexdigest(),
                "wheel_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(), "ucns_source_commit": identity,
-               "installed_payload_sha256": immutable, "installed_distribution_sha256": before, "imported_origins": origins, "tests": len(cases),
-               "skips": 0, "comparison_standings": standings, "empirical_status_transfer": False}
+               "installed_payload_sha256": immutable, "installed_distribution_sha256": before, "imported_origins": origins, "tests": test_count, "test_inventory": inventory.collected,
+               "successful_subtests": inventory.passed_subtests, "skips": 0, "comparison_standings": standings, "empirical_status_transfer": False}
     receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
 
 
