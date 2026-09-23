@@ -6,6 +6,13 @@
 #   requires: python3, bash
 #   mutates: temporary fixture archives, virtual environment, and installer trace
 #   cleanup: temporary directory context removes all fixture state
+#
+# id: check_epac_complete_test_evidence
+#   proves: epac_installation_replays_independently
+#   call: self::test_installed_replay_requires_complete_test_evidence
+#   requires: python3
+#   mutates: filesystem
+#   cleanup: temporary directory context removes fixture state
 # === END CHECKS ===
 from pathlib import Path
 import io
@@ -23,6 +30,35 @@ import zipfile
 import shutil
 from types import SimpleNamespace
 from unittest.mock import patch
+
+
+def test_installed_replay_requires_complete_test_evidence():
+    """Usage: pytest tests/test_distribution_replay.py; exercise false-green receipts."""
+    path = Path(__file__).resolve().parents[1] / "tools/verify_installed.py"
+    spec = importlib.util.spec_from_file_location("epac_installed_fixture", path)
+    verifier = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(verifier)
+    with TemporaryDirectory() as directory:
+        xml = Path(directory) / "results.xml"
+        good = '<testsuite tests="2" failures="0" errors="0" skipped="0"><testcase name="a"/><testcase name="b"/></testsuite>'
+        xml.write_text(good, encoding="utf-8")
+        assert verifier.verify_test_evidence(xml, ["a", "b"], ["a", "b"]) == 2
+        for collected, passed, report in (
+            ([], [], good),
+            (["a", "b"], ["a"], good),
+            (["a", "a"], ["a", "a"], good),
+            (["a", "b"], ["a", "b"], good.replace('tests="2"', 'tests="3"')),
+            (["a", "b"], ["a", "b"], good.replace('failures="0"', 'failures="1"')),
+            (["a", "b"], ["a", "b"], good.replace('<testcase name="b"/>', '')),
+            (["a", "b"], ["a", "b"], good.replace('<testcase name="b"/>', '<testcase name="b"><skipped/></testcase>')),
+        ):
+            xml.write_text(report, encoding="utf-8")
+            try:
+                verifier.verify_test_evidence(xml, collected, passed)
+            except AssertionError:
+                pass
+            else:
+                raise AssertionError("incomplete test evidence accepted")
 
 
 def _write_fixture_dist(dist, contents, wheel_payload):

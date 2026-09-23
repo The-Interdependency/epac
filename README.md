@@ -41,6 +41,9 @@ The package gate executes:
   source before running any archived verifier or tests; release-manifest hashes
   are checked when present, and the input binding is checked again at the end;
 - all repository and subatomic tests against separate clean wheel and source installs;
+- the current collected test inventory, with every test completing successfully,
+  no skips, and matching JUnit counts; the historical release's 209-test count
+  is not imposed on newer source revisions;
 - complete installed-distribution byte maps, import origins, exact UCNS source maps,
   and complete source snapshots before and after each replay;
 - the preregistered molecular comparison, requiring all 14 current standings (including the original four) to remain `FALSIFIED`;
@@ -73,6 +76,10 @@ output directories. The replay gate records the exact source and artifact bindin
 in `candidate-source.json`; a stale or incomplete sdist is rejected before its
 code can run. Source distributions include every tracked repository file,
 including CI definitions and the complete local operational skill snapshot.
+When adding a root `epac_*.py` module, add it to `tool.setuptools.py-modules`;
+the archive-coverage gate rejects omitted modules. Current candidates also
+package `epac_atomic_derivation` and `epac_b_derivation`; the immutable v0.1.0
+release retains its original bytes.
 
 ```bash
 python -m pip install uv==0.11.18
