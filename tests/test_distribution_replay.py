@@ -38,6 +38,15 @@ def test_installed_replay_requires_complete_test_evidence():
     spec = importlib.util.spec_from_file_location("epac_installed_fixture", path)
     verifier = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(verifier)
+    import pytest
+    from _pytest.subtests import SubtestReport, SubtestContext
+    inventory = verifier.TestInventory()
+    parent = pytest.TestReport("a", ("test.py", 0, "a"), {}, "passed", None, "call")
+    subtest = SubtestReport("a", ("test.py", 0, "a"), {}, "passed", None, "call")
+    subtest.context = SubtestContext(msg=None, kwargs={"case": 1})
+    inventory.pytest_runtest_logreport(subtest)
+    inventory.pytest_runtest_logreport(parent)
+    assert inventory.passed == ["a"]
     with TemporaryDirectory() as directory:
         xml = Path(directory) / "results.xml"
         good = '<testsuite tests="2" failures="0" errors="0" skipped="0"><testcase name="a"/><testcase name="b"/></testsuite>'

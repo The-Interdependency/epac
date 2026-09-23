@@ -49,7 +49,8 @@ class TestInventory:
         self.collected = [item.nodeid for item in session.items]
 
     def pytest_runtest_logreport(self, report):
-        if report.when == "call" and report.passed:
+        import pytest
+        if type(report) is pytest.TestReport and report.when == "call" and report.passed:
             self.passed.append(report.nodeid)
 
 
