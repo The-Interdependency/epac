@@ -1,0 +1,12 @@
+{
+  "schema": "epac.heldout-chemistry-oracle",
+  "version": "v1",
+  "policy": {
+    "role": "comparison-only",
+    "construction_access": "forbidden",
+    "discovery_sources": ["Periodic Table app or other chemistry references"],
+    "acceptance": "Important values require an independently identifiable authoritative source before scoring."
+  },
+  "domains": ["isotope", "oxidation-state", "valence", "reaction", "element-property"],
+  "cases": []
+}
