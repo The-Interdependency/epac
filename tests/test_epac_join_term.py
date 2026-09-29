@@ -130,6 +130,12 @@ def test_boundaries_store_named_ordered_holes_and_leftovers() -> None:
     assert holes and leftovers
     assert all(slot.participant_id is None and slot.participant_scale is None for slot in holes)
     assert all(slot.participant_id and slot.participant_scale is None for slot in leftovers)
+    declared_object_ids = (
+        [origin.origin_id for origin in tree.origins]
+        + [event.transformation_id for event in tree.transformations]
+        + [slot.participant_id for slot in leftovers]
+    )
+    assert len(declared_object_ids) == len(set(declared_object_ids))
 
 
 def test_bearing_is_inferred_and_tamper_rejected() -> None:
@@ -179,12 +185,58 @@ def test_s5_readout_is_exact_occupancy_only() -> None:
 
 def test_every_declared_semantic_field_is_dual_named() -> None:
     tree = construct_epac_join_tree()
+    original_digest = tree.candidate_digest
     wire = tree.to_dict()
     assert set(wire["semantic_field_bindings"]) == REQUIRED_SEMANTIC_FIELD_PATHS
+    assert epac_join_term._semantic_wire_field_paths(wire) == REQUIRED_SEMANTIC_FIELD_PATHS
+    assert epac_join_term._WIRE_METADATA_FIELDS == {
+        "candidate_digest",
+        "schema_id",
+        "schema_version",
+        "semantic_field_bindings",
+        "semantic_license",
+    }
     assert wire["semantic_license"]["application_digest"] == METAPAT_APPLICATION_DIGEST
     for binding in wire["semantic_field_bindings"].values():
-        assert set(binding) == {"spine_name", "domain_name", "application_role"}
+        assert set(binding) == {
+            "spine_name",
+            "domain_name",
+            "application_role",
+            "catalog_module_id",
+        }
         assert all(isinstance(value, str) and value for value in binding.values())
+        assert binding["catalog_module_id"] == epac_join_term._METAPAT_APPLICATION_ROLE_MODULES[
+            binding["application_role"]
+        ]
+        assert binding["spine_name"] in epac_join_term._APPLICATION_ROLE_ALLOWED_SPINES[
+            binding["application_role"]
+        ]
+    assert set(epac_join_term._METAPAT_APPLICATION_ROLE_MODULES) == {
+        "customs-boundary",
+        "stored-join-term",
+        "join-boundary",
+        "origin-state",
+        "scale-origin",
+        "multi-origin-tensor",
+        "authored-near-join",
+        "recursive-origin",
+        "inferred-bearing",
+        "state-metric",
+        "join-transformation",
+        "transformation-sequence",
+        "domain-customs",
+    }
+    with pytest.raises(TypeError):
+        epac_join_term.SEMANTIC_FIELD_BINDINGS["origin.phase"]["spine_name"] = "MUTATED"
+    with pytest.raises(TypeError):
+        epac_join_term.SEMANTIC_FIELD_BINDINGS["new.path"] = {}
+    with pytest.raises(TypeError):
+        epac_join_term._METAPAT_APPLICATION_ROLE_MODULES["origin-state"] = "MUTATED"
+    with pytest.raises(TypeError):
+        epac_join_term._APPLICATION_ROLE_ALLOWED_SPINES["origin-state"] = frozenset()
+    wire["semantic_field_bindings"]["origin.phase"]["spine_name"] = "MUTATED"
+    assert tree.candidate_digest == original_digest
+    assert tree.to_dict()["semantic_field_bindings"]["origin.phase"]["spine_name"] == "State"
 
 
 def test_join_isomorphism_preserves_structure_not_instance_ids() -> None:
@@ -200,8 +252,14 @@ def test_join_isomorphism_preserves_structure_not_instance_ids() -> None:
 def test_same_bag_different_tree_and_bag_cannot_parse() -> None:
     first = construct_epac_join_tree(s2_seating_order=("core", "guest", "vacancy"))
     second = construct_epac_join_tree(s2_seating_order=("guest", "core", "vacancy"))
+    renamed = construct_epac_join_tree(identity_namespace="renamed")
     assert legacy_bag_projection(first) == legacy_bag_projection(second)
     assert not join_isomorphic(first, second)
+    assert legacy_bag_projection(first) == legacy_bag_projection(renamed)
+    assert join_isomorphic(first, renamed)
+    assert trace_origin_lineage(first, first.origins[-1].origin_id) != trace_origin_lineage(
+        renamed, renamed.origins[-1].origin_id
+    )
     with pytest.raises(ValueError):
         recover_epac_join_tree(json.dumps(legacy_bag_projection(first)))
 
@@ -242,6 +300,43 @@ def test_malformed_wires_fail_closed() -> None:
     duplicate_origin = tree.to_dict()
     duplicate_origin["origins"][1]["origin_id"] = duplicate_origin["origins"][0]["origin_id"]
     mutations.append(duplicate_origin)
+    duplicate_leftover = tree.to_dict()
+    leftover_rows = [
+        slot
+        for origin in duplicate_leftover["origins"]
+        for slot in origin["slots"]
+        if slot["kind"] == "leftover"
+    ]
+    leftover_rows[1]["participant_id"] = leftover_rows[0]["participant_id"]
+    mutations.append(duplicate_leftover)
+    leftover_origin_collision = tree.to_dict()
+    next(
+        slot
+        for origin in leftover_origin_collision["origins"]
+        for slot in origin["slots"]
+        if slot["kind"] == "leftover"
+    )["participant_id"] = leftover_origin_collision["origins"][0]["origin_id"]
+    mutations.append(leftover_origin_collision)
+    transformation_origin_collision = tree.to_dict()
+    transformation_origin_collision["transformations"][0]["transformation_id"] = (
+        transformation_origin_collision["origins"][0]["origin_id"]
+    )
+    mutations.append(transformation_origin_collision)
+    duplicate_transformation = tree.to_dict()
+    duplicate_transformation["transformations"][1]["transformation_id"] = (
+        duplicate_transformation["transformations"][0]["transformation_id"]
+    )
+    mutations.append(duplicate_transformation)
+    leftover_transformation_collision = tree.to_dict()
+    next(
+        slot
+        for origin in leftover_transformation_collision["origins"]
+        for slot in origin["slots"]
+        if slot["kind"] == "leftover"
+    )["participant_id"] = leftover_transformation_collision["transformations"][0][
+        "transformation_id"
+    ]
+    mutations.append(leftover_transformation_collision)
     skip_scale = tree.to_dict()
     member = next(slot for slot in skip_scale["origins"][2]["slots"] if slot["kind"] == "member")
     member["participant_id"] = skip_scale["origins"][0]["origin_id"]

@@ -121,9 +121,11 @@ application `metapat.application.epac_join_terms` from METAPAT commit
 Current build/evidence doctrine is identified as skill-lib commit
 `516933d98f9de376f4e498f44059043dc0d96470`.
 
-The deterministic receipt binds exact hashes of every feature source because a
-committed file cannot contain the hash of the commit that contains itself. The
-final Git commit externally binds those same bytes. UCNS is not consumed or
+The deterministic receipt binds exact hashes of every non-generated feature
+input because a committed file cannot contain the hash of the commit that
+contains itself. The generated JSON receipt and Markdown audit are excluded
+from that manifest to avoid a self-hash cycle; their containing Git commit
+externally binds all bytes. UCNS is not consumed or
 modified by this candidate. METAPAT retains semantic authority; EPAC owns the
 schema, constructor, equality, serialization, public recovery, and evidence.
 No scientific, geometry, proof, measurement, confidentiality, or release

@@ -95,7 +95,7 @@ Usage guidance
 #
 # id: epac_join_tree_join_isomorphism
 #   given: two trees are compared
-#   then: alpha-renamed identities may be isomorphic while named order, holes, leftovers, state, phase chart, shape, or authored relation changes remain distinct
+#   then: bijectively alpha-renamed identities may be isomorphic while identity aliasing, named order, holes, leftovers, state, phase chart, shape, or authored relation changes remain distinct
 #   class: correctness
 #
 # id: epac_join_tree_bag_is_lossy
@@ -131,6 +131,7 @@ import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from fractions import Fraction
+from types import MappingProxyType
 from typing import Any
 
 JOIN_TREE_SCHEMA_ID = "epac.multi-origin-join-tree"
@@ -152,9 +153,67 @@ SCALE_DOMAIN_NAMES: tuple[str, ...] = (
 )
 SCALE_IDS: tuple[str, ...] = tuple(f"S{index}" for index in range(7))
 
-# Metadata fields (schema id/version/digest) identify the wire and are not
-# domain observations. Every semantic field path is licensed here.
-SEMANTIC_FIELD_BINDINGS: Mapping[str, Mapping[str, str]] = {
+# Exact role-to-catalog projection from the pinned METAPAT application.  An
+# application role identifies the licensing clause; spine_name identifies the
+# EPAC field's structural role.  Those axes are related but not synonymous.
+_METAPAT_APPLICATION_ROLE_MODULES = MappingProxyType({
+    "customs-boundary": "metapat.root_spine",
+    "stored-join-term": "metapat.axiom.1.thing",
+    "join-boundary": "metapat.axiom.2.boundary",
+    "origin-state": "metapat.axiom.3.state",
+    "scale-origin": "metapat.axiom.4.simplex",
+    "multi-origin-tensor": "metapat.axiom.5.tensor",
+    "authored-near-join": "metapat.axiom.6.relate",
+    "recursive-origin": "metapat.axiom.7.emerge",
+    "inferred-bearing": "metapat.axiom.8.vector",
+    "state-metric": "metapat.axiom.9.scalar",
+    "join-transformation": "metapat.axiom.10.transformation",
+    "transformation-sequence": "metapat.axiom.11.time",
+    "domain-customs": "metapat.axiom.12.domain_qualification",
+})
+_SPINE_NAMES = frozenset(
+    {
+        "Thing",
+        "Boundary",
+        "State",
+        "Simplex",
+        "Tensor",
+        "Scalar",
+        "Vector",
+        "Transformation",
+        "Time",
+    }
+)
+_APPLICATION_ROLE_ALLOWED_SPINES = MappingProxyType({
+    "customs-boundary": _SPINE_NAMES,
+    "stored-join-term": frozenset({"Thing"}),
+    "join-boundary": frozenset({"Boundary"}),
+    "origin-state": frozenset({"State"}),
+    "scale-origin": frozenset({"Simplex"}),
+    "multi-origin-tensor": frozenset({"Tensor"}),
+    "authored-near-join": frozenset({"Tensor"}),
+    "recursive-origin": frozenset({"Thing"}),
+    "inferred-bearing": frozenset({"Vector"}),
+    "state-metric": frozenset({"Scalar"}),
+    "join-transformation": frozenset({"Transformation"}),
+    "transformation-sequence": frozenset({"Time"}),
+    "domain-customs": _SPINE_NAMES,
+})
+
+# Exact metadata subtrees identify the wire or carry the semantic license and
+# are not domain observations. Every other serialized field path is licensed
+# here; _semantic_wire_field_paths derives that coverage from live wire data.
+_WIRE_METADATA_FIELDS = frozenset(
+    {
+        "candidate_digest",
+        "schema_id",
+        "schema_version",
+        "semantic_field_bindings",
+        "semantic_license",
+    }
+)
+_SEMANTIC_FIELD_BINDING_ROWS = {
+    "tree.object_kind": {"spine_name": "Thing", "domain_name": "multi-origin join-tree kind", "application_role": "stored-join-term"},
     "origin.origin_id": {"spine_name": "Thing", "domain_name": "origin identity", "application_role": "stored-join-term"},
     "origin.scale": {"spine_name": "Simplex", "domain_name": "EPAC scale origin", "application_role": "scale-origin"},
     "origin.domain_name": {"spine_name": "Simplex", "domain_name": "EPAC scale name", "application_role": "domain-customs"},
@@ -182,7 +241,18 @@ SEMANTIC_FIELD_BINDINGS: Mapping[str, Mapping[str, str]] = {
     "tree.origins": {"spine_name": "Tensor", "domain_name": "S0-through-S6 origin tensor", "application_role": "multi-origin-tensor"},
     "tree.transformations": {"spine_name": "Time", "domain_name": "sequential join transformation history", "application_role": "transformation-sequence"},
     "tree.legacy_bag": {"spine_name": "Thing", "domain_name": "non-structural legacy bag sidecar", "application_role": "domain-customs"},
+    "legacy_bag.kind": {"spine_name": "Thing", "domain_name": "legacy sidecar kind", "application_role": "domain-customs"},
+    "legacy_bag.excluded_from_tensor": {"spine_name": "Thing", "domain_name": "tensor-exclusion marker", "application_role": "domain-customs"},
+    "legacy_bag.scale_slot_counts": {"spine_name": "Thing", "domain_name": "lossy slot-count map by scale", "application_role": "domain-customs"},
+    "legacy_bag.slot_kind_counts": {"spine_name": "Thing", "domain_name": "lossy slot-count map by kind", "application_role": "domain-customs"},
 }
+SEMANTIC_FIELD_BINDINGS: Mapping[str, Mapping[str, str]] = MappingProxyType(
+    {
+        key: MappingProxyType(value)
+        for key, value in _SEMANTIC_FIELD_BINDING_ROWS.items()
+    }
+)
+del _SEMANTIC_FIELD_BINDING_ROWS
 
 REQUIRED_SEMANTIC_FIELD_PATHS = frozenset(SEMANTIC_FIELD_BINDINGS)
 SLOT_KINDS = frozenset({"member", "hole", "leftover"})
@@ -204,6 +274,36 @@ def _strict_keys(data: Mapping[str, Any], expected: set[str], name: str) -> None
         raise ValueError(f"unknown {name} fields: {sorted(unknown)!r}")
     if missing:
         raise ValueError(f"missing {name} fields: {sorted(missing)!r}")
+
+
+def _semantic_wire_field_paths(data: Mapping[str, Any]) -> frozenset[str]:
+    """Derive every meaning-bearing schema path from one serialized tree."""
+    if not isinstance(data, Mapping):
+        raise ValueError("semantic wire coverage requires an object")
+    paths = {
+        f"tree.{key}"
+        for key in data
+        if key not in _WIRE_METADATA_FIELDS
+    }
+    origins = data.get("origins", ())
+    for origin in origins if isinstance(origins, (list, tuple)) else ():
+        if not isinstance(origin, Mapping):
+            continue
+        paths.update(f"origin.{key}" for key in origin)
+        slots = origin.get("slots", ())
+        for slot in slots if isinstance(slots, (list, tuple)) else ():
+            if isinstance(slot, Mapping):
+                paths.update(f"slot.{key}" for key in slot)
+    transformations = data.get("transformations", ())
+    for transformation in (
+        transformations if isinstance(transformations, (list, tuple)) else ()
+    ):
+        if isinstance(transformation, Mapping):
+            paths.update(f"transformation.{key}" for key in transformation)
+    legacy_bag = data.get("legacy_bag")
+    if isinstance(legacy_bag, Mapping):
+        paths.update(f"legacy_bag.{key}" for key in legacy_bag)
+    return frozenset(paths)
 
 
 def _text(value: Any, name: str) -> str:
@@ -565,7 +665,16 @@ def _license_record() -> dict[str, Any]:
 
 
 def _field_binding_record() -> dict[str, dict[str, str]]:
-    return {key: dict(value) for key, value in sorted(SEMANTIC_FIELD_BINDINGS.items())}
+    records: dict[str, dict[str, str]] = {}
+    for key, value in sorted(SEMANTIC_FIELD_BINDINGS.items()):
+        role = value["application_role"]
+        spine = value["spine_name"]
+        module_id = _METAPAT_APPLICATION_ROLE_MODULES.get(role)
+        allowed_spines = _APPLICATION_ROLE_ALLOWED_SPINES.get(role, frozenset())
+        if module_id is None or spine not in allowed_spines:
+            raise RuntimeError(f"unlicensed METAPAT semantic pair for {key}")
+        records[key] = {**value, "catalog_module_id": module_id}
+    return records
 
 
 def _bag_for(origins: Sequence[ScaleOrigin]) -> LegacyBag:
@@ -604,8 +713,20 @@ class EPACJoinTree:
             raise ValueError("origin identities must be unique")
         if len(transformations) != 6:
             raise ValueError("tensor must contain exactly six adjacent-scale transformations")
-        if len({item.transformation_id for item in transformations}) != 6:
+        transformation_ids = tuple(item.transformation_id for item in transformations)
+        if len(set(transformation_ids)) != 6:
             raise ValueError("transformation identities must be unique")
+        leftover_ids = tuple(
+            slot.participant_id
+            for origin in origins
+            for slot in origin.slots
+            if slot.kind == "leftover"
+        )
+        declared_object_ids = origin_ids + transformation_ids + leftover_ids
+        if len(set(declared_object_ids)) != len(declared_object_ids):
+            raise ValueError(
+                "origin, transformation, and leftover object identities must be globally unique"
+            )
         if tuple(item.sequence for item in transformations) != tuple(range(1, 7)):
             raise ValueError("transformation sequence must be exactly 1 through 6")
         for index, origin in enumerate(origins):
@@ -627,6 +748,8 @@ class EPACJoinTree:
             raise ValueError("legacy bag must be the exact lossy projection of the tree")
         object.__setattr__(self, "origins", origins)
         object.__setattr__(self, "transformations", transformations)
+        if _semantic_wire_field_paths(self._payload()) != REQUIRED_SEMANTIC_FIELD_PATHS:
+            raise RuntimeError("semantic field bindings do not cover the live wire schema")
 
     def _payload(self) -> dict[str, Any]:
         return {
@@ -830,6 +953,15 @@ def legacy_bag_projection(tree: EPACJoinTree) -> dict[str, Any]:
 
 def _structural_signature(tree: EPACJoinTree) -> tuple[Any, ...]:
     by_id = {origin.origin_id: origin.scale for origin in tree.origins}
+    leftover_by_id = {
+        slot.participant_id: index
+        for index, slot in enumerate(
+            slot
+            for origin in tree.origins
+            for slot in origin.slots
+            if slot.kind == "leftover"
+        )
+    }
     origin_rows = []
     for origin in tree.origins:
         slot_rows = tuple(
@@ -840,7 +972,7 @@ def _structural_signature(tree: EPACJoinTree) -> tuple[Any, ...]:
                 (
                     by_id.get(slot.participant_id)
                     if slot.kind == "member"
-                    else "leftover"
+                    else ("leftover", leftover_by_id[slot.participant_id])
                     if slot.kind == "leftover"
                     else None
                 ),

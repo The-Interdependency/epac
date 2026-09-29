@@ -43,9 +43,17 @@ from epac_join_term import (
 RECEIPT_PATH = Path("data/epac-join-term-v0-receipt.json")
 AUDIT_PATH = Path("docs/epac-join-term-v0-audit.md")
 SOURCE_PATHS = (
+    Path("README.md"),
+    Path("docs/PROVENANCE.md"),
+    Path("docs/domain-claims.md"),
+    Path("docs/work-graph.json"),
     Path("epac_join_term.py"),
+    Path("epac_boundary_probe_completeness.py"),
     Path("docs/multi-origin-join-term-v0.md"),
+    Path("docs/research-status.md"),
     Path("docs/work-graphs/epac-join-term-v0.json"),
+    Path("pyproject.toml"),
+    Path("tests/test_boundary_probe_completeness.py"),
     Path("tests/test_epac_join_term.py"),
     Path("tools/generate_join_term_v0.py"),
 )
@@ -103,17 +111,20 @@ def build_receipt(root: Path) -> dict[str, Any]:
     root = root.resolve()
     tree = construct_epac_join_tree()
     reordered = construct_epac_join_tree(
-        identity_namespace="fixture-b",
         s2_seating_order=("guest", "core", "vacancy"),
     )
+    renamed = construct_epac_join_tree(identity_namespace="fixture-b")
     source_hashes = _source_hashes(root)
     candidate_json = tree.to_json().encode("utf-8")
     bag_json = _canonical_json(legacy_bag_projection(tree)).encode("utf-8")
     reordered_bag_json = _canonical_json(legacy_bag_projection(reordered)).encode("utf-8")
+    renamed_bag_json = _canonical_json(legacy_bag_projection(renamed)).encode("utf-8")
     if bag_json != reordered_bag_json:
         raise RuntimeError("same-count witness no longer has identical bag bytes")
     if join_isomorphic(tree, reordered):
         raise RuntimeError("same-count witness unexpectedly became join-isomorphic")
+    if renamed_bag_json != bag_json or not join_isomorphic(tree, renamed):
+        raise RuntimeError("alpha-renamed identity witness no longer preserves structure and bag")
     receipt: dict[str, Any] = {
         "schema_id": "epac.join-term-v0-evidence",
         "schema_version": "1.0.0",
@@ -184,7 +195,22 @@ def build_receipt(root: Path) -> dict[str, Any]:
                 "reordered_legacy_bag_sha256": _sha256(reordered_bag_json),
                 "bags_equal": True,
                 "join_isomorphic": False,
-                "conclusion": "the legacy bag cannot uniquely recover authored seating or lineage",
+                "conclusion": "the legacy bag cannot uniquely recover authored seating or the complete join tree",
+            },
+            "same_bag_alpha_renamed_identity_witness": {
+                "renamed_identity_namespace": "fixture-b",
+                "renamed_candidate_digest": renamed.candidate_digest,
+                "renamed_legacy_bag_sha256": _sha256(renamed_bag_json),
+                "bags_equal": True,
+                "join_isomorphic": True,
+                "baseline_s6_lineage": list(
+                    trace_origin_lineage(tree, tree.origins[-1].origin_id)
+                ),
+                "renamed_s6_lineage": list(
+                    trace_origin_lineage(renamed, renamed.origins[-1].origin_id)
+                ),
+                "exact_instance_lineages_equal": False,
+                "conclusion": "the legacy bag does not select exact instance identity labels, while structural lineage up to alpha-renaming is unchanged",
             },
         },
         "evidence": {
@@ -209,6 +235,7 @@ def render_audit(receipt: Mapping[str, Any]) -> str:
     authority = receipt["authority"]
     results = receipt["results"]
     witness = results["same_bag_nonisomorphic_witness"]
+    identity_witness = results["same_bag_alpha_renamed_identity_witness"]
     lines = [
         "# EPAC join-term v0 deterministic audit",
         "",
@@ -226,7 +253,7 @@ def render_audit(receipt: Mapping[str, Any]) -> str:
         f"- skill-lib: `{authority['skill_lib']['commit']}` (tree `{authority['skill_lib']['tree']}`)",
         "- UCNS consumed: `false`; UCNS law modified: `false`",
         "",
-        "The containing feature commit cannot be embedded in a file inside itself. The evidence therefore binds the exact pre-feature EPAC base plus SHA-256 of every feature source; the final Git commit binds those bytes externally.",
+        "The containing feature commit cannot be embedded in a file inside itself. The evidence therefore binds the exact pre-feature EPAC base plus SHA-256 of every non-generated feature input; the generated receipt and audit are excluded to avoid a self-hash cycle, and the final Git commit binds all bytes externally.",
         "",
         "## Exact result",
         "",
@@ -246,6 +273,15 @@ def render_audit(receipt: Mapping[str, Any]) -> str:
         "- Bags equal: `true`",
         "- Join-isomorphic: `false`",
         f"- Conclusion: {witness['conclusion']}.",
+        "",
+        "## Exact-instance identity projection witness",
+        "",
+        f"- Renamed identity namespace: `{identity_witness['renamed_identity_namespace']}`",
+        f"- Renamed candidate digest: `{identity_witness['renamed_candidate_digest']}`",
+        "- Bags equal: `true`",
+        "- Join-isomorphic: `true`",
+        "- Exact instance lineages equal: `false`",
+        f"- Conclusion: {identity_witness['conclusion']}.",
         "",
         "This is information loss. It is not a secrecy, computational-hardness, or confidentiality result.",
         "",
