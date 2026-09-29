@@ -42,6 +42,44 @@ from typing import Any
 #   unresolved: external oracle authority selection and custody remain outside EPAC; this module binds supplied evidence but does not establish independent custody by itself
 # === END MODULE_BUILD ===
 
+# === CONTRACTS ===
+# id: heldout_selection_boundary_frozen_before_predictions
+#   given: a validation plan and prediction commitment are supplied for held-out comparison
+#   then: case ids, canonical domains, and comparator rules are bound before predictions; prediction ids outside that verified plan are rejected
+#   class: evidence
+#   since: 2026-09-29
+#
+# id: heldout_commitment_persistence_and_identity
+#   given: predictions and source identity are frozen, serialized, reloaded, or externally reconstructed
+#   then: only persistence-stable JSON-shaped prediction values with a nonempty source identity and matching digest are accepted
+#   class: evidence
+#   since: 2026-09-29
+#
+# id: heldout_comparison_tri_state_semantics
+#   given: frozen predictions and held-out expected values are compared under a preregistered comparator
+#   then: comparable agreement is SURVIVED, comparable disagreement is FALSIFIED, and missing or incomparable evidence is UNRESOLVED without bool/number aliasing or large-integer loss
+#   class: correctness
+#   since: 2026-09-29
+#
+# id: heldout_oracle_evidence_integrity
+#   given: held-out oracle cases and provenance are revealed after prediction commitment
+#   then: oracle ids are unique, values are persistence-stable, provenance identities are nonblank, and malformed evidence cannot be scored as success
+#   class: evidence
+#   since: 2026-09-29
+#
+# id: heldout_receipt_evidence_binding
+#   given: a verified plan, verified prediction commitment, and held-out oracle are compared
+#   then: returned receipt evidence is detached from mutable caller inputs and binds the plan, prediction commitment, oracle digest, results, and counts
+#   class: evidence
+#   since: 2026-09-29
+#
+# id: heldout_oracle_loading_is_unambiguous
+#   given: oracle evidence is loaded from a file, source checkout, or installed distribution
+#   then: duplicate JSON keys are rejected and source checkout data is preferred over an unrelated installed package
+#   class: correctness
+#   since: 2026-09-29
+# === END CONTRACTS ===
+
 STATUSES = ("SURVIVED", "FALSIFIED", "UNRESOLVED")
 _PLAN_SCHEMA = "epac.heldout-validation-plan"
 _PREDICTION_SCHEMA = "epac.heldout-prediction-commitment"
@@ -265,10 +303,9 @@ def _json_exact_equal(left: Any, right: Any) -> bool | None:
             return False
         if not isinstance(right, (int, float)) or isinstance(right, bool):
             return False
-        try:
-            if not math.isfinite(float(left)) or not math.isfinite(float(right)):
-                return None
-        except (OverflowError, TypeError, ValueError):
+        if isinstance(left, float) and not math.isfinite(left):
+            return None
+        if isinstance(right, float) and not math.isfinite(right):
             return None
         return left == right
     if isinstance(left, str) or isinstance(right, str):
@@ -414,6 +451,12 @@ def compare_after_freeze(
         raise ValueError("oracle case inventory does not match frozen validation plan")
 
     predictions = commitment_snapshot["predictions"]
+    unexpected_prediction_ids = sorted(set(predictions) - set(plan_by_id))
+    if unexpected_prediction_ids:
+        raise ValueError(
+            "prediction commitment includes cases absent from frozen validation plan: "
+            + ", ".join(unexpected_prediction_ids)
+        )
     results: list[dict[str, Any]] = []
     for case_id in sorted(plan_by_id):
         case = oracle_by_id[case_id]

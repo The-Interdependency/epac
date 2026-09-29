@@ -20,6 +20,146 @@ from epac_heldout_validation import (
 )
 
 
+# === CHECKS ===
+# id: check_freeze_is_deterministic_oracle_free_and_plan_bound
+#   proves: heldout_selection_boundary_frozen_before_predictions, heldout_commitment_persistence_and_identity
+#   call: self::test_freeze_is_deterministic_oracle_free_and_plan_bound
+#   mutates: none
+#   cleanup: none
+#
+# id: check_plan_rejects_duplicate_ids_and_oracle_fields
+#   proves: heldout_selection_boundary_frozen_before_predictions
+#   call: self::test_plan_rejects_duplicate_ids_and_oracle_fields
+#   mutates: none
+#   cleanup: none
+#
+# id: check_plan_rejects_oracle_fields_hidden_in_comparator_rules
+#   proves: heldout_selection_boundary_frozen_before_predictions
+#   call: self::test_plan_rejects_oracle_fields_hidden_in_comparator_rules
+#   mutates: none
+#   cleanup: none
+#
+# id: check_prediction_cannot_escape_frozen_case_inventory
+#   proves: heldout_selection_boundary_frozen_before_predictions
+#   call: self::test_prediction_cannot_escape_frozen_case_inventory
+#   mutates: none
+#   cleanup: none
+#
+# id: check_prediction_commitment_rejects_non_json_values_before_hashing
+#   proves: heldout_commitment_persistence_and_identity
+#   call: self::test_prediction_commitment_rejects_non_json_values_before_hashing
+#   mutates: none
+#   cleanup: none
+#
+# id: check_domain_is_identifier_shaped_and_revalidated
+#   proves: heldout_selection_boundary_frozen_before_predictions
+#   call: self::test_domain_is_identifier_shaped_and_revalidated
+#   mutates: none
+#   cleanup: none
+#
+# id: check_programmatic_oracle_rejects_non_json_values_before_evidence_hashing
+#   proves: heldout_oracle_evidence_integrity
+#   call: self::test_programmatic_oracle_rejects_non_json_values_before_evidence_hashing
+#   mutates: none
+#   cleanup: none
+#
+# id: check_tampered_prediction_cannot_be_compared
+#   proves: heldout_commitment_persistence_and_identity
+#   call: self::test_tampered_prediction_cannot_be_compared
+#   mutates: none
+#   cleanup: none
+#
+# id: check_commitment_revalidates_nonempty_source_identity_even_with_matching_digest
+#   proves: heldout_commitment_persistence_and_identity
+#   call: self::test_commitment_revalidates_nonempty_source_identity_even_with_matching_digest
+#   mutates: none
+#   cleanup: none
+#
+# id: check_case_inventory_and_comparator_are_bound_before_comparison
+#   proves: heldout_selection_boundary_frozen_before_predictions
+#   call: self::test_case_inventory_and_comparator_are_bound_before_comparison
+#   mutates: none
+#   cleanup: none
+#
+# id: check_external_commitment_rejects_predictions_outside_verified_plan
+#   proves: heldout_selection_boundary_frozen_before_predictions, heldout_commitment_persistence_and_identity
+#   call: self::test_external_commitment_rejects_predictions_outside_verified_plan
+#   mutates: none
+#   cleanup: none
+#
+# id: check_exact_comparison_preserves_arbitrary_size_integers
+#   proves: heldout_comparison_tri_state_semantics
+#   call: self::test_exact_comparison_preserves_arbitrary_size_integers
+#   mutates: none
+#   cleanup: none
+#
+# id: check_comparison_classifies_only_after_freeze
+#   proves: heldout_comparison_tri_state_semantics, heldout_receipt_evidence_binding
+#   call: self::test_comparison_classifies_only_after_freeze
+#   mutates: none
+#   cleanup: none
+#
+# id: check_absent_expected_null_provenance_and_missing_prediction_are_unresolved
+#   proves: heldout_comparison_tri_state_semantics, heldout_oracle_evidence_integrity
+#   call: self::test_absent_expected_null_provenance_and_missing_prediction_are_unresolved
+#   mutates: none
+#   cleanup: none
+#
+# id: check_exact_comparison_is_json_type_safe_including_nested_values
+#   proves: heldout_comparison_tri_state_semantics
+#   call: self::test_exact_comparison_is_json_type_safe_including_nested_values
+#   mutates: none
+#   cleanup: none
+#
+# id: check_duplicate_oracle_case_ids_are_rejected_before_scoring
+#   proves: heldout_oracle_evidence_integrity
+#   call: self::test_duplicate_oracle_case_ids_are_rejected_before_scoring
+#   mutates: none
+#   cleanup: none
+#
+# id: check_nonfinite_numeric_operands_or_tolerance_are_unresolved
+#   proves: heldout_comparison_tri_state_semantics
+#   call: self::test_nonfinite_numeric_operands_or_tolerance_are_unresolved
+#   mutates: none
+#   cleanup: none
+#
+# id: check_numeric_tolerance_preserves_large_integer_distinctions
+#   proves: heldout_comparison_tri_state_semantics
+#   call: self::test_numeric_tolerance_preserves_large_integer_distinctions
+#   mutates: none
+#   cleanup: none
+#
+# id: check_blank_provenance_identity_is_unresolved
+#   proves: heldout_oracle_evidence_integrity
+#   call: self::test_blank_provenance_identity_is_unresolved
+#   mutates: none
+#   cleanup: none
+#
+# id: check_receipt_and_commitment_detach_mutable_evidence_inputs
+#   proves: heldout_receipt_evidence_binding
+#   call: self::test_receipt_and_commitment_detach_mutable_evidence_inputs
+#   mutates: none
+#   cleanup: none
+#
+# id: check_load_oracle_rejects_duplicate_json_object_keys
+#   proves: heldout_oracle_loading_is_unambiguous, heldout_oracle_evidence_integrity
+#   call: self::test_load_oracle_rejects_duplicate_json_object_keys
+#   mutates: none
+#   cleanup: none
+#
+# id: check_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout
+#   proves: heldout_oracle_loading_is_unambiguous
+#   call: self::test_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout
+#   mutates: none
+#   cleanup: none
+#
+# id: check_set_equality_does_not_alias_boolean_and_numeric_values
+#   proves: heldout_comparison_tri_state_semantics
+#   call: self::test_set_equality_does_not_alias_boolean_and_numeric_values
+#   mutates: none
+#   cleanup: none
+# === END CHECKS ===
+
 def plan_cases():
     return [
         {"id": "element:H:valence", "domain": "valence", "comparison": {"kind": "exact"}},
@@ -275,6 +415,73 @@ def test_case_inventory_and_comparator_are_bound_before_comparison():
         compare_after_freeze(commitment, changed_rule, validation_plan=plan)
 
 
+def test_external_commitment_rejects_predictions_outside_verified_plan():
+    plan = freeze_validation_plan([
+        {"id": "x", "domain": "fixture", "comparison": {"kind": "exact"}}
+    ])
+    commitment = freeze_predictions(
+        {"x": 1},
+        source_identity="epac@test",
+        validation_plan=plan,
+    )
+    forged = deepcopy(commitment)
+    forged["predictions"]["outside"] = 99
+    unsigned = {
+        k: forged[k]
+        for k in ("schema", "version", "source_identity", "validation_plan_sha256", "predictions")
+    }
+    forged["commitment_sha256"] = _digest_envelope(unsigned)
+    verify_commitment(forged)
+    heldout = {
+        "schema": "epac.heldout-chemistry-oracle",
+        "version": "v1",
+        "cases": [{
+            "id": "x",
+            "domain": "fixture",
+            "comparison": {"kind": "exact"},
+            "expected": 1,
+            "provenance": {"authority": "fixture", "locator": "membership"},
+        }],
+    }
+    with pytest.raises(ValueError, match="absent from frozen validation plan"):
+        compare_after_freeze(forged, heldout, validation_plan=plan)
+
+
+def test_exact_comparison_preserves_arbitrary_size_integers():
+    huge = 10 ** 400
+    plan = freeze_validation_plan([
+        {"id": "same", "domain": "fixture", "comparison": {"kind": "exact"}},
+        {"id": "different", "domain": "fixture", "comparison": {"kind": "exact"}},
+    ])
+    commitment = freeze_predictions(
+        {"same": huge, "different": huge + 1},
+        source_identity="epac@test",
+        validation_plan=plan,
+    )
+    heldout = {
+        "schema": "epac.heldout-chemistry-oracle",
+        "version": "v1",
+        "cases": [
+            {
+                "id": "same",
+                "domain": "fixture",
+                "comparison": {"kind": "exact"},
+                "expected": huge,
+                "provenance": {"authority": "fixture", "locator": "huge-same"},
+            },
+            {
+                "id": "different",
+                "domain": "fixture",
+                "comparison": {"kind": "exact"},
+                "expected": huge,
+                "provenance": {"authority": "fixture", "locator": "huge-different"},
+            },
+        ],
+    }
+    receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+    assert receipt["counts"] == {"SURVIVED": 1, "FALSIFIED": 1, "UNRESOLVED": 0}
+
+
 def test_comparison_classifies_only_after_freeze():
     plan, commitment = frozen({
         "element:H:valence": 1,
@@ -363,35 +570,37 @@ def test_duplicate_oracle_case_ids_are_rejected_before_scoring():
         compare_after_freeze(commitment, duplicate, validation_plan=plan)
 
 
-@pytest.mark.parametrize(
-    ("expected", "predicted", "tolerance"),
-    [
+def test_nonfinite_numeric_operands_or_tolerance_are_unresolved():
+    cases = [
         (1.0, math.inf, 0.1),
         (math.inf, 1.0, 0.1),
         (1.0, 1.0, math.inf),
         (1.0, math.nan, 0.1),
         (1.0, 1.0, math.nan),
-    ],
-)
-def test_nonfinite_numeric_operands_or_tolerance_are_unresolved(expected, predicted, tolerance):
-    plan = freeze_validation_plan([
-        {"id": "x", "domain": "fixture",
-         "comparison": {"kind": "numeric-tolerance", "absolute_tolerance": tolerance}}
-    ])
-    commitment = freeze_predictions({"x": predicted}, source_identity="epac@test", validation_plan=plan)
-    heldout = {
-        "schema": "epac.heldout-chemistry-oracle",
-        "version": "v1",
-        "cases": [{
-            "id": "x",
-            "domain": "fixture",
-            "comparison": {"kind": "numeric-tolerance", "absolute_tolerance": tolerance},
-            "expected": expected,
-            "provenance": {"authority": "fixture", "locator": "x"},
-        }],
-    }
-    receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
-    assert receipt["counts"] == {"SURVIVED": 0, "FALSIFIED": 0, "UNRESOLVED": 1}
+    ]
+    for expected, predicted, tolerance in cases:
+        plan = freeze_validation_plan([
+            {"id": "x", "domain": "fixture",
+             "comparison": {"kind": "numeric-tolerance", "absolute_tolerance": tolerance}}
+        ])
+        commitment = freeze_predictions(
+            {"x": predicted},
+            source_identity="epac@test",
+            validation_plan=plan,
+        )
+        heldout = {
+            "schema": "epac.heldout-chemistry-oracle",
+            "version": "v1",
+            "cases": [{
+                "id": "x",
+                "domain": "fixture",
+                "comparison": {"kind": "numeric-tolerance", "absolute_tolerance": tolerance},
+                "expected": expected,
+                "provenance": {"authority": "fixture", "locator": "x"},
+            }],
+        }
+        receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+        assert receipt["counts"] == {"SURVIVED": 0, "FALSIFIED": 0, "UNRESOLVED": 1}
 
 
 def test_numeric_tolerance_preserves_large_integer_distinctions():
