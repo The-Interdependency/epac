@@ -77,6 +77,7 @@
 import json
 from copy import deepcopy
 from importlib.resources import files
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
 import pytest
@@ -273,11 +274,17 @@ def test_serialization_and_receipt_regeneration_are_deterministic() -> None:
     audit_path = ROOT / "docs/epac-join-term-v0-audit.md"
     assert receipt_path.read_bytes().endswith(b"\n")
     assert audit_path.read_bytes().endswith(b"\n")
-    from tools.generate_join_term_v0 import render_audit, render_receipt
+    generator_path = ROOT / "tools/generate_join_term_v0.py"
+    spec = spec_from_file_location("epac_join_term_v0_generator_fixture", generator_path)
+    assert spec is not None and spec.loader is not None
+    generator = module_from_spec(spec)
+    spec.loader.exec_module(generator)
 
-    rendered_receipt = render_receipt(ROOT)
+    rendered_receipt = generator.render_receipt(ROOT)
     assert receipt_path.read_text(encoding="utf-8") == rendered_receipt
-    assert audit_path.read_text(encoding="utf-8") == render_audit(json.loads(rendered_receipt))
+    assert audit_path.read_text(encoding="utf-8") == generator.render_audit(
+        json.loads(rendered_receipt)
+    )
 
 
 def test_molecular_shape_falsification_remains_unchanged() -> None:

@@ -7,7 +7,7 @@ The public receipt recovers one complete typed S0-through-S6 join tree and its e
 ## Exact authority
 
 - EPAC base: `1e5c999286f12221eff9870d1372203ac7935f2a` (tree `ce7781938ff684d826bd91f475b5423bd56b146a`)
-- EPAC feature source manifest: `00184174b3086c35d1988438bbdd84df24326fdc28baf65455168225058bf5c6`
+- EPAC feature source manifest: `14d44317f95357dc1bafdc60a0dde52423bf94829ba515d262ffc967d647d88e`
 - METAPAT producer: `18011c2bf4c3c3c1f50c601add371702a7c1ff05` (tree `7e86e60d8bb5f4a9b51f031d0ca34202d0a28741`)
 - METAPAT application: `metapat.application.epac_join_terms@epac-join-terms-application-v4`
 - METAPAT application digest: `cba0ccc360a0ecd9b78ce582a7f54d1385beeaa83de495faa76f40112bd23e7d`
@@ -20,7 +20,7 @@ The containing feature commit cannot be embedded in a file inside itself. The ev
 
 - Candidate digest: `1ee218f4706d618473e68411569bc3e2f1b8a0b12e36e3db2240415ed4cd361d`
 - Candidate JSON SHA-256: `9d4e983a74fd873774c02e2c7f124662b2d980abf761ab02fc221839b2fa4a18`
-- Evidence digest: `6f6a700aeff21e79eecab9d825a7eb6d7d47d758923366aebb4e408d014d7e39`
+- Evidence digest: `29d8a144366746af4de0bb5b96e4e74f395f3d992d555a3d081100f76ec0c198`
 - Origins: `7`
 - Transformations: `6`
 - Slots: `18` (`6` members, `6` holes, `6` leftovers)
@@ -42,7 +42,7 @@ This is information loss. It is not a secrecy, computational-hardness, or confid
 - `docs/multi-origin-join-term-v0.md`: `033261bf939679c2868ccebc0ec02d70746e27c219047fd6c316696822ae6f22`
 - `docs/work-graphs/epac-join-term-v0.json`: `3e9d1fee2fd3b410256cfb8b3fd1e842705e0b6eeb284fac9fd7bf8e4c275d06`
 - `epac_join_term.py`: `4981bc55b143f7fc76bf814d7dfa9f61b423c9bb9551ad9f6c2db8dc59d3e8d7`
-- `tests/test_epac_join_term.py`: `76cfefa2df9f16f8e652e0226ae4a2c2fea05f1e5fccab627ae87aeba19f3e22`
+- `tests/test_epac_join_term.py`: `bb10e2e6f8c3cc966d41f06efe32937729574aea3a6b1bdaa558e0437c7f6a65`
 - `tools/generate_join_term_v0.py`: `07f4ffb58921b4a0fb478314fba043c7466a7db8e40382495d5d7dbbe635c7e6`
 
 ## Explicit nonclaims
