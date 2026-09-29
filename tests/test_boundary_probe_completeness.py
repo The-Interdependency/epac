@@ -63,6 +63,7 @@ EPAC_ROOT = Path(_installed_audit.__file__).resolve().parent
 from epac_boundary_probe_completeness import (
     AMBIGUOUS,
     BOUNDARY_OBSERVING,
+    INTERNAL_NON_BOUNDARY,
     FALSIFIED,
     SURVIVED,
     UNRESOLVED,
@@ -137,13 +138,34 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
             self.assertIn("epac_viz." + name, operations)
             self.assertIn("epac_viz.spiral_viz." + name, operations)
             self.assertEqual(_installed_audit._classify_operation("epac_viz", name), AMBIGUOUS)
+        heldout_exports = {
+            row["name"]
+            for row in operations.values()
+            if row["module"] == "epac_heldout_validation"
+        }
+        self.assertEqual(
+            heldout_exports,
+            {
+                "freeze_validation_plan",
+                "freeze_predictions",
+                "verify_commitment",
+                "compare_after_freeze",
+                "load_oracle",
+                "load_packaged_oracle",
+            },
+        )
+        for name in heldout_exports:
+            self.assertEqual(
+                _installed_audit._classify_operation("epac_heldout_validation", name),
+                INTERNAL_NON_BOUNDARY,
+            )
         for name in ("AtomicRecord", "ElectronState", "atomic_record", "iter_table"):
             row = operations["epac_atomic." + name]
             self.assertEqual(_installed_audit._classify_operation(row["module"], row["name"]), AMBIGUOUS)
 
     def test_declared_operations_preserve_unresolved_semantics(self) -> None:
         inventory = self.report["operation_inventory"]
-        self.assertEqual(inventory["operation_count"], 153)
+        self.assertEqual(inventory["operation_count"], 159)
         self.assertEqual(inventory["boundary_relevant_count"], 58)
         self.assertEqual(inventory["ambiguous_count"], 56)
         self.assertEqual(inventory["omitted_boundary_relevant_count"], 14)
