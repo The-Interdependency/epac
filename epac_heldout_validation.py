@@ -29,7 +29,7 @@ from typing import Any
 #   summary: comparison-only held-out validation boundary that preregisters case identities and comparator rules before EPAC predictions are frozen and oracle values are revealed
 #   owner: The Interdependency
 #   public_surface: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_oracle, load_packaged_oracle
-#   internal_surface: _canonical, _digest, _required_nonempty_string, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _loads_oracle_json
+#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _loads_oracle_json
 #   auth_boundary: none
 #   storage_boundary: read
 #   network_boundary: none
@@ -64,6 +64,47 @@ def _required_nonempty_string(value: Any, field: str) -> str:
     return value
 
 
+def _normalize_json_value(value: Any, *, field: str) -> Any:
+    """Normalize the supported JSON container/type model without coercing tuples."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return bool(value)
+    if isinstance(value, int):
+        return int(value)
+    if isinstance(value, float):
+        return float(value)
+    if isinstance(value, str):
+        return str(value)
+    if isinstance(value, list):
+        return [
+            _normalize_json_value(item, field=f"{field}[]")
+            for item in value
+        ]
+    if isinstance(value, Mapping):
+        normalized: dict[str, Any] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise ValueError(f"{field} object keys must be strings")
+            normalized[key] = _normalize_json_value(
+                item,
+                field=f"{field}.{key}",
+            )
+        return normalized
+    raise ValueError(
+        f"{field} must use JSON-shaped values; unsupported type: "
+        f"{type(value).__name__}"
+    )
+
+
+def _normalized_domain(value: Any) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip() or value != value.strip():
+        raise ValueError("domain must be null or a nonempty canonical string")
+    return value
+
+
 def _has_nonempty_provenance_identity(provenance: Any) -> bool:
     if not isinstance(provenance, Mapping):
         return False
@@ -87,7 +128,10 @@ def _normalized_comparison(case: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError(f"unexpected comparator fields for {kind}: {fields}")
     normalized: dict[str, Any] = {"kind": kind}
     if "absolute_tolerance" in comparison:
-        normalized["absolute_tolerance"] = deepcopy(comparison["absolute_tolerance"])
+        normalized["absolute_tolerance"] = _normalize_json_value(
+            comparison["absolute_tolerance"],
+            field="absolute_tolerance",
+        )
     return normalized
 
 
@@ -110,7 +154,7 @@ def freeze_validation_plan(cases: list[Mapping[str, Any]]) -> dict[str, Any]:
         seen.add(case_id)
         normalized.append({
             "id": case_id,
-            "domain": deepcopy(case.get("domain")),
+            "domain": _normalized_domain(case.get("domain")),
             "comparison": _normalized_comparison(case),
         })
     normalized.sort(key=lambda case: case["id"])
@@ -136,6 +180,7 @@ def _verify_validation_plan(plan: Mapping[str, Any]) -> None:
         if not isinstance(case, Mapping) or set(case) != {"id", "domain", "comparison"}:
             raise ValueError("invalid validation plan case")
         case_id = _required_nonempty_string(case.get("id"), "case id")
+        _normalized_domain(case.get("domain"))
         if case_id in seen:
             raise ValueError(f"duplicate validation plan case id: {case_id}")
         seen.add(case_id)
@@ -164,7 +209,10 @@ def freeze_predictions(
         case_id = _required_nonempty_string(case_id, "prediction case id")
         if case_id not in allowed_ids:
             raise ValueError(f"prediction case is absent from frozen validation plan: {case_id}")
-        normalized[case_id] = deepcopy(value)
+        normalized[case_id] = _normalize_json_value(
+            value,
+            field=f"prediction[{case_id}]",
+        )
     normalized = dict(sorted(normalized.items()))
     envelope = {
         "schema": _PREDICTION_SCHEMA,
@@ -193,8 +241,9 @@ def verify_commitment(commitment: Mapping[str, Any]) -> None:
     _required_nonempty_string(commitment["validation_plan_sha256"], "validation_plan_sha256")
     if not isinstance(commitment["predictions"], Mapping):
         raise ValueError("predictions must be a mapping")
-    for case_id in commitment["predictions"]:
+    for case_id, value in commitment["predictions"].items():
         _required_nonempty_string(case_id, "prediction case id")
+        _normalize_json_value(value, field=f"prediction[{case_id}]")
     unsigned = {
         k: commitment[k]
         for k in ("schema", "version", "source_identity", "validation_plan_sha256", "predictions")
@@ -322,13 +371,32 @@ def compare_after_freeze(
     validation_plan: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Reveal independently sourced oracle values only after both commitments."""
-    _verify_validation_plan(validation_plan)
-    verify_commitment(commitment)
-    if commitment["validation_plan_sha256"] != validation_plan["plan_sha256"]:
+    plan_snapshot = _normalize_json_value(
+        validation_plan,
+        field="validation_plan",
+    )
+    commitment_snapshot = _normalize_json_value(
+        commitment,
+        field="commitment",
+    )
+    oracle_snapshot = _normalize_json_value(
+        oracle,
+        field="oracle",
+    )
+    if not isinstance(plan_snapshot, dict):
+        raise ValueError("validation plan must be a JSON object")
+    if not isinstance(commitment_snapshot, dict):
+        raise ValueError("prediction commitment must be a JSON object")
+    if not isinstance(oracle_snapshot, dict):
+        raise ValueError("oracle must be a JSON object")
+
+    _verify_validation_plan(plan_snapshot)
+    verify_commitment(commitment_snapshot)
+    if commitment_snapshot["validation_plan_sha256"] != plan_snapshot["plan_sha256"]:
         raise ValueError("prediction commitment is bound to a different validation plan")
-    if oracle.get("schema") != _ORACLE_SCHEMA or oracle.get("version") != _VERSION:
+    if oracle_snapshot.get("schema") != _ORACLE_SCHEMA or oracle_snapshot.get("version") != _VERSION:
         raise ValueError("unsupported held-out oracle")
-    cases = oracle.get("cases")
+    cases = oracle_snapshot.get("cases")
     if not isinstance(cases, list):
         raise ValueError("oracle cases must be a list")
 
@@ -341,11 +409,11 @@ def compare_after_freeze(
             raise ValueError(f"duplicate oracle case id: {case_id}")
         oracle_by_id[case_id] = case
 
-    plan_by_id = {case["id"]: case for case in validation_plan["cases"]}
+    plan_by_id = {case["id"]: case for case in plan_snapshot["cases"]}
     if set(oracle_by_id) != set(plan_by_id):
         raise ValueError("oracle case inventory does not match frozen validation plan")
 
-    predictions = commitment["predictions"]
+    predictions = commitment_snapshot["predictions"]
     results: list[dict[str, Any]] = []
     for case_id in sorted(plan_by_id):
         case = oracle_by_id[case_id]
@@ -353,14 +421,15 @@ def compare_after_freeze(
         oracle_rule = _normalized_comparison(case)
         if _canonical(oracle_rule) != _canonical(plan_case["comparison"]):
             raise ValueError(f"oracle comparator does not match frozen validation plan: {case_id}")
-        if _canonical(case.get("domain")) != _canonical(plan_case.get("domain")):
+        oracle_domain = _normalized_domain(case.get("domain"))
+        if oracle_domain != plan_case["domain"]:
             raise ValueError(f"oracle domain does not match frozen validation plan: {case_id}")
 
         provenance = case.get("provenance")
         if not _has_nonempty_provenance_identity(provenance):
             results.append({
                 "id": case_id,
-                "domain": deepcopy(case.get("domain")),
+                "domain": plan_case["domain"],
                 "status": "UNRESOLVED",
                 "reason": "missing provenance identity",
             })
@@ -368,7 +437,7 @@ def compare_after_freeze(
         if "expected" not in case:
             results.append({
                 "id": case_id,
-                "domain": deepcopy(case.get("domain")),
+                "domain": plan_case["domain"],
                 "status": "UNRESOLVED",
                 "reason": "missing expected value",
                 "provenance": deepcopy(provenance),
@@ -377,7 +446,7 @@ def compare_after_freeze(
         if case_id not in predictions:
             results.append({
                 "id": case_id,
-                "domain": deepcopy(case.get("domain")),
+                "domain": plan_case["domain"],
                 "status": "UNRESOLVED",
                 "reason": "no frozen prediction",
                 "expected": deepcopy(case["expected"]),
@@ -388,7 +457,7 @@ def compare_after_freeze(
         status = _compare(case["expected"], predictions[case_id], plan_case["comparison"])
         results.append({
             "id": case_id,
-            "domain": deepcopy(case.get("domain")),
+            "domain": plan_case["domain"],
             "status": status,
             "predicted": deepcopy(predictions[case_id]),
             "expected": deepcopy(case["expected"]),
@@ -400,9 +469,9 @@ def compare_after_freeze(
     receipt = {
         "schema": _RECEIPT_SCHEMA,
         "version": _VERSION,
-        "validation_plan_sha256": validation_plan["plan_sha256"],
-        "prediction_commitment_sha256": commitment["commitment_sha256"],
-        "oracle_sha256": _digest(oracle),
+        "validation_plan_sha256": plan_snapshot["plan_sha256"],
+        "prediction_commitment_sha256": commitment_snapshot["commitment_sha256"],
+        "oracle_sha256": _digest(oracle_snapshot),
         "results": results,
         "counts": counts,
     }

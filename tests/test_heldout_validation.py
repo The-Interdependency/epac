@@ -106,6 +106,140 @@ def test_prediction_cannot_escape_frozen_case_inventory():
         freeze_predictions({"y": 1}, source_identity="epac@test", validation_plan=plan)
 
 
+def test_prediction_commitment_rejects_non_json_values_before_hashing():
+    plan = freeze_validation_plan([
+        {"id": "x", "domain": "fixture", "comparison": {"kind": "exact"}}
+    ])
+
+    with pytest.raises(ValueError, match="JSON-shaped"):
+        freeze_predictions(
+            {"x": (1,)},
+            source_identity="epac@test",
+            validation_plan=plan,
+        )
+    with pytest.raises(ValueError, match="JSON-shaped"):
+        freeze_predictions(
+            {"x": [{"nested": (1,)}]},
+            source_identity="epac@test",
+            validation_plan=plan,
+        )
+
+    commitment = freeze_predictions(
+        {"x": [1]},
+        source_identity="epac@test",
+        validation_plan=plan,
+    )
+    forged = deepcopy(commitment)
+    forged["predictions"]["x"] = (1,)
+    unsigned = {
+        k: forged[k]
+        for k in ("schema", "version", "source_identity", "validation_plan_sha256", "predictions")
+    }
+    # Python's JSON encoder gives tuple/list the same bytes; verification must
+    # still reject the in-memory tuple representation before accepting the SHA.
+    assert _digest_envelope(unsigned) == commitment["commitment_sha256"]
+    forged["commitment_sha256"] = _digest_envelope(unsigned)
+    with pytest.raises(ValueError, match="JSON-shaped"):
+        verify_commitment(forged)
+
+    round_tripped = json.loads(json.dumps(commitment))
+    heldout = {
+        "schema": "epac.heldout-chemistry-oracle",
+        "version": "v1",
+        "cases": [{
+            "id": "x",
+            "domain": "fixture",
+            "comparison": {"kind": "exact"},
+            "expected": [1],
+            "provenance": {"authority": "fixture", "locator": "json-stability"},
+        }],
+    }
+    before = compare_after_freeze(commitment, heldout, validation_plan=plan)
+    after = compare_after_freeze(round_tripped, heldout, validation_plan=plan)
+    assert before == after
+    assert before["counts"] == {"SURVIVED": 1, "FALSIFIED": 0, "UNRESOLVED": 0}
+
+
+def test_domain_is_identifier_shaped_and_revalidated():
+    invalid_domains = (
+        {"expected": 7},
+        ["expected", 7],
+        7,
+        "   ",
+        " padded ",
+    )
+    for domain in invalid_domains:
+        with pytest.raises(ValueError, match="domain must be null or a nonempty canonical string"):
+            freeze_validation_plan([
+                {"id": "x", "domain": domain, "comparison": {"kind": "exact"}}
+            ])
+
+    plan = freeze_validation_plan([
+        {"id": "x", "domain": "fixture", "comparison": {"kind": "exact"}}
+    ])
+    forged = deepcopy(plan)
+    forged["cases"][0]["domain"] = {"expected": 7}
+    unsigned = {k: forged[k] for k in ("schema", "version", "cases")}
+    forged["plan_sha256"] = _digest_envelope(unsigned)
+    with pytest.raises(ValueError, match="domain must be null or a nonempty canonical string"):
+        freeze_predictions(
+            {"x": 1},
+            source_identity="epac@test",
+            validation_plan=forged,
+        )
+
+    commitment = freeze_predictions(
+        {"x": 1},
+        source_identity="epac@test",
+        validation_plan=plan,
+    )
+    oracle_with_structured_domain = {
+        "schema": "epac.heldout-chemistry-oracle",
+        "version": "v1",
+        "cases": [{
+            "id": "x",
+            "domain": {"expected": 7},
+            "comparison": {"kind": "exact"},
+            "expected": 1,
+            "provenance": {"authority": "fixture", "locator": "domain"},
+        }],
+    }
+    with pytest.raises(ValueError, match="domain must be null or a nonempty canonical string"):
+        compare_after_freeze(
+            commitment,
+            oracle_with_structured_domain,
+            validation_plan=plan,
+        )
+
+
+def test_programmatic_oracle_rejects_non_json_values_before_evidence_hashing():
+    plan = freeze_validation_plan([
+        {"id": "x", "domain": "fixture", "comparison": {"kind": "exact"}}
+    ])
+    commitment = freeze_predictions(
+        {"x": [1]},
+        source_identity="epac@test",
+        validation_plan=plan,
+    )
+    oracle_with_tuple = {
+        "schema": "epac.heldout-chemistry-oracle",
+        "version": "v1",
+        "cases": [{
+            "id": "x",
+            "domain": "fixture",
+            "comparison": {"kind": "exact"},
+            "expected": (1,),
+            "provenance": {"authority": "fixture", "locator": "tuple"},
+        }],
+    }
+    with pytest.raises(ValueError, match="JSON-shaped"):
+        compare_after_freeze(
+            commitment,
+            oracle_with_tuple,
+            validation_plan=plan,
+        )
+
+
 def test_tampered_prediction_cannot_be_compared():
     plan, commitment = frozen({"element:H:valence": 1})
     tampered = deepcopy(commitment)

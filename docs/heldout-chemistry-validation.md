@@ -26,12 +26,15 @@ Recommended stable IDs include `element:H:valence`, `element:O:oxidation`, `isot
 
 ## Comparator and evidence input rules
 
-Validation-plan comparator fields are closed in v1 so expected labels cannot be smuggled into the prediction side:
+Validation-plan fields are deliberately narrow so oracle-shaped data cannot cross into the prediction side:
 
-- `exact` and `set-equality` accept only `kind`;
+- `domain` is either `null` or one nonempty canonical string; objects, arrays, numbers, blank strings, and padded strings are rejected;
+- `exact` and `set-equality` comparators accept only `kind`;
 - `numeric-tolerance` accepts only `kind` and `absolute_tolerance`;
 - an unknown comparator kind may be preregistered with `kind` only and will score `UNRESOLVED`;
 - any additional comparator field is rejected before the plan is committed or verified.
+
+Prediction and programmatic oracle values must use the JSON container/type model: `null`, booleans, numbers, strings, arrays/lists, and string-keyed objects/mappings. Python-only coercible values such as tuples are rejected before commitment or evidence hashing, including when nested. This keeps an in-memory commitment semantically identical to the same commitment after documented JSON persistence/reload. Non-finite Python floats remain admissible only so the comparator can classify them `UNRESOLVED`; they never produce a numeric success.
 
 Numeric-tolerance comparison keeps integers as integers and uses exact rational arithmetic over accepted finite Python numeric values, so large integer distinctions are not collapsed by an intermediate float conversion. Non-finite operands or tolerances remain `UNRESOLVED`.
 
