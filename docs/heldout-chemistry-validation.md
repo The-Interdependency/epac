@@ -24,6 +24,19 @@ The checked-in `data/heldout_chemistry_oracle.json` is intentionally empty as a 
 
 Recommended stable IDs include `element:H:valence`, `element:O:oxidation`, `isotope:H-1:mass`, and `reaction:<canonical-id>:products`. The corpus can grow across isotope behavior, oxidation/valence, reaction outcomes, and element properties without changing EPAC construction code.
 
+## Comparator and evidence input rules
+
+Validation-plan comparator fields are closed in v1 so expected labels cannot be smuggled into the prediction side:
+
+- `exact` and `set-equality` accept only `kind`;
+- `numeric-tolerance` accepts only `kind` and `absolute_tolerance`;
+- an unknown comparator kind may be preregistered with `kind` only and will score `UNRESOLVED`;
+- any additional comparator field is rejected before the plan is committed or verified.
+
+Numeric-tolerance comparison keeps integers as integers and uses exact rational arithmetic over accepted finite Python numeric values, so large integer distinctions are not collapsed by an intermediate float conversion. Non-finite operands or tolerances remain `UNRESOLVED`.
+
+Provenance `authority` and `locator` must both be nonempty strings after trimming; blank or null identities are `UNRESOLVED`. File-based oracle loading rejects duplicate JSON object keys at any nesting level rather than accepting parser-dependent evidence. In a source checkout, `load_packaged_oracle()` prefers the sibling `data/heldout_chemistry_oracle.json`; in an installed distribution it reads the `epac_data` package resource.
+
 ## Runnable end-to-end example
 
 This runs from a source checkout or the installed distribution. It persists and reloads both commitments before revealing a synthetic held-out value, exercises packaged-oracle loading, then persists the evidence receipt.

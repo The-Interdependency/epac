@@ -4,13 +4,17 @@ from copy import deepcopy
 import hashlib
 import json
 import math
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
+import epac_heldout_validation as heldout_validation
 from epac_heldout_validation import (
     compare_after_freeze,
     freeze_predictions,
     freeze_validation_plan,
+    load_oracle,
     load_packaged_oracle,
     verify_commitment,
 )
@@ -76,6 +80,24 @@ def test_plan_rejects_duplicate_ids_and_oracle_fields():
         freeze_validation_plan([{"id": "x"}, {"id": "x"}])
     with pytest.raises(ValueError, match="cannot contain expected values"):
         freeze_validation_plan([{"id": "x", "expected": 1}])
+
+
+def test_plan_rejects_oracle_fields_hidden_in_comparator_rules():
+    for comparison in (
+        {"kind": "exact", "expected": 7},
+        {"kind": "set-equality", "expected": [7]},
+        {"kind": "numeric-tolerance", "absolute_tolerance": 0, "expected": 7},
+    ):
+        with pytest.raises(ValueError, match="unexpected comparator fields"):
+            freeze_validation_plan([{"id": "x", "comparison": comparison}])
+
+    plan = freeze_validation_plan([{"id": "x", "comparison": {"kind": "exact"}}])
+    forged = deepcopy(plan)
+    forged["cases"][0]["comparison"]["expected"] = 7
+    unsigned = {k: forged[k] for k in ("schema", "version", "cases")}
+    forged["plan_sha256"] = _digest_envelope(unsigned)
+    with pytest.raises(ValueError, match="unexpected comparator fields"):
+        freeze_predictions({"x": 1}, source_identity="epac@test", validation_plan=forged)
 
 
 def test_prediction_cannot_escape_frozen_case_inventory():
@@ -238,6 +260,52 @@ def test_nonfinite_numeric_operands_or_tolerance_are_unresolved(expected, predic
     assert receipt["counts"] == {"SURVIVED": 0, "FALSIFIED": 0, "UNRESOLVED": 1}
 
 
+def test_numeric_tolerance_preserves_large_integer_distinctions():
+    plan = freeze_validation_plan([
+        {"id": "x", "domain": "fixture",
+         "comparison": {"kind": "numeric-tolerance", "absolute_tolerance": 0}}
+    ])
+    commitment = freeze_predictions(
+        {"x": 9007199254740993},
+        source_identity="epac@test",
+        validation_plan=plan,
+    )
+    heldout = {
+        "schema": "epac.heldout-chemistry-oracle",
+        "version": "v1",
+        "cases": [{
+            "id": "x",
+            "domain": "fixture",
+            "comparison": {"kind": "numeric-tolerance", "absolute_tolerance": 0},
+            "expected": 9007199254740992,
+            "provenance": {"authority": "fixture", "locator": "large-int"},
+        }],
+    }
+    receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+    assert receipt["counts"] == {"SURVIVED": 0, "FALSIFIED": 1, "UNRESOLVED": 0}
+
+
+def test_blank_provenance_identity_is_unresolved():
+    plan = freeze_validation_plan([
+        {"id": "x", "domain": "fixture", "comparison": {"kind": "exact"}}
+    ])
+    commitment = freeze_predictions({"x": 1}, source_identity="epac@test", validation_plan=plan)
+    heldout = {
+        "schema": "epac.heldout-chemistry-oracle",
+        "version": "v1",
+        "cases": [{
+            "id": "x",
+            "domain": "fixture",
+            "comparison": {"kind": "exact"},
+            "expected": 1,
+            "provenance": {"authority": "   ", "locator": "\t"},
+        }],
+    }
+    receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+    assert receipt["counts"] == {"SURVIVED": 0, "FALSIFIED": 0, "UNRESOLVED": 1}
+    assert receipt["results"][0]["reason"] == "missing provenance identity"
+
+
 def test_receipt_and_commitment_detach_mutable_evidence_inputs():
     predictions = {
         "element:H:valence": 1,
@@ -260,8 +328,39 @@ def test_receipt_and_commitment_detach_mutable_evidence_inputs():
     assert receipt["receipt_sha256"] == preserved["receipt_sha256"]
 
 
-def test_packaged_oracle_loader_works_from_checkout_or_install():
-    packaged = load_packaged_oracle()
+def test_load_oracle_rejects_duplicate_json_object_keys():
+    payload = (
+        '{"schema":"epac.heldout-chemistry-oracle","version":"v1","cases":'
+        '[{"id":"x","expected":1,"expected":2}]}'
+    )
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "oracle.json"
+        path.write_text(payload, encoding="utf-8")
+        with pytest.raises(ValueError, match="duplicate JSON key"):
+            load_oracle(path)
+
+
+def test_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout():
+    source_oracle = (
+        Path(heldout_validation.__file__).resolve().parent
+        / "data"
+        / "heldout_chemistry_oracle.json"
+    )
+    if source_oracle.is_file():
+        original_files = heldout_validation.files
+
+        def unexpected_installed_lookup(*_args, **_kwargs):
+            raise AssertionError("source checkout must be preferred over installed epac_data")
+
+        heldout_validation.files = unexpected_installed_lookup
+        try:
+            packaged = load_packaged_oracle()
+        finally:
+            heldout_validation.files = original_files
+        assert packaged == load_oracle(source_oracle)
+    else:
+        packaged = load_packaged_oracle()
+
     assert packaged["schema"] == "epac.heldout-chemistry-oracle"
     assert packaged["cases"] == []
 

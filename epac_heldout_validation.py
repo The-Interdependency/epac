@@ -1,4 +1,4 @@
-"""Two-phase held-out chemistry validation for EPAC.
+"""Staged held-out chemistry validation for EPAC.
 
 The construction side may create a prediction commitment without importing or
 reading the oracle corpus.  Only the comparison phase accepts oracle facts.
@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from copy import deepcopy
+from fractions import Fraction
 import hashlib
 from importlib.resources import files
 import json
@@ -28,15 +29,15 @@ from typing import Any
 #   summary: comparison-only held-out validation boundary that preregisters case identities and comparator rules before EPAC predictions are frozen and oracle values are revealed
 #   owner: The Interdependency
 #   public_surface: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_oracle, load_packaged_oracle
-#   internal_surface: _canonical, _digest, _verify_validation_plan, _json_exact_equal, _json_token, _finite_number, _compare
+#   internal_surface: _canonical, _digest, _required_nonempty_string, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _loads_oracle_json
 #   auth_boundary: none
-#   storage_boundary: none
+#   storage_boundary: read
 #   network_boundary: none
 #   user_data_boundary: none
 #   admin_only: false
 #   tests: tests.test_heldout_validation
 #   rollout: opt-in research validation surface; callers persist the validation-plan commitment before prediction commitment and reveal independently sourced oracle values only during comparison
-#   rollback: remove this module, its package entry, tests, oracle fixture, and documentation without changing EPAC construction modules or chemistry derivation behavior
+#   rollback: remove this module, its package and boundary-inventory entries, tests, oracle fixture, and documentation without changing EPAC construction modules or chemistry derivation behavior
 #   since: 2026-09-29
 #   unresolved: external oracle authority selection and custody remain outside EPAC; this module binds supplied evidence but does not establish independent custody by itself
 # === END MODULE_BUILD ===
@@ -63,11 +64,31 @@ def _required_nonempty_string(value: Any, field: str) -> str:
     return value
 
 
+def _has_nonempty_provenance_identity(provenance: Any) -> bool:
+    if not isinstance(provenance, Mapping):
+        return False
+    return all(
+        isinstance(provenance.get(field), str) and bool(provenance[field].strip())
+        for field in ("authority", "locator")
+    )
+
+
 def _normalized_comparison(case: Mapping[str, Any]) -> dict[str, Any]:
     comparison = case.get("comparison", {"kind": "exact"})
     if not isinstance(comparison, Mapping):
         raise ValueError("comparison must be a mapping")
-    return deepcopy(dict(comparison))
+    kind = comparison.get("kind", "exact")
+    if not isinstance(kind, str) or not kind.strip() or kind != kind.strip():
+        raise ValueError("comparison kind must be a nonempty canonical string")
+    allowed = {"kind", "absolute_tolerance"} if kind == "numeric-tolerance" else {"kind"}
+    extra = set(comparison) - allowed
+    if extra:
+        fields = ", ".join(sorted(str(field) for field in extra))
+        raise ValueError(f"unexpected comparator fields for {kind}: {fields}")
+    normalized: dict[str, Any] = {"kind": kind}
+    if "absolute_tolerance" in comparison:
+        normalized["absolute_tolerance"] = deepcopy(comparison["absolute_tolerance"])
+    return normalized
 
 
 def freeze_validation_plan(cases: list[Mapping[str, Any]]) -> dict[str, Any]:
@@ -118,8 +139,9 @@ def _verify_validation_plan(plan: Mapping[str, Any]) -> None:
         if case_id in seen:
             raise ValueError(f"duplicate validation plan case id: {case_id}")
         seen.add(case_id)
-        if not isinstance(case.get("comparison"), Mapping):
-            raise ValueError("comparison must be a mapping")
+        normalized_comparison = _normalized_comparison(case)
+        if _canonical(normalized_comparison) != _canonical(case["comparison"]):
+            raise ValueError("validation plan comparison must be canonical")
     unsigned = {k: plan[k] for k in ("schema", "version", "cases")}
     if _digest(unsigned) != plan["plan_sha256"]:
         raise ValueError("validation plan digest mismatch")
@@ -223,14 +245,12 @@ def _json_exact_equal(left: Any, right: Any) -> bool | None:
     return None
 
 
-def _finite_number(value: Any) -> float | None:
+def _finite_number(value: Any) -> int | float | None:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
-    try:
-        converted = float(value)
-    except (OverflowError, TypeError, ValueError):
+    if isinstance(value, float) and not math.isfinite(value):
         return None
-    return converted if math.isfinite(converted) else None
+    return value
 
 
 def _json_token(value: Any) -> tuple[Any, ...] | None:
@@ -255,6 +275,19 @@ def _json_token(value: Any) -> tuple[Any, ...] | None:
     return None
 
 
+def _numeric_within_tolerance(
+    expected: Any,
+    predicted: Any,
+    tolerance_value: Any,
+) -> bool | None:
+    tolerance = _finite_number(tolerance_value)
+    left = _finite_number(predicted)
+    right = _finite_number(expected)
+    if tolerance is None or tolerance < 0 or left is None or right is None:
+        return None
+    return abs(Fraction(left) - Fraction(right)) <= Fraction(tolerance)
+
+
 def _compare(expected: Any, predicted: Any, rule: Mapping[str, Any]) -> str:
     kind = rule.get("kind", "exact")
     if kind == "exact":
@@ -271,12 +304,14 @@ def _compare(expected: Any, predicted: Any, rule: Mapping[str, Any]) -> str:
             return "UNRESOLVED"
         return "SURVIVED" if predicted_tokens == expected_tokens else "FALSIFIED"
     if kind == "numeric-tolerance":
-        tolerance = _finite_number(rule.get("absolute_tolerance"))
-        left = _finite_number(predicted)
-        right = _finite_number(expected)
-        if tolerance is None or tolerance < 0 or left is None or right is None:
+        within = _numeric_within_tolerance(
+            expected,
+            predicted,
+            rule.get("absolute_tolerance"),
+        )
+        if within is None:
             return "UNRESOLVED"
-        return "SURVIVED" if abs(left - right) <= tolerance else "FALSIFIED"
+        return "SURVIVED" if within else "FALSIFIED"
     return "UNRESOLVED"
 
 
@@ -322,7 +357,7 @@ def compare_after_freeze(
             raise ValueError(f"oracle domain does not match frozen validation plan: {case_id}")
 
         provenance = case.get("provenance")
-        if not isinstance(provenance, Mapping) or not provenance.get("authority") or not provenance.get("locator"):
+        if not _has_nonempty_provenance_identity(provenance):
             results.append({
                 "id": case_id,
                 "domain": deepcopy(case.get("domain")),
@@ -374,15 +409,31 @@ def compare_after_freeze(
     return {**receipt, "receipt_sha256": _digest(receipt)}
 
 
+def _reject_duplicate_object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError(f"duplicate JSON key in oracle evidence: {key}")
+        value[key] = item
+    return value
+
+
+def _loads_oracle_json(payload: str) -> dict[str, Any]:
+    value = json.loads(payload, object_pairs_hook=_reject_duplicate_object_pairs)
+    if not isinstance(value, dict):
+        raise ValueError("oracle document must be a JSON object")
+    return value
+
+
 def load_oracle(path: str | Path) -> dict[str, Any]:
     """Comparison-side helper. Construction modules must not call this."""
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    return _loads_oracle_json(Path(path).read_text(encoding="utf-8"))
 
 
 def load_packaged_oracle() -> dict[str, Any]:
-    """Load the shipped comparison-only oracle in source or installed form."""
-    try:
-        resource = files("epac_data").joinpath("heldout_chemistry_oracle.json")
-        return json.loads(resource.read_text(encoding="utf-8"))
-    except ModuleNotFoundError:
-        return load_oracle(Path(__file__).resolve().parent / "data" / "heldout_chemistry_oracle.json")
+    """Load this checkout's oracle first, otherwise the installed package resource."""
+    source_oracle = Path(__file__).resolve().parent / "data" / "heldout_chemistry_oracle.json"
+    if source_oracle.is_file():
+        return load_oracle(source_oracle)
+    resource = files("epac_data").joinpath("heldout_chemistry_oracle.json")
+    return _loads_oracle_json(resource.read_text(encoding="utf-8"))
