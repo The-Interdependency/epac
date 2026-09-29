@@ -108,3 +108,23 @@ event is recorded in [docs/graduation.json](graduation.json) and the byte-identi
 local copy of the [Stack-owned scoped receipt](https://github.com/The-Interdependency/stack/blob/1c6ec9fb85d2ead58b13d806a5c4a9bc3803c936/integration/epac/authority-transition.json).
 Use the release tag and SHA256SUMS to inspect the immutable bytes; use the
 current graduation record to inspect subsequent lifecycle standing.
+
+## Post-release EPAC join-term candidate — 2026-09-29
+
+The typed multi-origin join-term candidate starts from EPAC commit
+`1e5c999286f12221eff9870d1372203ac7935f2a` (tree
+`ce7781938ff684d826bd91f475b5423bd56b146a`). It consumes the semantic
+application `metapat.application.epac_join_terms` from METAPAT commit
+`18011c2bf4c3c3c1f50c601add371702a7c1ff05` (tree
+`7e86e60d8bb5f4a9b51f031d0ca34202d0a28741`) with application digest
+`cba0ccc360a0ecd9b78ce582a7f54d1385beeaa83de495faa76f40112bd23e7d`.
+Current build/evidence doctrine is identified as skill-lib commit
+`516933d98f9de376f4e498f44059043dc0d96470`.
+
+The deterministic receipt binds exact hashes of every feature source because a
+committed file cannot contain the hash of the commit that contains itself. The
+final Git commit externally binds those same bytes. UCNS is not consumed or
+modified by this candidate. METAPAT retains semantic authority; EPAC owns the
+schema, constructor, equality, serialization, public recovery, and evidence.
+No scientific, geometry, proof, measurement, confidentiality, or release
+authority transfers.

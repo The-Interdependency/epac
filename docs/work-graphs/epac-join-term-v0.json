@@ -1,0 +1,73 @@
+{
+  "active_frontier": [
+    "Measure whether exact lineage and named seating improve a separately preregistered EPAC task.",
+    "Identify, if one exists, a native secret-dependent operation whose legitimate public projection does not efficiently reproduce it."
+  ],
+  "authority": {
+    "does_not_own": [
+      "METAPAT root or catalog authority",
+      "UCNS geometry, topology, theorem, or gonol authority",
+      "EDCM measurement authority",
+      "external physics or chemistry truth"
+    ],
+    "non_transfer": [
+      "METAPAT licenses semantic roles but does not validate the EPAC implementation",
+      "typed join-tree correctness does not transfer chemistry, physics, energy-coupling, molecular-shape, or production validity",
+      "shared vocabulary, counts, or geometry do not establish ancestry"
+    ],
+    "owns": [
+      "EPAC join-term schema, constructor, equality, serialization, recovery, and deterministic evidence",
+      "classification of the legacy bag as a lossy non-structural sidecar"
+    ]
+  },
+  "blocked": [],
+  "cross_repository_relations": [
+    {
+      "authority_transfer": false,
+      "identity": "metapat.application.epac_join_terms@epac-join-terms-application-v4#cba0ccc360a0ecd9b78ce582a7f54d1385beeaa83de495faa76f40112bd23e7d",
+      "relation": "exact semantic license for spine-to-EPAC role names",
+      "repository": "The-Interdependency/metapat"
+    },
+    {
+      "authority_transfer": false,
+      "identity": "516933d98f9de376f4e498f44059043dc0d96470",
+      "relation": "current build, evidence, risk-boundary, documentation, test, and work-graph doctrine",
+      "repository": "The-Interdependency/skill-lib"
+    }
+  ],
+  "delivered": [
+    {
+      "boundary": "complete public representation; no secret or confidentiality claim",
+      "status": "implemented candidate",
+      "surface": "typed S0-through-S6 join tree"
+    },
+    {
+      "boundary": "counts only; excluded from tensor and equality",
+      "status": "preserved migration sidecar",
+      "surface": "legacy bag projection"
+    },
+    {
+      "boundary": "representation correctness only; molecular-shape evidence remains FALSIFIED",
+      "status": "deterministic public-only recovery evidence",
+      "surface": "canonical JSON receipt and Markdown audit"
+    }
+  ],
+  "hmmm": [
+    "No native secret-dependent useful operation is established.",
+    "The downstream value of exact lineage and seating replay remains unmeasured.",
+    "No UCNS correspondence is selected or licensed."
+  ],
+  "machine_entrypoints": {
+    "candidate": "epac_join_term.py",
+    "generator": "tools/generate_join_term_v0.py",
+    "human_specification": "docs/multi-origin-join-term-v0.md",
+    "public_receipt": "data/epac-join-term-v0-receipt.json",
+    "tests": "tests/test_epac_join_term.py"
+  },
+  "repository": "The-Interdependency/epac",
+  "status": {
+    "current_claim": "A strict typed S0-through-S6 join tree preserves exact authored adjacency, named ordered seating, explicit holes and leftovers, exact state, inferred bearing, and provenance. Its count bag is a provably lossy sidecar. Public receipt bytes recover the complete candidate without private state.",
+    "state": "native correctness candidate"
+  },
+  "version": "0.1.0"
+}
