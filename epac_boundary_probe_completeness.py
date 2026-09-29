@@ -113,6 +113,7 @@ Observable = Any
 ObservableFn = Callable[[StateContext], Observable]
 
 OPERATION_SOURCE_FILES = (
+    "epac_heldout_validation.py",
     "epac_evidence_cache.py",
     "viz/__init__.py",
     "subatomic/__init__.py",
@@ -355,6 +356,8 @@ def _declared_operations() -> tuple[dict[str, str], ...]:
 
 
 def _classify_operation(module: str, name: str) -> str:
+    if module == "epac_heldout_validation":
+        return INTERNAL_NON_BOUNDARY
     if module in {
         "epac_atomic",
         "epac_atomic_derivation",

@@ -4,9 +4,19 @@
   "policy": {
     "role": "comparison-only",
     "construction_access": "forbidden",
-    "discovery_sources": ["Periodic Table app or other chemistry references"],
+    "selection_binding": "Case IDs, domains, and comparator rules must be frozen and persisted in an epac.heldout-validation-plan commitment before predictions are frozen or revealed.",
+    "empty_corpus_semantics": "Packaging default only; anti-selection comes from the frozen validation plan, not corpus emptiness.",
+    "discovery_sources": [
+      "Periodic Table app or other chemistry references"
+    ],
     "acceptance": "Important values require an independently identifiable authoritative source before scoring."
   },
-  "domains": ["isotope", "oxidation-state", "valence", "reaction", "element-property"],
+  "domains": [
+    "isotope",
+    "oxidation-state",
+    "valence",
+    "reaction",
+    "element-property"
+  ],
   "cases": []
 }
