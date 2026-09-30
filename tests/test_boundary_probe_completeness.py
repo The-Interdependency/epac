@@ -173,7 +173,7 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
                 "EPACJoinTree",
                 "ExactRatio",
                 "JoinSlot",
-                "JoinTransformation",
+                "AuthoredJoin",
                 "LegacyBag",
                 "ScaleOrigin",
                 "construct_epac_join_tree",

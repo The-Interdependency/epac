@@ -84,7 +84,7 @@ EPAC_BASE_TREE = "ce7781938ff684d826bd91f475b5423bd56b146a"
 METAPAT_PRODUCER_COMMIT = "1cdfb09dd00a451cee30eec2e78624df8c682662"
 METAPAT_PRODUCER_TREE = "d946a5a18b0c53fd561dcd9d68fdf36d5dd11638"
 METAPAT_APPLICATION_FIXTURE_SHA256 = "7f3ff74394b48c2162818fad8a373d1b88547b0df73beb8a604376022dcddf07"
-METAPAT_APPLICATION_SOURCE_SHA256 = "5eebc833e40ea5c5d36700aa5badad286f0e5a7086b7a1d92be319fd1198a21f"
+METAPAT_APPLICATION_SOURCE_SHA256 = "6cfb4a4109fd43a4f8343b48dd6fd72b74346f4609a65911cbf96188412b6ef0"
 SKILL_LIB_COMMIT = "516933d98f9de376f4e498f44059043dc0d96470"
 SKILL_LIB_TREE = "a1465ddf1de9519c9abc1a97d058432ba71bb257"
 
@@ -184,6 +184,8 @@ def build_receipt(root: Path) -> dict[str, Any]:
                 "application_digest": METAPAT_APPLICATION_DIGEST,
                 "application_fixture_sha256": METAPAT_APPLICATION_FIXTURE_SHA256,
                 "application_source_sha256": METAPAT_APPLICATION_SOURCE_SHA256,
+                "application_source_path": "src/metapat/epac_join_terms.py",
+                "application_fixture_path": "src/metapat/fixtures/epac-join-terms-application-v4.json",
                 "authority": "semantic spine role license only",
                 "authority_transfer": False,
             },
