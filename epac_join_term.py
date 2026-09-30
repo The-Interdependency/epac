@@ -22,7 +22,7 @@ Usage guidance
 #   public_surface: ExactRatio, JoinSlot, ScaleOrigin, AuthoredJoin, LegacyBag, EPACJoinTree, construct_epac_join_tree, recover_epac_join_tree, join_isomorphic, trace_origin_lineage, legacy_bag_projection
 #   internal_surface: canonical JSON, strict validators, structural signature, fixture declarations
 #   auth_boundary: none
-#   storage_boundary: caller-provided public bytes only; no secrets or mutable persistence
+#   storage_boundary: read own source for evidence identity and caller-provided public wire; no secrets or mutable persistence
 #   network_boundary: none
 #   user_data_boundary: public deterministic research fixture only
 #   admin_only: false
@@ -836,7 +836,10 @@ class EPACJoinTree:
             data = json.loads(text, object_pairs_hook=_reject_duplicate_keys)
         except json.JSONDecodeError as exc:
             raise ValueError("invalid EPAC join-tree JSON") from exc
-        return cls.from_dict(data)
+        tree = cls.from_dict(data)
+        if text != tree.to_json():
+            raise ValueError("EPAC join-tree JSON must use its canonical encoding")
+        return tree
 
 
 def _slot(

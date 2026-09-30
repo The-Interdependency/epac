@@ -111,7 +111,7 @@ object_kind:    multi-origin-join-tree
 
 `candidate_digest` is SHA-256 of the canonical payload excluding only that digest field. Strict recovery rejects duplicate JSON keys, unknown or missing fields, invalid or unreduced ratios, omitted explicit slot state, duplicate identities, incomplete scales, invalid k, noncontiguous slot order, malformed holes, skip-scale references, inconsistent joins, changed semantic bindings, changed license identity, bag masquerading, and digest mismatch. Origin, authored-join, and leftover object identities occupy one globally unique declared-object scope. A member `participant_id` is a reference to an already declared origin and therefore intentionally repeats that origin identity; it does not declare a new object.
 
-Parsing also requires the supplied payload to equal the canonical serialization of the recovered object before its digest is accepted; normalization cannot hide changed wire data.
+Mapping parsing also requires the supplied payload to equal the canonical serialization of the recovered object before its digest is accepted; normalization cannot hide changed wire data. JSON recovery additionally compares the original text with the canonical tree serialization. Whitespace, a trailing newline, reordered keys, alternate numeric spellings such as `-0`, and unnecessary Unicode escapes are rejected even if they parse to the same values. The newline terminating the outer evidence receipt is not part of the embedded candidate wire.
 
 Canonical evidence:
 

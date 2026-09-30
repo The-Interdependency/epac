@@ -523,6 +523,22 @@ def test_noncanonical_ratios_rejected_even_with_recomputed_digest() -> None:
                 EPACJoinTree.from_dict(wire)
     assert ExactRatio(2, 16) == ExactRatio(1, 8)  # typed construction still reduces
     assert EPACJoinTree.from_json(tree.to_json()) == tree
+    # JSON parsing must not erase a different encoding under the same digest.
+    canonical = tree.to_json()
+    variants = [
+        canonical + "\n",
+        " " + canonical,
+        json.dumps(tree.to_dict(), sort_keys=True, indent=2),
+        json.dumps(tree.to_dict(), sort_keys=False, separators=(",", ":")),
+        canonical.replace('"numerator":0', '"numerator":-0', 1),
+    ]
+    unicode_tree = construct_epac_join_tree(identity_namespace="fixture-é")
+    variants.append(json.dumps(unicode_tree.to_dict(), sort_keys=True, separators=(",", ":")))
+    for encoded in variants:
+        assert encoded != EPACJoinTree.from_dict(json.loads(encoded)).to_json()
+        with pytest.raises(ValueError, match="canonical encoding"):
+            recover_epac_join_tree(encoded.encode("utf-8"))
+    assert recover_epac_join_tree(unicode_tree.to_json().encode("utf-8")) == unicode_tree
 
 
 def test_generator_runs_directly_without_installation(tmp_path) -> None:
