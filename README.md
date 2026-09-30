@@ -11,6 +11,7 @@ EPAC is the independent repository for The Interdependency's elementary/particle
 - Research status: provisional / cross-domain hypothesis unless a narrower artifact says otherwise.
 - Empirical status: no transfer. Repository independence does not make a physics or chemistry claim true.
 - Molecular-shape prediction: **FALSIFIED** for the preregistered comparison carried from the incubator; that negative result is preserved as evidence.
+- Typed multi-origin join term: native correctness candidate. It preserves authored S0-through-S6 lineage and named seating; its legacy count bag is a demonstrably lossy sidecar. This does not change molecular-shape standing.
 - UCNS Public Gonol position operations beyond carrier identity: `hmmm`.
 - Standing-wave / field descriptions: live modeling direction, not established external physics merely by appearing here.
 
@@ -27,6 +28,7 @@ The extraction preserves the stack research artifacts and their epistemic status
 ## Structure
 
 - `epac_*.py` — executable constructors and comparison surfaces migrated from the incubator.
+- `epac_join_term.py` — strict EPAC-owned S0-through-S6 join-tree candidate, equality, public recovery, and lineage replay.
 - `subatomic/` — subatomic construction candidates, receipts, and executable witnesses.
 - `tests/` — repository-level regression and falsification tests.
 - `data/` — bounded input/comparison data used by the current experiments.
@@ -80,6 +82,28 @@ When adding a root `epac_*.py` module, add it to `tool.setuptools.py-modules`;
 the archive-coverage gate rejects omitted modules. Current candidates also
 package `epac_atomic_derivation` and `epac_b_derivation`; the immutable v0.1.0
 release retains its original bytes.
+
+The post-v0.1.0 join-term candidate is public representation research, not a
+secret-key surface or new release. Its METAPAT license identity, source hashes,
+candidate digest, minimal same-bag/non-isomorphic witness, and nonclaims are in
+`data/epac-join-term-v0-receipt.json`.
+
+```bash
+python tools/generate_join_term_v0.py --check
+python -m pytest -q tests/test_epac_join_term.py
+```
+
+Public-only recovery does not invoke construction state:
+
+```python
+import json
+from importlib.resources import files
+from epac_join_term import recover_epac_join_tree, trace_origin_lineage
+
+receipt = json.loads(files("epac_data").joinpath("epac-join-term-v0-receipt.json").read_text())
+tree = recover_epac_join_tree(json.dumps(receipt["candidate"], sort_keys=True, separators=(",", ":")))
+lineage = trace_origin_lineage(tree, tree.origins[-1].origin_id)
+```
 
 ```bash
 python -m pip install uv==0.11.18
@@ -151,3 +175,5 @@ subject to that license when distributed. Dependencies retain their own rights
 and licensing status; this selection grants no rights to UCNS or other upstream
 projects. [License provenance](docs/license-selection.json) records the owner
 instruction and its resolution using the organization’s weak-copyleft convention.
+
+The repaired join-term wire `0.2.0` binds the merged METAPAT license, separates stored state from identified scalar readouts, and preserves authored adjacent-scale relations without claiming Vector, Transformation, or Time. The static candidate provides no resulting state-change or actual occurrence evidence. See `docs/multi-origin-join-term-v0.md` for the explicit pre-merge API migration.

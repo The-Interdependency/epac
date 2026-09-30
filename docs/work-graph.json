@@ -4,7 +4,8 @@
     "authority_transfer": false,
     "hmmm": [
       "Geometry ratification, canonicality/compositionality, PCEA application, and unmeasured operation effects remain unresolved.",
-      "No PostgreSQL fresh-making acceptance is asserted."
+      "No PostgreSQL fresh-making acceptance is asserted.",
+      "Compatibility beyond the exact METAPAT application producer recorded in docs/work-graphs/epac-join-term-v0.json is unestablished and requires an explicit rebind."
     ],
     "measurement_status_transfer": false,
     "proof_status_transfer": false,
@@ -25,8 +26,8 @@
     },
     {
       "authority": "semantic authority for METAPAT application terms",
-      "commit": "d6699e21b11c8f8394998efc34a468e2d6efc8b0",
-      "relation": "semantic source consumed by EPAC",
+      "commit": "1cdfb09dd00a451cee30eec2e78624df8c682662",
+      "relation": "semantic source consumed by EPAC; join-term v0 binds metapat.application.epac_join_terms@epac-join-terms-application-v4 with digest 461ef7e059aa65b514017683ba9b57058ee9f582bc63748fabd021cdeb660b4b and delegates its scoped graph to docs/work-graphs/epac-join-term-v0.json",
       "repository": "The-Interdependency/metapat"
     },
     {
@@ -38,5 +39,5 @@
   ],
   "schema": "the-interdependency.stack-manifest",
   "version": "1.0.0",
-  "work_graph_sha256": "9e079e25fa2021f83a17171db4be157b43aced0aa6fbbf4729fc9ce71ff4f4f3"
+  "work_graph_sha256": "3359501225382845edf34312b4acd864a51a8204617016bae8979f449ab4a7b5"
 }

@@ -15,6 +15,10 @@ This means the current construction is not evidence that EPAC predicts empirical
 
 The extraction carries atomic, periodic, molecular, dimensional-arity, Public Gonol, subatomic, comparison, receipt, and regression-test surfaces from the pinned stack source.
 
+The post-v0.1.0 typed multi-origin join-term candidate preserves one explicit origin at every S0-through-S6 scale, adjacent authored joins, named ordered slots, holes, leftovers, exact state, inferred bearing, and provenance. Deterministic public bytes recover the complete tree and exact origin lineage without constructor state. Its legacy bag preserves counts but loses seating and is not the tree.
+
+This is representation correctness only. It does not provide a cryptographic private structure, confidentiality, chemical or physical phase, physical energy, UCNS correspondence, molecular geometry, or evidence that the representation improves an external task.
+
 ## Usage guidance
 
 Treat constructor success as reproducibility of a declared structure. Treat a comparison standing only as evidence for the exact preregistered claim it scores. Do not infer physics or chemistry validation from either.
@@ -25,3 +29,7 @@ Treat constructor success as reproducibility of a declared structure. Treat a co
 - a non-imported mapping from EPAC relational structure to empirical molecular angles
 - standing-wave/field ontology beyond provisional modeling language
 - release packaging and downstream artifact consumption
+- whether exact lineage and seating improve a separately preregistered EPAC task
+- whether any genuinely secret native structure enables a useful operation that a legitimate public projection cannot efficiently reproduce
+
+The repaired join-term wire `0.2.0` binds the merged METAPAT license, separates stored state from identified scalar readouts, and preserves authored adjacent-scale relations without claiming Vector, Transformation, or Time. The static candidate provides no resulting state-change or actual occurrence evidence. See `docs/multi-origin-join-term-v0.md` for the explicit pre-merge API migration.
