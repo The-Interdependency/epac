@@ -32,3 +32,5 @@ Use the complete join tree for exact lineage or seating replay. Treat its `legac
 
 - whether standing-wave language will earn a narrower ratified EPAC ontology claim after explicit external-physics comparison
 - whether any fixed lexical expansion of EPAC is useful enough to ratify; none is currently required
+
+The repaired join-term wire `0.2.0` binds the merged METAPAT license, separates stored state from identified scalar readouts, and preserves authored adjacent-scale relations without claiming Vector, Transformation, or Time. The static candidate provides no resulting state-change or actual occurrence evidence. See `docs/multi-origin-join-term-v0.md` for the explicit pre-merge API migration.

@@ -21,15 +21,35 @@
 #   unresolved: the receipt records contract evidence, not external-domain validity or release authority
 # === END MODULE_BUILD ===
 
+# === CONTRACTS ===
+# id: epac_join_generator_direct_invocation
+#   given: the documented command is run from an uninstalled checkout
+#   then: the generator loads its own checkout and verifies the committed evidence
+#   class: correctness
+#
+# id: epac_join_generator_source_identity
+#   given: an alternate root or a loaded implementation with different source bytes
+#   then: generation and verification fail before writing evidence
+#   class: provenance
+# === END CONTRACTS ===
+
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import sys
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+# Direct invocation must select this checkout, even without an installed EPAC.
+# Imported use deliberately preserves the installed module for artifact replay.
+GENERATOR_ROOT = Path(__file__).resolve().parents[1]
+if __name__ == "__main__":
+    sys.path.insert(0, str(GENERATOR_ROOT))
+
+import epac_join_term
 from epac_join_term import (
     METAPAT_APPLICATION_DIGEST,
     METAPAT_APPLICATION_ID,
@@ -43,6 +63,7 @@ from epac_join_term import (
 RECEIPT_PATH = Path("data/epac-join-term-v0-receipt.json")
 AUDIT_PATH = Path("docs/epac-join-term-v0-audit.md")
 SOURCE_PATHS = (
+    Path("data/metapat-epac-join-terms-application-v4.json"),
     Path("README.md"),
     Path("docs/PROVENANCE.md"),
     Path("docs/domain-claims.md"),
@@ -60,14 +81,14 @@ SOURCE_PATHS = (
 
 EPAC_BASE_COMMIT = "1e5c999286f12221eff9870d1372203ac7935f2a"
 EPAC_BASE_TREE = "ce7781938ff684d826bd91f475b5423bd56b146a"
-METAPAT_PRODUCER_COMMIT = "18011c2bf4c3c3c1f50c601add371702a7c1ff05"
-METAPAT_PRODUCER_TREE = "7e86e60d8bb5f4a9b51f031d0ca34202d0a28741"
-METAPAT_APPLICATION_FIXTURE_SHA256 = "b1b5a232b6f262e8fc210582d43f04b99d96bc381a46cb2252b21f9055b8bb9b"
-METAPAT_APPLICATION_SOURCE_SHA256 = "519a5c06239c1ecfe8aef0367b7b0604425fc05310768ad91037084e4754103d"
+METAPAT_PRODUCER_COMMIT = "1cdfb09dd00a451cee30eec2e78624df8c682662"
+METAPAT_PRODUCER_TREE = "d946a5a18b0c53fd561dcd9d68fdf36d5dd11638"
+METAPAT_APPLICATION_FIXTURE_SHA256 = "7f3ff74394b48c2162818fad8a373d1b88547b0df73beb8a604376022dcddf07"
+METAPAT_APPLICATION_SOURCE_SHA256 = "5eebc833e40ea5c5d36700aa5badad286f0e5a7086b7a1d92be319fd1198a21f"
 SKILL_LIB_COMMIT = "516933d98f9de376f4e498f44059043dc0d96470"
 SKILL_LIB_TREE = "a1465ddf1de9519c9abc1a97d058432ba71bb257"
 
-AUTHORING_RUNTIME = {
+ORIGINAL_AUTHORING_RUNTIME = {
     "implementation": "CPython",
     "version": "3.12.3",
     "executable": "/usr/bin/python3.12",
@@ -75,6 +96,7 @@ AUTHORING_RUNTIME = {
 }
 
 NONCLAIMS = (
+    "Vector action, resulting state Transformation, or actual Time sequence",
     "chemical or physical truth",
     "molecular geometry or shape prediction",
     "UCNS correspondence, topology, theorem status, or gonol identity",
@@ -86,6 +108,7 @@ NONCLAIMS = (
 )
 
 HMMM = (
+    "Authored adjacency and its stored order do not establish state changes or actual occurrence order; Transformation and Time remain unlicensed for this candidate.",
     "Whether a useful operation exists that requires secret EPAC state and cannot be efficiently reproduced from a legitimate public projection remains unestablished; this candidate is wholly public.",
     "Whether exact lineage and seating replay improve an independently preregistered EPAC task remains unmeasured.",
     "Whether any later UCNS correspondence is useful requires a separate license and test without rewriting UCNS law.",
@@ -109,6 +132,21 @@ def _source_hashes(root: Path) -> dict[str, str]:
 
 def build_receipt(root: Path) -> dict[str, Any]:
     root = root.resolve()
+    if root != GENERATOR_ROOT:
+        raise ValueError("--root must identify the checkout containing this generator")
+    # Installed replay is allowed only for the same source bytes. Never hash B
+    # while constructing with a module loaded from A (including a stale import).
+    if epac_join_term._MODULE_SOURCE_SHA256 != _sha256((root / "epac_join_term.py").read_bytes()):
+        raise ValueError("loaded epac_join_term source does not match --root")
+    fixture_bytes = (root / "data/metapat-epac-join-terms-application-v4.json").read_bytes()
+    if _sha256(fixture_bytes) != METAPAT_APPLICATION_FIXTURE_SHA256:
+        raise ValueError("METAPAT producer fixture digest mismatch")
+    application = json.loads(fixture_bytes)
+    if application["application_digest"] != METAPAT_APPLICATION_DIGEST:
+        raise ValueError("METAPAT application identity mismatch")
+    producer_roles = {item["application_role"]: item["module_id"] for item in application["catalog_bindings"]}
+    if producer_roles != epac_join_term._METAPAT_APPLICATION_ROLE_MODULES:
+        raise ValueError("consumer role projection differs from merged METAPAT producer")
     tree = construct_epac_join_tree()
     reordered = construct_epac_join_tree(
         s2_seating_order=("guest", "core", "vacancy"),
@@ -128,7 +166,7 @@ def build_receipt(root: Path) -> dict[str, Any]:
     receipt: dict[str, Any] = {
         "schema_id": "epac.join-term-v0-evidence",
         "schema_version": "1.0.0",
-        "evidence_epoch": "2026-09-29",
+        "evidence_epoch": "2026-09-30",
         "authority": {
             "epac": {
                 "repository": "The-Interdependency/epac",
@@ -162,7 +200,8 @@ def build_receipt(root: Path) -> dict[str, Any]:
                 "authority_transfer": False,
             },
         },
-        "runtime_identity": AUTHORING_RUNTIME,
+        "historical_original_authoring_runtime": ORIGINAL_AUTHORING_RUNTIME,
+        "runtime_scope": "Deterministic evidence is runtime-independent; current execution identities belong to the exact-head artifact replay receipts, not this historical authoring record.",
         "inputs": {
             "identity_namespace": "fixture-a",
             "s2_seating_order": ["core", "guest", "vacancy"],
@@ -179,7 +218,7 @@ def build_receipt(root: Path) -> dict[str, Any]:
             "candidate_digest": tree.candidate_digest,
             "candidate_json_sha256": _sha256(candidate_json),
             "origin_count": len(tree.origins),
-            "transformation_count": len(tree.transformations),
+            "authored_join_count": len(tree.joins),
             "slot_count": sum(origin.k for origin in tree.origins),
             "hole_count": sum(slot.kind == "hole" for origin in tree.origins for slot in origin.slots),
             "leftover_count": sum(slot.kind == "leftover" for origin in tree.origins for slot in origin.slots),
@@ -214,8 +253,8 @@ def build_receipt(root: Path) -> dict[str, Any]:
             },
         },
         "evidence": {
-            "declared_contract_count": 12,
-            "declared_check_count": 12,
+            "declared_contract_count": 17,
+            "declared_check_count": 17,
             "public_recovery_uses_constructor_state": False,
             "molecular_shape_standing": "FALSIFIED (preserved; tested separately)",
             "deterministic_regeneration_command": "python tools/generate_join_term_v0.py --check",
@@ -261,7 +300,7 @@ def render_audit(receipt: Mapping[str, Any]) -> str:
         f"- Candidate JSON SHA-256: `{results['candidate_json_sha256']}`",
         f"- Evidence digest: `{receipt['evidence_digest']}`",
         f"- Origins: `{results['origin_count']}`",
-        f"- Transformations: `{results['transformation_count']}`",
+        f"- Authored joins (no Transformation or Time claim): `{results['authored_join_count']}`",
         f"- Slots: `{results['slot_count']}` (`{results['member_count']}` members, `{results['hole_count']}` holes, `{results['leftover_count']}` leftovers)",
         f"- Native operation: {results['native_operation']}",
         "",
@@ -326,11 +365,14 @@ def write_outputs(root: Path) -> tuple[Path, Path]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path("."))
+    parser.add_argument("--root", type=Path, default=GENERATOR_ROOT)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args(argv)
     root = args.root.resolve()
-    receipt_text = render_receipt(root)
+    try:
+        receipt_text = render_receipt(root)
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
     audit_text = render_audit(json.loads(receipt_text))
     failures = 0
     for relative, expected in ((RECEIPT_PATH, receipt_text), (AUDIT_PATH, audit_text)):

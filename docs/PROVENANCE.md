@@ -115,9 +115,9 @@ The typed multi-origin join-term candidate starts from EPAC commit
 `1e5c999286f12221eff9870d1372203ac7935f2a` (tree
 `ce7781938ff684d826bd91f475b5423bd56b146a`). It consumes the semantic
 application `metapat.application.epac_join_terms` from METAPAT commit
-`18011c2bf4c3c3c1f50c601add371702a7c1ff05` (tree
-`7e86e60d8bb5f4a9b51f031d0ca34202d0a28741`) with application digest
-`cba0ccc360a0ecd9b78ce582a7f54d1385beeaa83de495faa76f40112bd23e7d`.
+`1cdfb09dd00a451cee30eec2e78624df8c682662` (tree
+`d946a5a18b0c53fd561dcd9d68fdf36d5dd11638`) with application digest
+`461ef7e059aa65b514017683ba9b57058ee9f582bc63748fabd021cdeb660b4b`.
 Current build/evidence doctrine is identified as skill-lib commit
 `516933d98f9de376f4e498f44059043dc0d96470`.
 
@@ -130,3 +130,5 @@ modified by this candidate. METAPAT retains semantic authority; EPAC owns the
 schema, constructor, equality, serialization, public recovery, and evidence.
 No scientific, geometry, proof, measurement, confidentiality, or release
 authority transfers.
+
+The repaired join-term wire `0.2.0` binds the merged METAPAT license, separates stored state from identified scalar readouts, and preserves authored adjacent-scale relations without claiming Vector, Transformation, or Time. The static candidate provides no resulting state-change or actual occurrence evidence. See `docs/multi-origin-join-term-v0.md` for the explicit pre-merge API migration.

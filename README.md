@@ -175,3 +175,5 @@ subject to that license when distributed. Dependencies retain their own rights
 and licensing status; this selection grants no rights to UCNS or other upstream
 projects. [License provenance](docs/license-selection.json) records the owner
 instruction and its resolution using the organization’s weak-copyleft convention.
+
+The repaired join-term wire `0.2.0` binds the merged METAPAT license, separates stored state from identified scalar readouts, and preserves authored adjacent-scale relations without claiming Vector, Transformation, or Time. The static candidate provides no resulting state-change or actual occurrence evidence. See `docs/multi-origin-join-term-v0.md` for the explicit pre-merge API migration.

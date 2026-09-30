@@ -1,7 +1,7 @@
 """Typed S0-through-S6 EPAC multi-origin join terms.
 
 This module is a representation and correctness prototype.  It preserves an
-authored recursive join tree, exact state metrics, named ordered slots, holes,
+authored recursive join tree, exact state properties and separate readouts, named ordered slots, holes,
 leftovers, inferred bearing, and provenance.  It does not establish chemistry,
 physics, energy coupling, UCNS correspondence, or production suitability.
 
@@ -19,7 +19,7 @@ Usage guidance
 #   module_kind: schema
 #   summary: strict public prototype for a typed ordered provenance-bearing S0-through-S6 EPAC join tree and its lossy legacy bag projection
 #   owner: The Interdependency/epac
-#   public_surface: ExactRatio, JoinSlot, ScaleOrigin, JoinTransformation, LegacyBag, EPACJoinTree, construct_epac_join_tree, recover_epac_join_tree, join_isomorphic, trace_origin_lineage, legacy_bag_projection
+#   public_surface: ExactRatio, JoinSlot, ScaleOrigin, AuthoredJoin, LegacyBag, EPACJoinTree, construct_epac_join_tree, recover_epac_join_tree, join_isomorphic, trace_origin_lineage, legacy_bag_projection
 #   internal_surface: canonical JSON, strict validators, structural signature, fixture declarations
 #   auth_boundary: none
 #   storage_boundary: caller-provided public bytes only; no secrets or mutable persistence
@@ -47,7 +47,7 @@ Usage guidance
 # id: epac_multi_origin_join_recovery
 #   summary: recovers and validates the complete typed S0-through-S6 join tree from public deterministic JSON and replays exact authored lineage
 #   exposes: epac_join_term.recover_epac_join_tree, epac_join_term.trace_origin_lineage
-#   inputs: public UTF-8 JSON bytes under epac.multi-origin-join-tree version 0.1.0
+#   inputs: public UTF-8 JSON bytes under epac.multi-origin-join-tree version 0.2.0
 #   outputs: immutable validated join tree and exact S0-through-target origin lineage
 #   boundaries: auth:none, storage:none, network:none, user_data:public fixture only
 # === END CAPABILITIES ===
@@ -65,7 +65,7 @@ Usage guidance
 # === CONTRACTS ===
 # id: epac_join_tree_complete_scale_tensor
 #   given: an EPAC join tree is constructed or recovered
-#   then: it contains exactly one typed origin at every scale S0 through S6 and exactly six authored adjacent-scale transformations
+#   then: it contains exactly one typed origin at every scale S0 through S6 and exactly six authored adjacent-scale joins
 #   class: schema
 #
 # id: epac_join_tree_explicit_boundary
@@ -74,13 +74,13 @@ Usage guidance
 #   class: correctness
 #
 # id: epac_join_tree_inferred_bearing
-#   given: slot-facing scalar measurements are present
+#   given: stored slot-facing properties are present
 #   then: ordered bearing components are derived by the declared sign rule and a mismatching serialized bearing is rejected
 #   class: correctness
 #
 # id: epac_join_tree_recursive_identity
 #   given: an origin above S0 is inspected
-#   then: its member slot references only the immediately preceding origin and its transformation records exact source and new target identity
+#   then: its member slot references only the immediately preceding origin and its authored join records exact source and new target identity
 #   class: construction
 #
 # id: epac_join_tree_s5_energy_qualified
@@ -109,7 +109,7 @@ Usage guidance
 #   class: evidence
 #
 # id: epac_join_tree_strict_rejection
-#   given: duplicate keys, unknown or missing fields, invalid modulus, omitted explicit slot state, duplicate identities, skip-scale references, or inconsistent transformations
+#   given: duplicate keys, unknown or missing fields, invalid modulus, omitted explicit slot state, duplicate identities, skip-scale references, or inconsistent joins
 #   then: recovery fails closed
 #   class: safety
 #
@@ -122,6 +122,21 @@ Usage guidance
 #   given: this candidate is added to EPAC
 #   then: the preregistered molecular-shape standings remain FALSIFIED and are neither deleted nor reinterpreted
 #   class: boundary_contract
+#
+# id: epac_join_tree_readout_boundary
+#   given: stored origin properties and derived readouts
+#   then: each readout identifies its origin, measured property, and rule and cannot replace or alter the stored state
+#   class: boundary_contract
+#
+# id: epac_join_tree_conditional_roles
+#   given: static bearing and authored adjacent-scale joins without result or occurrence evidence
+#   then: no field claims Vector, Transformation, or Time and the producer role projection matches the exact merged fixture
+#   class: provenance
+#
+# id: epac_join_tree_canonical_wire
+#   given: an equivalent unreduced ratio or other normalized wire value with an old or recomputed digest
+#   then: recovery rejects it rather than silently normalizing the digest-bearing payload
+#   class: safety
 # === END CONTRACTS ===
 
 from __future__ import annotations
@@ -131,16 +146,19 @@ import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from fractions import Fraction
+from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
+_MODULE_SOURCE_SHA256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
 JOIN_TREE_SCHEMA_ID = "epac.multi-origin-join-tree"
-JOIN_TREE_SCHEMA_VERSION = "0.1.0"
+JOIN_TREE_SCHEMA_VERSION = "0.2.0"
 BEARING_RULE_ID = "epac.bearing.slot-facing-sign.v0"
 ADJACENT_JOIN_RELATION = "epac.join.adjacent-scale"
 METAPAT_APPLICATION_ID = "metapat.application.epac_join_terms"
 METAPAT_APPLICATION_VERSION = "epac-join-terms-application-v4"
-METAPAT_APPLICATION_DIGEST = "cba0ccc360a0ecd9b78ce582a7f54d1385beeaa83de495faa76f40112bd23e7d"
+METAPAT_APPLICATION_DIGEST = "461ef7e059aa65b514017683ba9b57058ee9f582bc63748fabd021cdeb660b4b"
 
 SCALE_DOMAIN_NAMES: tuple[str, ...] = (
     "subatomic slot",
@@ -165,7 +183,6 @@ _METAPAT_APPLICATION_ROLE_MODULES = MappingProxyType({
     "multi-origin-tensor": "metapat.axiom.5.tensor",
     "authored-near-join": "metapat.axiom.6.relate",
     "recursive-origin": "metapat.axiom.7.emerge",
-    "inferred-bearing": "metapat.axiom.8.vector",
     "state-metric": "metapat.axiom.9.scalar",
     "join-transformation": "metapat.axiom.10.transformation",
     "transformation-sequence": "metapat.axiom.11.time",
@@ -179,9 +196,6 @@ _SPINE_NAMES = frozenset(
         "Simplex",
         "Tensor",
         "Scalar",
-        "Vector",
-        "Transformation",
-        "Time",
     }
 )
 _APPLICATION_ROLE_ALLOWED_SPINES = MappingProxyType({
@@ -193,7 +207,6 @@ _APPLICATION_ROLE_ALLOWED_SPINES = MappingProxyType({
     "multi-origin-tensor": frozenset({"Tensor"}),
     "authored-near-join": frozenset({"Tensor"}),
     "recursive-origin": frozenset({"Thing"}),
-    "inferred-bearing": frozenset({"Vector"}),
     "state-metric": frozenset({"Scalar"}),
     "join-transformation": frozenset({"Transformation"}),
     "transformation-sequence": frozenset({"Time"}),
@@ -226,20 +239,25 @@ _SEMANTIC_FIELD_BINDING_ROWS = {
     "slot.kind": {"spine_name": "Boundary", "domain_name": "member, hole, or leftover", "application_role": "join-boundary"},
     "slot.participant_id": {"spine_name": "Thing", "domain_name": "member or leftover identity", "application_role": "stored-join-term"},
     "slot.participant_scale": {"spine_name": "Simplex", "domain_name": "member source scale", "application_role": "scale-origin"},
-    "slot.facing_scalar": {"spine_name": "Scalar", "domain_name": "slot-facing measurement", "application_role": "state-metric"},
-    "origin.bearing": {"spine_name": "Vector", "domain_name": "inferred ordered slot bearing", "application_role": "inferred-bearing"},
+    "slot.facing": {"spine_name": "State", "domain_name": "stored slot-facing property", "application_role": "origin-state"},
+    "origin.bearing": {"spine_name": "Scalar", "domain_name": "ordered static slot-facing sign readouts", "application_role": "state-metric"},
     "origin.arity": {"spine_name": "Boundary", "domain_name": "occupied seating arity", "application_role": "join-boundary"},
     "origin.shape_signature": {"spine_name": "Tensor", "domain_name": "ordered seating shape", "application_role": "multi-origin-tensor"},
     "origin.s5_energy_readout": {"spine_name": "Scalar", "domain_name": "EPAC S5 occupancy functional", "application_role": "state-metric"},
+    "origin.readouts": {"spine_name": "Scalar", "domain_name": "identified phase, capacity, and slot-facing readouts", "application_role": "state-metric"},
+    "readout.origin_id": {"spine_name": "Thing", "domain_name": "readout source origin identity", "application_role": "stored-join-term"},
+    "readout.measured_property": {"spine_name": "State", "domain_name": "named source state property", "application_role": "origin-state"},
+    "readout.rule_id": {"spine_name": "Thing", "domain_name": "EPAC readout rule identity", "application_role": "domain-customs"},
+    "readout.value": {"spine_name": "Scalar", "domain_name": "computed EPAC readout value", "application_role": "state-metric"},
     "origin.provenance": {"spine_name": "Thing", "domain_name": "origin provenance", "application_role": "recursive-origin"},
-    "transformation.transformation_id": {"spine_name": "Transformation", "domain_name": "join event identity", "application_role": "join-transformation"},
-    "transformation.sequence": {"spine_name": "Time", "domain_name": "join event sequence", "application_role": "transformation-sequence"},
-    "transformation.source_origin_id": {"spine_name": "Thing", "domain_name": "source origin identity", "application_role": "recursive-origin"},
-    "transformation.target_origin_id": {"spine_name": "Thing", "domain_name": "new target origin identity", "application_role": "recursive-origin"},
-    "transformation.relation": {"spine_name": "Tensor", "domain_name": "authored adjacent-scale join", "application_role": "authored-near-join"},
-    "transformation.provenance": {"spine_name": "Thing", "domain_name": "join event provenance", "application_role": "recursive-origin"},
+    "join.join_id": {"spine_name": "Thing", "domain_name": "authored join record identity", "application_role": "stored-join-term"},
+    "join.order": {"spine_name": "Tensor", "domain_name": "authored adjacent-scale relation position", "application_role": "authored-near-join"},
+    "join.source_origin_id": {"spine_name": "Thing", "domain_name": "source origin identity", "application_role": "recursive-origin"},
+    "join.target_origin_id": {"spine_name": "Thing", "domain_name": "new target origin identity", "application_role": "recursive-origin"},
+    "join.relation": {"spine_name": "Tensor", "domain_name": "authored adjacent-scale join", "application_role": "authored-near-join"},
+    "join.provenance": {"spine_name": "Thing", "domain_name": "authored join provenance", "application_role": "recursive-origin"},
     "tree.origins": {"spine_name": "Tensor", "domain_name": "S0-through-S6 origin tensor", "application_role": "multi-origin-tensor"},
-    "tree.transformations": {"spine_name": "Time", "domain_name": "sequential join transformation history", "application_role": "transformation-sequence"},
+    "tree.joins": {"spine_name": "Tensor", "domain_name": "ordered authored adjacent-scale relations", "application_role": "authored-near-join"},
     "tree.legacy_bag": {"spine_name": "Thing", "domain_name": "non-structural legacy bag sidecar", "application_role": "domain-customs"},
     "legacy_bag.kind": {"spine_name": "Thing", "domain_name": "legacy sidecar kind", "application_role": "domain-customs"},
     "legacy_bag.excluded_from_tensor": {"spine_name": "Thing", "domain_name": "tensor-exclusion marker", "application_role": "domain-customs"},
@@ -259,7 +277,7 @@ SLOT_KINDS = frozenset({"member", "hole", "leftover"})
 PHASE_CHARTS = frozenset({"visible", "lifted"})
 
 
-def _canonical_json(value: Mapping[str, Any]) -> str:
+def _canonical_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
@@ -294,12 +312,18 @@ def _semantic_wire_field_paths(data: Mapping[str, Any]) -> frozenset[str]:
         for slot in slots if isinstance(slots, (list, tuple)) else ():
             if isinstance(slot, Mapping):
                 paths.update(f"slot.{key}" for key in slot)
-    transformations = data.get("transformations", ())
-    for transformation in (
-        transformations if isinstance(transformations, (list, tuple)) else ()
+        readouts = origin.get("readouts", ())
+        records = list(readouts) if isinstance(readouts, (list, tuple)) else []
+        records.extend((origin.get("bearing"), origin.get("s5_energy_readout")))
+        for readout in records:
+            if isinstance(readout, Mapping):
+                paths.update(f"readout.{key}" for key in readout)
+    joins = data.get("joins", ())
+    for join in (
+        joins if isinstance(joins, (list, tuple)) else ()
     ):
-        if isinstance(transformation, Mapping):
-            paths.update(f"transformation.{key}" for key in transformation)
+        if isinstance(join, Mapping):
+            paths.update(f"join.{key}" for key in join)
     legacy_bag = data.get("legacy_bag")
     if isinstance(legacy_bag, Mapping):
         paths.update(f"legacy_bag.{key}" for key in legacy_bag)
@@ -364,10 +388,13 @@ class ExactRatio:
         if not isinstance(data, Mapping):
             raise ValueError("exact ratio must be an object")
         _strict_keys(data, {"numerator", "denominator"}, "exact-ratio")
-        return cls(
+        ratio = cls(
             _integer(data["numerator"], "ratio numerator"),
             _integer(data["denominator"], "ratio denominator", minimum=1),
         )
+        if ratio.to_dict() != data:
+            raise ValueError("exact ratio must be reduced on the wire")
+        return ratio
 
 
 @dataclass(frozen=True, slots=True)
@@ -377,19 +404,19 @@ class JoinSlot:
     kind: str
     participant_id: str | None
     participant_scale: str | None
-    facing_scalar: int
+    facing: int
 
     def __post_init__(self) -> None:
         _text(self.name, "slot name")
         _integer(self.order, "slot order", minimum=0)
         if self.kind not in SLOT_KINDS:
             raise ValueError(f"unsupported slot kind {self.kind!r}")
-        _integer(self.facing_scalar, "slot facing_scalar")
+        _integer(self.facing, "slot facing")
         if self.kind == "hole":
             if self.participant_id is not None or self.participant_scale is not None:
                 raise ValueError("hole must store null participant identity and scale")
-            if self.facing_scalar != 0:
-                raise ValueError("hole facing_scalar must be zero")
+            if self.facing != 0:
+                raise ValueError("hole facing must be zero")
         elif self.kind == "member":
             _text(self.participant_id, "member participant_id")
             if self.participant_scale not in SCALE_IDS:
@@ -401,7 +428,7 @@ class JoinSlot:
 
     @property
     def bearing_component(self) -> int:
-        return (self.facing_scalar > 0) - (self.facing_scalar < 0)
+        return (self.facing > 0) - (self.facing < 0)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -410,7 +437,7 @@ class JoinSlot:
             "kind": self.kind,
             "participant_id": self.participant_id,
             "participant_scale": self.participant_scale,
-            "facing_scalar": self.facing_scalar,
+            "facing": self.facing,
         }
 
     @classmethod
@@ -419,7 +446,7 @@ class JoinSlot:
             raise ValueError("join slot must be an object")
         _strict_keys(
             data,
-            {"name", "order", "kind", "participant_id", "participant_scale", "facing_scalar"},
+            {"name", "order", "kind", "participant_id", "participant_scale", "facing"},
             "join-slot",
         )
         return cls(
@@ -428,7 +455,7 @@ class JoinSlot:
             kind=_text(data["kind"], "slot kind"),
             participant_id=_optional_text(data["participant_id"], "participant_id"),
             participant_scale=_optional_text(data["participant_scale"], "participant_scale"),
-            facing_scalar=_integer(data["facing_scalar"], "slot facing_scalar"),
+            facing=_integer(data["facing"], "slot facing"),
         )
 
 
@@ -486,6 +513,19 @@ class ScaleOrigin:
             return None
         return ExactRatio(self.arity, self.k)
 
+    def _readout(self, measured_property: str, rule_id: str, value: Any) -> dict[str, Any]:
+        return {"origin_id": self.origin_id, "measured_property": measured_property,
+                "rule_id": rule_id, "value": value}
+
+    @property
+    def readouts(self) -> list[dict[str, Any]]:
+        return [
+            self._readout("phase", "epac.readout.exact-phase.v0", self.phase.to_dict()),
+            self._readout("k", "epac.readout.capacity.v0", self.k),
+            *[self._readout(f"slots[{slot.order}].facing", "epac.readout.slot-facing.v0", slot.facing)
+              for slot in self.slots],
+        ]
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "origin_id": self.origin_id,
@@ -495,11 +535,14 @@ class ScaleOrigin:
             "phase_chart": self.phase_chart,
             "k": self.k,
             "slots": [slot.to_dict() for slot in self.slots],
-            "bearing": {"rule_id": BEARING_RULE_ID, "components": list(self.bearing)},
+            "bearing": self._readout("slots[*].facing", BEARING_RULE_ID, list(self.bearing)),
+            "readouts": self.readouts,
             "arity": self.arity,
             "shape_signature": list(self.shape_signature),
             "s5_energy_readout": (
-                self.s5_energy_readout.to_dict() if self.s5_energy_readout is not None else None
+                self._readout("slots[*].kind,k", "epac.readout.occupied-slots-over-k.v0",
+                              self.s5_energy_readout.to_dict())
+                if self.s5_energy_readout is not None else None
             ),
             "provenance": list(self.provenance),
         }
@@ -510,7 +553,7 @@ class ScaleOrigin:
             raise ValueError("scale origin must be an object")
         expected = {
             "origin_id", "scale", "domain_name", "phase", "phase_chart", "k", "slots",
-            "bearing", "arity", "shape_signature", "s5_energy_readout", "provenance",
+            "bearing", "readouts", "arity", "shape_signature", "s5_energy_readout", "provenance",
         }
         _strict_keys(data, expected, "scale-origin")
         if not isinstance(data["slots"], list):
@@ -525,63 +568,44 @@ class ScaleOrigin:
             slots=tuple(JoinSlot.from_dict(item) for item in data["slots"]),
             provenance=_text_tuple(data["provenance"], "origin provenance", minimum=1),
         )
-        bearing = data["bearing"]
-        if not isinstance(bearing, Mapping):
-            raise ValueError("bearing must be an object")
-        _strict_keys(bearing, {"rule_id", "components"}, "bearing")
-        if bearing["rule_id"] != BEARING_RULE_ID:
-            raise ValueError("unsupported bearing rule")
-        components = bearing["components"]
-        if (
-            not isinstance(components, list)
-            or any(
-                isinstance(component, bool)
-                or not isinstance(component, int)
-                or component not in {-1, 0, 1}
-                for component in components
-            )
-            or tuple(components) != origin.bearing
-        ):
-            raise ValueError("serialized bearing does not match inferred slot-facing signs")
+        expected_wire = origin.to_dict()
+        for field in ("bearing", "readouts", "s5_energy_readout"):
+            if _canonical_json(data[field]) != _canonical_json(expected_wire[field]):
+                raise ValueError(f"serialized {field} must match its identified state and readout rule")
         if _integer(data["arity"], "origin arity", minimum=0) != origin.arity:
             raise ValueError("serialized arity does not match explicit slots")
         if _text_tuple(data["shape_signature"], "shape_signature") != origin.shape_signature:
             raise ValueError("serialized shape_signature does not match explicit slots")
-        energy = data["s5_energy_readout"]
-        if origin.scale == "S5":
-            if energy is None or ExactRatio.from_dict(energy) != origin.s5_energy_readout:
-                raise ValueError("S5 energy readout must equal exact occupied-slots/k")
-        elif energy is not None:
-            raise ValueError("non-S5 origin cannot carry an S5 energy readout")
         return origin
 
 
 @dataclass(frozen=True, slots=True)
-class JoinTransformation:
-    transformation_id: str
-    sequence: int
+class AuthoredJoin:
+    """An authored relation and its structural position, not a state change."""
+    join_id: str
+    order: int
     source_origin_id: str
     target_origin_id: str
     relation: str
     provenance: tuple[str, ...]
 
     def __post_init__(self) -> None:
-        _text(self.transformation_id, "transformation_id")
-        _integer(self.sequence, "transformation sequence", minimum=1)
+        _text(self.join_id, "join_id")
+        _integer(self.order, "authored join order", minimum=1)
         _text(self.source_origin_id, "source_origin_id")
         _text(self.target_origin_id, "target_origin_id")
         if self.source_origin_id == self.target_origin_id:
-            raise ValueError("transformation source and target identities must differ")
+            raise ValueError("join source and target identities must differ")
         if self.relation != ADJACENT_JOIN_RELATION:
             raise ValueError("only the authored adjacent-scale join relation is supported")
         object.__setattr__(
-            self, "provenance", _text_tuple(self.provenance, "transformation provenance", minimum=1)
+            self, "provenance", _text_tuple(self.provenance, "join provenance", minimum=1)
         )
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "transformation_id": self.transformation_id,
-            "sequence": self.sequence,
+            "join_id": self.join_id,
+            "order": self.order,
             "source_origin_id": self.source_origin_id,
             "target_origin_id": self.target_origin_id,
             "relation": self.relation,
@@ -589,21 +613,21 @@ class JoinTransformation:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> JoinTransformation:
+    def from_dict(cls, data: Mapping[str, Any]) -> AuthoredJoin:
         if not isinstance(data, Mapping):
-            raise ValueError("join transformation must be an object")
+            raise ValueError("authored join must be an object")
         _strict_keys(
             data,
-            {"transformation_id", "sequence", "source_origin_id", "target_origin_id", "relation", "provenance"},
-            "join-transformation",
+            {"join_id", "order", "source_origin_id", "target_origin_id", "relation", "provenance"},
+            "authored-join",
         )
         return cls(
-            transformation_id=_text(data["transformation_id"], "transformation_id"),
-            sequence=_integer(data["sequence"], "transformation sequence", minimum=1),
+            join_id=_text(data["join_id"], "join_id"),
+            order=_integer(data["order"], "authored join order", minimum=1),
             source_origin_id=_text(data["source_origin_id"], "source_origin_id"),
             target_origin_id=_text(data["target_origin_id"], "target_origin_id"),
-            relation=_text(data["relation"], "transformation relation"),
-            provenance=_text_tuple(data["provenance"], "transformation provenance", minimum=1),
+            relation=_text(data["relation"], "join relation"),
+            provenance=_text_tuple(data["provenance"], "join provenance", minimum=1),
         )
 
 
@@ -689,7 +713,7 @@ def _bag_for(origins: Sequence[ScaleOrigin]) -> LegacyBag:
 @dataclass(frozen=True, slots=True)
 class EPACJoinTree:
     origins: tuple[ScaleOrigin, ...]
-    transformations: tuple[JoinTransformation, ...]
+    joins: tuple[AuthoredJoin, ...]
     legacy_bag: LegacyBag
     object_kind: str = "multi-origin-join-tree"
     schema_id: str = JOIN_TREE_SCHEMA_ID
@@ -701,34 +725,34 @@ class EPACJoinTree:
         if self.schema_id != JOIN_TREE_SCHEMA_ID or self.schema_version != JOIN_TREE_SCHEMA_VERSION:
             raise ValueError("unsupported EPAC join-tree schema")
         origins = tuple(self.origins)
-        transformations = tuple(self.transformations)
+        joins = tuple(self.joins)
         if any(not isinstance(item, ScaleOrigin) for item in origins):
             raise ValueError("origins must contain ScaleOrigin values")
-        if any(not isinstance(item, JoinTransformation) for item in transformations):
-            raise ValueError("transformations must contain JoinTransformation values")
+        if any(not isinstance(item, AuthoredJoin) for item in joins):
+            raise ValueError("joins must contain AuthoredJoin values")
         if tuple(origin.scale for origin in origins) != SCALE_IDS:
             raise ValueError("tensor must contain exactly one ordered origin S0 through S6")
         origin_ids = tuple(origin.origin_id for origin in origins)
         if len(set(origin_ids)) != len(origin_ids):
             raise ValueError("origin identities must be unique")
-        if len(transformations) != 6:
-            raise ValueError("tensor must contain exactly six adjacent-scale transformations")
-        transformation_ids = tuple(item.transformation_id for item in transformations)
-        if len(set(transformation_ids)) != 6:
-            raise ValueError("transformation identities must be unique")
+        if len(joins) != 6:
+            raise ValueError("tensor must contain exactly six adjacent-scale joins")
+        join_ids = tuple(item.join_id for item in joins)
+        if len(set(join_ids)) != 6:
+            raise ValueError("join identities must be unique")
         leftover_ids = tuple(
             slot.participant_id
             for origin in origins
             for slot in origin.slots
             if slot.kind == "leftover"
         )
-        declared_object_ids = origin_ids + transformation_ids + leftover_ids
+        declared_object_ids = origin_ids + join_ids + leftover_ids
         if len(set(declared_object_ids)) != len(declared_object_ids):
             raise ValueError(
-                "origin, transformation, and leftover object identities must be globally unique"
+                "origin, join, and leftover object identities must be globally unique"
             )
-        if tuple(item.sequence for item in transformations) != tuple(range(1, 7)):
-            raise ValueError("transformation sequence must be exactly 1 through 6")
+        if tuple(item.order for item in joins) != tuple(range(1, 7)):
+            raise ValueError("authored join order must be exactly 1 through 6")
         for index, origin in enumerate(origins):
             members = tuple(slot for slot in origin.slots if slot.kind == "member")
             if index == 0:
@@ -741,13 +765,13 @@ class EPACJoinTree:
             member = members[0]
             if member.participant_id != previous.origin_id or member.participant_scale != previous.scale:
                 raise ValueError(f"{origin.scale} member must reference the immediately preceding origin")
-            event = transformations[index - 1]
+            event = joins[index - 1]
             if event.source_origin_id != previous.origin_id or event.target_origin_id != origin.origin_id:
-                raise ValueError(f"transformation {event.sequence} does not match adjacent origins")
+                raise ValueError(f"join {event.order} does not match adjacent origins")
         if not isinstance(self.legacy_bag, LegacyBag) or self.legacy_bag != _bag_for(origins):
             raise ValueError("legacy bag must be the exact lossy projection of the tree")
         object.__setattr__(self, "origins", origins)
-        object.__setattr__(self, "transformations", transformations)
+        object.__setattr__(self, "joins", joins)
         if _semantic_wire_field_paths(self._payload()) != REQUIRED_SEMANTIC_FIELD_PATHS:
             raise RuntimeError("semantic field bindings do not cover the live wire schema")
 
@@ -759,7 +783,7 @@ class EPACJoinTree:
             "semantic_license": _license_record(),
             "semantic_field_bindings": _field_binding_record(),
             "origins": [origin.to_dict() for origin in self.origins],
-            "transformations": [item.to_dict() for item in self.transformations],
+            "joins": [item.to_dict() for item in self.joins],
             "legacy_bag": self.legacy_bag.to_dict(),
         }
 
@@ -779,7 +803,7 @@ class EPACJoinTree:
             raise ValueError("EPAC join tree must be an object")
         expected = {
             "schema_id", "schema_version", "object_kind", "semantic_license",
-            "semantic_field_bindings", "origins", "transformations", "legacy_bag",
+            "semantic_field_bindings", "origins", "joins", "legacy_bag",
             "candidate_digest",
         }
         _strict_keys(data, expected, "EPAC-join-tree")
@@ -789,16 +813,19 @@ class EPACJoinTree:
             raise ValueError("semantic field bindings are incomplete or changed")
         if set(data["semantic_field_bindings"]) != REQUIRED_SEMANTIC_FIELD_PATHS:
             raise ValueError("semantic field bindings do not cover the complete declared wire")
-        if not isinstance(data["origins"], list) or not isinstance(data["transformations"], list):
-            raise ValueError("origins and transformations must be arrays")
+        if not isinstance(data["origins"], list) or not isinstance(data["joins"], list):
+            raise ValueError("origins and joins must be arrays")
         tree = cls(
             schema_id=_text(data["schema_id"], "schema_id"),
             schema_version=_text(data["schema_version"], "schema_version"),
             object_kind=_text(data["object_kind"], "object_kind"),
             origins=tuple(ScaleOrigin.from_dict(item) for item in data["origins"]),
-            transformations=tuple(JoinTransformation.from_dict(item) for item in data["transformations"]),
+            joins=tuple(AuthoredJoin.from_dict(item) for item in data["joins"]),
             legacy_bag=LegacyBag.from_dict(data["legacy_bag"]),
         )
+        raw_payload = {key: value for key, value in data.items() if key != "candidate_digest"}
+        if _canonical_json(raw_payload) != _canonical_json(tree._payload()):
+            raise ValueError("non-canonical EPAC join-tree payload")
         if _text(data["candidate_digest"], "candidate_digest") != tree.candidate_digest:
             raise ValueError("candidate_digest mismatch")
         return tree
@@ -915,10 +942,10 @@ def construct_epac_join_tree(
                 len(slots), slots, ("epac.join-term-v0", f"declared-scale:{scale}"),
             )
         )
-    transformations = tuple(
-        JoinTransformation(
-            transformation_id=f"epac.transformation:{namespace}:S{index - 1}-S{index}",
-            sequence=index,
+    joins = tuple(
+        AuthoredJoin(
+            join_id=f"epac.join:{namespace}:S{index - 1}-S{index}",
+            order=index,
             source_origin_id=origin_ids[f"S{index - 1}"],
             target_origin_id=origin_ids[f"S{index}"],
             relation=ADJACENT_JOIN_RELATION,
@@ -927,7 +954,7 @@ def construct_epac_join_tree(
         for index in range(1, 7)
     )
     origin_tuple = tuple(origins)
-    return EPACJoinTree(origin_tuple, transformations, _bag_for(origin_tuple))
+    return EPACJoinTree(origin_tuple, joins, _bag_for(origin_tuple))
 
 
 def recover_epac_join_tree(public_bytes: bytes | str) -> EPACJoinTree:
@@ -977,7 +1004,7 @@ def _structural_signature(tree: EPACJoinTree) -> tuple[Any, ...]:
                     else None
                 ),
                 slot.participant_scale,
-                slot.facing_scalar,
+                slot.facing,
             )
             for slot in origin.slots
         )
@@ -999,13 +1026,13 @@ def _structural_signature(tree: EPACJoinTree) -> tuple[Any, ...]:
         )
     event_rows = tuple(
         (
-            item.sequence,
+            item.order,
             by_id[item.source_origin_id],
             by_id[item.target_origin_id],
             item.relation,
             item.provenance,
         )
-        for item in tree.transformations
+        for item in tree.joins
     )
     return tuple(origin_rows), event_rows
 
@@ -1022,7 +1049,7 @@ def trace_origin_lineage(tree: EPACJoinTree, target_origin_id: str) -> tuple[str
     if not isinstance(tree, EPACJoinTree):
         raise TypeError("tree must be EPACJoinTree")
     _text(target_origin_id, "target_origin_id")
-    by_target = {item.target_origin_id: item.source_origin_id for item in tree.transformations}
+    by_target = {item.target_origin_id: item.source_origin_id for item in tree.joins}
     known = {origin.origin_id for origin in tree.origins}
     if target_origin_id not in known:
         raise ValueError("target origin is not present in the tree")
@@ -1047,7 +1074,7 @@ __all__ = [
     "EPACJoinTree",
     "ExactRatio",
     "JoinSlot",
-    "JoinTransformation",
+    "AuthoredJoin",
     "LegacyBag",
     "ScaleOrigin",
     "construct_epac_join_tree",

@@ -21,7 +21,7 @@
 #
 # id: check_epac_join_tree_recursive_identity
 #   proves: epac_join_tree_recursive_identity
-#   call: self::test_recursive_origins_and_transformations_are_adjacent
+#   call: self::test_recursive_origins_and_joins_are_adjacent
 #   mutates: none
 #   cleanup: none
 #
@@ -72,9 +72,43 @@
 #   call: self::test_molecular_shape_falsification_remains_unchanged
 #   mutates: filesystem_read
 #   cleanup: none
+#
+# id: check_epac_join_tree_readout_boundary
+#   proves: epac_join_tree_readout_boundary
+#   call: self::test_readouts_identify_state_without_replacing_it
+#   mutates: temporary_files
+#   cleanup: pytest_tmp_path
+#
+# id: check_epac_join_tree_conditional_roles
+#   proves: epac_join_tree_conditional_roles
+#   call: self::test_merged_producer_and_conditional_roles
+#   mutates: temporary_files
+#   cleanup: pytest_tmp_path
+#
+# id: check_epac_join_tree_canonical_wire
+#   proves: epac_join_tree_canonical_wire
+#   call: self::test_noncanonical_ratios_rejected_even_with_recomputed_digest
+#   mutates: temporary_files
+#   cleanup: pytest_tmp_path
+#
+# id: check_epac_join_generator_direct_invocation
+#   proves: epac_join_generator_direct_invocation
+#   call: self::test_generator_runs_directly_without_installation
+#   mutates: temporary_files
+#   cleanup: pytest_tmp_path
+#
+# id: check_epac_join_generator_source_identity
+#   proves: epac_join_generator_source_identity
+#   call: self::test_generator_rejects_mismatched_source_before_writing
+#   mutates: temporary_files
+#   cleanup: pytest_tmp_path
 # === END CHECKS ===
 
 import json
+import hashlib
+import os
+import subprocess
+import sys
 from copy import deepcopy
 from importlib.resources import files
 from importlib.util import module_from_spec, spec_from_file_location
@@ -110,8 +144,8 @@ def test_complete_s0_through_s6_tensor() -> None:
     tree = construct_epac_join_tree()
     assert tuple(origin.scale for origin in tree.origins) == SCALE_IDS
     assert len(tree.origins) == 7
-    assert len(tree.transformations) == 6
-    assert tuple(item.sequence for item in tree.transformations) == tuple(range(1, 7))
+    assert len(tree.joins) == 6
+    assert tuple(item.order for item in tree.joins) == tuple(range(1, 7))
     assert len({origin.origin_id for origin in tree.origins}) == 7
 
 
@@ -132,7 +166,7 @@ def test_boundaries_store_named_ordered_holes_and_leftovers() -> None:
     assert all(slot.participant_id and slot.participant_scale is None for slot in leftovers)
     declared_object_ids = (
         [origin.origin_id for origin in tree.origins]
-        + [event.transformation_id for event in tree.transformations]
+        + [event.join_id for event in tree.joins]
         + [slot.participant_id for slot in leftovers]
     )
     assert len(declared_object_ids) == len(set(declared_object_ids))
@@ -142,16 +176,16 @@ def test_bearing_is_inferred_and_tamper_rejected() -> None:
     tree = construct_epac_join_tree()
     assert all(
         origin.bearing
-        == tuple((slot.facing_scalar > 0) - (slot.facing_scalar < 0) for slot in origin.slots)
+        == tuple((slot.facing > 0) - (slot.facing < 0) for slot in origin.slots)
         for origin in tree.origins
     )
     tampered = tree.to_dict()
-    tampered["origins"][2]["bearing"]["components"][0] *= -1
+    tampered["origins"][2]["bearing"]["value"][0] *= -1
     with pytest.raises(ValueError, match="bearing"):
         EPACJoinTree.from_dict(tampered)
 
 
-def test_recursive_origins_and_transformations_are_adjacent() -> None:
+def test_recursive_origins_and_joins_are_adjacent() -> None:
     tree = construct_epac_join_tree()
     for index in range(1, 7):
         source = tree.origins[index - 1]
@@ -162,7 +196,7 @@ def test_recursive_origins_and_transformations_are_adjacent() -> None:
             source.origin_id,
             source.scale,
         )
-        event = tree.transformations[index - 1]
+        event = tree.joins[index - 1]
         assert (event.source_origin_id, event.target_origin_id) == (
             source.origin_id,
             target.origin_id,
@@ -220,7 +254,6 @@ def test_every_declared_semantic_field_is_dual_named() -> None:
         "multi-origin-tensor",
         "authored-near-join",
         "recursive-origin",
-        "inferred-bearing",
         "state-metric",
         "join-transformation",
         "transformation-sequence",
@@ -317,33 +350,33 @@ def test_malformed_wires_fail_closed() -> None:
         if slot["kind"] == "leftover"
     )["participant_id"] = leftover_origin_collision["origins"][0]["origin_id"]
     mutations.append(leftover_origin_collision)
-    transformation_origin_collision = tree.to_dict()
-    transformation_origin_collision["transformations"][0]["transformation_id"] = (
-        transformation_origin_collision["origins"][0]["origin_id"]
+    join_origin_collision = tree.to_dict()
+    join_origin_collision["joins"][0]["join_id"] = (
+        join_origin_collision["origins"][0]["origin_id"]
     )
-    mutations.append(transformation_origin_collision)
-    duplicate_transformation = tree.to_dict()
-    duplicate_transformation["transformations"][1]["transformation_id"] = (
-        duplicate_transformation["transformations"][0]["transformation_id"]
+    mutations.append(join_origin_collision)
+    duplicate_join = tree.to_dict()
+    duplicate_join["joins"][1]["join_id"] = (
+        duplicate_join["joins"][0]["join_id"]
     )
-    mutations.append(duplicate_transformation)
-    leftover_transformation_collision = tree.to_dict()
+    mutations.append(duplicate_join)
+    leftover_join_collision = tree.to_dict()
     next(
         slot
-        for origin in leftover_transformation_collision["origins"]
+        for origin in leftover_join_collision["origins"]
         for slot in origin["slots"]
         if slot["kind"] == "leftover"
-    )["participant_id"] = leftover_transformation_collision["transformations"][0][
-        "transformation_id"
+    )["participant_id"] = leftover_join_collision["joins"][0][
+        "join_id"
     ]
-    mutations.append(leftover_transformation_collision)
+    mutations.append(leftover_join_collision)
     skip_scale = tree.to_dict()
     member = next(slot for slot in skip_scale["origins"][2]["slots"] if slot["kind"] == "member")
     member["participant_id"] = skip_scale["origins"][0]["origin_id"]
     member["participant_scale"] = "S0"
     mutations.append(skip_scale)
     inconsistent_event = tree.to_dict()
-    inconsistent_event["transformations"][0]["target_origin_id"] = inconsistent_event["origins"][2]["origin_id"]
+    inconsistent_event["joins"][0]["target_origin_id"] = inconsistent_event["origins"][2]["origin_id"]
     mutations.append(inconsistent_event)
     incomplete_license = tree.to_dict()
     del incomplete_license["semantic_field_bindings"]["origin.phase"]
@@ -352,7 +385,7 @@ def test_malformed_wires_fail_closed() -> None:
     bag_masquerade["object_kind"] = "bag"
     mutations.append(bag_masquerade)
     boolean_bearing = tree.to_dict()
-    boolean_bearing["origins"][1]["bearing"]["components"][0] = True
+    boolean_bearing["origins"][1]["bearing"]["value"][0] = True
     mutations.append(boolean_bearing)
 
     for mutation in mutations:
@@ -391,3 +424,135 @@ def test_molecular_shape_falsification_remains_unchanged() -> None:
         "atomic_shells_as_sealed_shape_prediction",
     ):
         assert standings[name] == "FALSIFIED"
+
+
+def _generator():
+    spec = spec_from_file_location("epac_join_generator_identity_test", ROOT / "tools/generate_join_term_v0.py")
+    assert spec is not None and spec.loader is not None
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _rehash(wire):
+    payload = {key: value for key, value in wire.items() if key != "candidate_digest"}
+    wire["candidate_digest"] = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+
+
+def test_readouts_identify_state_without_replacing_it() -> None:
+    tree = construct_epac_join_tree()
+    original_bytes = tree.to_json()
+    for origin in tree.origins:
+        wire = origin.to_dict()
+        assert wire["phase"] == origin.phase.to_dict()
+        assert wire["k"] == origin.k
+        assert wire["readouts"][0] == {
+            "origin_id": origin.origin_id, "measured_property": "phase",
+            "rule_id": "epac.readout.exact-phase.v0", "value": origin.phase.to_dict(),
+        }
+        assert wire["readouts"][1]["measured_property"] == "k"
+        assert wire["readouts"][1]["value"] == origin.k
+        for slot, readout in zip(origin.slots, wire["readouts"][2:]):
+            assert readout["measured_property"] == f"slots[{slot.order}].facing"
+            assert readout["value"] == slot.facing
+        records = wire["readouts"] + [wire["bearing"]]
+        if wire["s5_energy_readout"] is not None:
+            records.append(wire["s5_energy_readout"])
+        for readout in records:
+            assert readout["origin_id"] == origin.origin_id
+            assert readout["measured_property"] and readout["rule_id"]
+        wire["readouts"][0]["value"]["numerator"] += 1
+    assert tree.to_json() == original_bytes
+    for field in ("origin_id", "measured_property", "rule_id", "value"):
+        wire = tree.to_dict()
+        wire["origins"][0]["readouts"][0][field] = "unrelated"
+        _rehash(wire)
+        with pytest.raises(ValueError, match="readouts"):
+            EPACJoinTree.from_dict(wire)
+    wire = tree.to_dict()
+    wire["origins"][0]["readouts"][0]["value"]["numerator"] = False
+    _rehash(wire)
+    with pytest.raises(ValueError, match="readouts"):
+        EPACJoinTree.from_dict(wire)
+
+
+def test_merged_producer_and_conditional_roles() -> None:
+    producer_bytes = files("epac_data").joinpath("metapat-epac-join-terms-application-v4.json").read_bytes()
+    producer = json.loads(producer_bytes)
+    generator = _generator()
+    assert hashlib.sha256(producer_bytes).hexdigest() == generator.METAPAT_APPLICATION_FIXTURE_SHA256
+    assert producer["application_digest"] == METAPAT_APPLICATION_DIGEST
+    assert {item["application_role"]: item["module_id"] for item in producer["catalog_bindings"]} == epac_join_term._METAPAT_APPLICATION_ROLE_MODULES
+    tree = construct_epac_join_tree()
+    bindings = tree.to_dict()["semantic_field_bindings"]
+    assert {row["spine_name"] for row in bindings.values()}.isdisjoint({"Vector", "Transformation", "Time"})
+    assert bindings["origin.phase"]["spine_name"] == "State"
+    assert bindings["slot.facing"]["spine_name"] == "State"
+    assert bindings["origin.readouts"]["spine_name"] == "Scalar"
+    assert bindings["origin.bearing"]["spine_name"] == "Scalar"
+    assert bindings["tree.joins"]["application_role"] == "authored-near-join"
+    assert "joins" in tree.to_dict() and "transformations" not in tree.to_dict()
+    for path, role, spine in [("origin.bearing", "inferred-bearing", "Vector"),
+                              ("join.join_id", "join-transformation", "Transformation"),
+                              ("join.order", "transformation-sequence", "Time")]:
+        wire = tree.to_dict()
+        wire["semantic_field_bindings"][path].update(application_role=role, spine_name=spine)
+        _rehash(wire)
+        with pytest.raises(ValueError, match="semantic field bindings"):
+            EPACJoinTree.from_dict(wire)
+
+
+def test_noncanonical_ratios_rejected_even_with_recomputed_digest() -> None:
+    tree = construct_epac_join_tree()
+    # Nonzero phase, zero phase, phase readout, and occupancy readout.
+    for origin_index, field in [(1, "phase"), (0, "phase"), (1, "readouts"), (5, "s5_energy_readout")]:
+        for rehash in (False, True):
+            wire = tree.to_dict()
+            ratio = wire["origins"][origin_index][field]
+            if field == "readouts":
+                ratio = ratio[0]["value"]
+            elif field == "s5_energy_readout":
+                ratio = ratio["value"]
+            ratio["numerator"] *= 2
+            ratio["denominator"] *= 2
+            if rehash:
+                _rehash(wire)
+            with pytest.raises(ValueError):
+                EPACJoinTree.from_dict(wire)
+    assert ExactRatio(2, 16) == ExactRatio(1, 8)  # typed construction still reduces
+    assert EPACJoinTree.from_json(tree.to_json()) == tree
+
+
+def test_generator_runs_directly_without_installation(tmp_path) -> None:
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+    env.pop("PYTHONHOME", None)
+    # -S disables site packages and editable-install hooks. CWD is outside source.
+    result = subprocess.run(
+        [sys.executable, "-S", str(ROOT / "tools/generate_join_term_v0.py"), "--check"],
+        cwd=tmp_path, env=env, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.count("CURRENT") == 2
+
+
+def test_generator_rejects_mismatched_source_before_writing(tmp_path, monkeypatch) -> None:
+    generator = _generator()
+    with pytest.raises(ValueError, match="checkout containing this generator"):
+        generator.write_outputs(tmp_path)
+    assert not list(tmp_path.iterdir())
+    # Also reject a copied source tree, even when its receipt could be recomputed.
+    for relative in generator.SOURCE_PATHS:
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((ROOT / relative).read_bytes())
+    source = tmp_path / "epac_join_term.py"
+    source.write_text(source.read_text().replace("slot-facing-sign.v0", "slot-facing-sign.other"))
+    with pytest.raises(ValueError, match="checkout containing this generator"):
+        generator.write_outputs(tmp_path)
+    assert not (tmp_path / generator.RECEIPT_PATH).exists()
+    monkeypatch.setattr(epac_join_term, "_MODULE_SOURCE_SHA256", "different-loaded-source")
+    with pytest.raises(ValueError, match="loaded epac_join_term source"):
+        generator.build_receipt(ROOT)

@@ -31,3 +31,5 @@ Treat constructor success as reproducibility of a declared structure. Treat a co
 - release packaging and downstream artifact consumption
 - whether exact lineage and seating improve a separately preregistered EPAC task
 - whether any genuinely secret native structure enables a useful operation that a legitimate public projection cannot efficiently reproduce
+
+The repaired join-term wire `0.2.0` binds the merged METAPAT license, separates stored state from identified scalar readouts, and preserves authored adjacent-scale relations without claiming Vector, Transformation, or Time. The static candidate provides no resulting state-change or actual occurrence evidence. See `docs/multi-origin-join-term-v0.md` for the explicit pre-merge API migration.

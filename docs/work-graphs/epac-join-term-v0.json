@@ -24,7 +24,9 @@
   "cross_repository_relations": [
     {
       "authority_transfer": false,
-      "identity": "metapat.application.epac_join_terms@epac-join-terms-application-v4#cba0ccc360a0ecd9b78ce582a7f54d1385beeaa83de495faa76f40112bd23e7d",
+      "identity": "metapat.application.epac_join_terms@epac-join-terms-application-v4#461ef7e059aa65b514017683ba9b57058ee9f582bc63748fabd021cdeb660b4b",
+      "producer_commit": "1cdfb09dd00a451cee30eec2e78624df8c682662",
+      "producer_tree": "d946a5a18b0c53fd561dcd9d68fdf36d5dd11638",
       "relation": "exact semantic license for spine-to-EPAC role names",
       "repository": "The-Interdependency/metapat"
     },
@@ -55,18 +57,20 @@
   "hmmm": [
     "No native secret-dependent useful operation is established.",
     "The downstream value of exact lineage and seating replay remains unmeasured.",
-    "No UCNS correspondence is selected or licensed."
+    "No UCNS correspondence is selected or licensed.",
+    "Static bearing and authored adjacency supply no state-changing Vector, resulting Transformation, or actual temporal sequence. These roles are not claimed."
   ],
   "machine_entrypoints": {
     "candidate": "epac_join_term.py",
     "generator": "tools/generate_join_term_v0.py",
     "human_specification": "docs/multi-origin-join-term-v0.md",
+    "producer_fixture": "data/metapat-epac-join-terms-application-v4.json",
     "public_receipt": "data/epac-join-term-v0-receipt.json",
     "tests": "tests/test_epac_join_term.py"
   },
   "repository": "The-Interdependency/epac",
   "status": {
-    "current_claim": "A strict typed S0-through-S6 join tree preserves exact authored adjacency, named ordered seating, explicit holes and leftovers, exact state, inferred bearing, and provenance. Its count bag is a provably lossy sidecar. Public receipt bytes recover the complete candidate without private state.",
+    "current_claim": "A strict typed S0-through-S6 join tree preserves exact authored adjacency, named ordered seating, explicit holes and leftovers, exact state, separately identified scalar readouts, static inferred bearing, and provenance. Its count bag is a provably lossy sidecar. Public receipt bytes recover the complete candidate without private state.",
     "state": "native correctness candidate"
   },
   "version": "0.1.0"
