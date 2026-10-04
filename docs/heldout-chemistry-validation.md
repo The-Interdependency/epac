@@ -44,6 +44,8 @@ In a source checkout, `load_packaged_oracle()` prefers the sibling `data/heldout
 
 The reserved `hmmm` provenance identity (ignoring surrounding whitespace and case) is unresolved, just like a blank or null identity. It cannot produce a scored success.
 
+The same reserved sentinel is rejected as a prediction `source_identity` during freezing, commitment verification, reloading, and comparison, including envelopes with a recomputed matching digest. Supply a resolved EPAC head or receipt identity before freezing predictions.
+
 Reload preserved receipts with `load_validation_receipt(path)`. It rejects duplicate keys, invalid envelopes and digest fields, repeated case IDs, inconsistent result statuses or counts, and a mismatched `receipt_sha256`. It also checks scored statuses against the evidence carried in each result. These checks establish internal integrity; an unkeyed checksum does not authenticate a custodian or prevent replacement of the entire evidence chain. Preserve externally trusted digests or independently controlled custody when that stronger claim matters.
 
 ## Runnable end-to-end example

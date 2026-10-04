@@ -437,16 +437,21 @@ def test_tampered_prediction_cannot_be_compared():
 
 
 def test_commitment_revalidates_nonempty_source_identity_even_with_matching_digest():
-    _, commitment = frozen({"element:H:valence": 1})
-    forged = deepcopy(commitment)
-    forged["source_identity"] = ""
-    unsigned = {
-        k: forged[k]
-        for k in ("schema", "version", "source_identity", "validation_plan_sha256", "predictions")
-    }
-    forged["commitment_sha256"] = _digest_envelope(unsigned)
-    with pytest.raises(ValueError, match="source_identity"):
-        verify_commitment(forged)
+    plan, commitment = frozen({"element:H:valence": 1})
+    for source_identity in ("", " \t", "hmmm", " HMMM ", "\thMmM\n"):
+        with pytest.raises(ValueError, match="source_identity"):
+            freeze_predictions({"element:H:valence": 1}, source_identity=source_identity, validation_plan=plan)
+        forged = deepcopy(commitment)
+        forged["source_identity"] = source_identity
+        unsigned = {
+            k: forged[k]
+            for k in ("schema", "version", "source_identity", "validation_plan_sha256", "predictions")
+        }
+        forged["commitment_sha256"] = _digest_envelope(unsigned)
+        with pytest.raises(ValueError, match="source_identity"):
+            verify_commitment(forged)
+        with pytest.raises(ValueError, match="source_identity"):
+            compare_after_freeze(forged, oracle(), validation_plan=plan)
 
 
 def test_case_inventory_and_comparator_are_bound_before_comparison():
@@ -820,6 +825,16 @@ def test_persisted_commitment_loaders_verify_envelopes_and_plan_binding():
         prediction_path.write_text(json.dumps(forged), encoding="utf-8")
         with pytest.raises(ValueError, match="absent from frozen validation plan"):
             load_prediction_commitment(prediction_path, validation_plan=plan)
+
+        for source_identity in ("hmmm", " HMMM ", "\thMmM\n"):
+            forged = deepcopy(commitment)
+            forged["source_identity"] = source_identity
+            forged["commitment_sha256"] = _digest_envelope({
+                key: value for key, value in forged.items() if key != "commitment_sha256"
+            })
+            prediction_path.write_text(json.dumps(forged), encoding="utf-8")
+            with pytest.raises(ValueError, match="source_identity"):
+                load_prediction_commitment(prediction_path, validation_plan=plan)
 
         forged_plan = deepcopy(plan)
         forged_plan["cases"][0]["comparison"]["expected"] = 7

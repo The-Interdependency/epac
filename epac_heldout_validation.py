@@ -54,7 +54,7 @@ from typing import Any
 #
 # id: heldout_commitment_persistence_and_identity
 #   given: predictions and source identity are frozen, serialized, reloaded, or externally reconstructed
-#   then: only persistence-stable JSON-shaped prediction values with a nonempty source identity and matching digest are accepted
+#   then: only persistence-stable JSON-shaped prediction values with a nonempty resolved source identity and matching digest are accepted; the reserved hmmm source sentinel is rejected
 #   class: evidence
 #   since: 2026-09-29
 #
@@ -114,6 +114,8 @@ def _digest(value: Any) -> str:
 def _required_nonempty_string(value: Any, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be a nonempty string")
+    if field == "source_identity" and value.strip().casefold() == "hmmm":
+        raise ValueError("source_identity must be resolved, not the hmmm sentinel")
     return value
 
 
