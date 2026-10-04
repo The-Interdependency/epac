@@ -54,6 +54,8 @@ Every loader also requires decimal/exponent JSON numbers to preserve their exact
 
 All numeric comparison uses exact rational interpretations of the committed JSON decimal values, including nested exact/set equality and tolerance arithmetic. For example, `1e23` means exactly `100000000000000000000000`, not the nearby integer represented by its in-memory binary float. Programmatic floats use their canonical JSON decimal representation, so direct and persisted scoring agree.
 
+Strings and object keys must contain valid Unicode scalar values. Loaders and programmatic normalization reject unpaired surrogates with `ValueError` before hashing or returning loaded evidence. Valid non-ASCII text, including JSON-escaped surrogate pairs that decode to a Unicode scalar, retains the same canonical UTF-8 digest.
+
 Reload preserved receipts with `load_validation_receipt(path)`. It rejects duplicate keys, invalid envelopes and digest fields, repeated case IDs, inconsistent result statuses or counts, and a mismatched `receipt_sha256`. It also checks scored statuses against the evidence carried in each result. These checks establish internal integrity; an unkeyed checksum does not authenticate a custodian or prevent replacement of the entire evidence chain. Preserve externally trusted digests or independently controlled custody when that stronger claim matters.
 
 ## Runnable end-to-end example

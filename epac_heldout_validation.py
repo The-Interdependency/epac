@@ -33,7 +33,7 @@ from typing import Any
 #   summary: comparison-only held-out validation boundary that preregisters case identities and comparator rules before EPAC predictions are frozen and oracle values are revealed
 #   owner: The Interdependency
 #   public_surface: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_validation_plan, load_prediction_commitment, load_validation_receipt, load_oracle, load_packaged_oracle
-#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _verify_validation_receipt, _has_unresolved_evidence, _json_number_fraction, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _parse_roundtrip_float, _loads_evidence_json
+#   internal_surface: _canonical, _validated_unicode_string, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _verify_validation_receipt, _has_unresolved_evidence, _json_number_fraction, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _parse_roundtrip_float, _loads_evidence_json
 #   auth_boundary: none
 #   storage_boundary: read
 #   network_boundary: none
@@ -55,7 +55,7 @@ from typing import Any
 #
 # id: heldout_commitment_persistence_and_identity
 #   given: predictions and source identity are frozen, serialized, reloaded, or externally reconstructed
-#   then: only persistence-stable JSON-shaped prediction values with a nonempty resolved source identity and matching digest are accepted; the reserved hmmm source sentinel is rejected
+#   then: only persistence-stable JSON-shaped prediction values with Unicode scalar strings, a nonempty resolved source identity, and matching digest are accepted; the reserved hmmm source sentinel is rejected
 #   class: evidence
 #   since: 2026-09-29
 #
@@ -79,7 +79,7 @@ from typing import Any
 #
 # id: heldout_oracle_loading_is_unambiguous
 #   given: oracle evidence is loaded from a file, source checkout, or installed distribution
-#   then: duplicate JSON keys are rejected and source checkout data is preferred over an unrelated installed package
+#   then: duplicate JSON keys and unpaired Unicode surrogates are rejected before evidence is returned, and source checkout data is preferred over an unrelated installed package
 #   class: correctness
 #   since: 2026-09-29
 #
@@ -111,7 +111,17 @@ _VERSION = "v1"
 
 
 def _canonical(value: Any) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return _validated_unicode_string(payload, field="held-out evidence").encode("utf-8")
+
+
+def _validated_unicode_string(value: str, *, field: str) -> str:
+    value = str(value)
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise ValueError(f"{field} must contain Unicode scalar values") from exc
+    return value
 
 
 def _digest(value: Any) -> str:
@@ -123,7 +133,7 @@ def _required_nonempty_string(value: Any, field: str) -> str:
         raise ValueError(f"{field} must be a nonempty string")
     if value.strip().casefold() == "hmmm":
         raise ValueError(f"{field} must be resolved, not the hmmm sentinel")
-    return value
+    return _validated_unicode_string(value, field=field)
 
 
 def _normalize_json_value(value: Any, *, field: str) -> Any:
@@ -137,7 +147,7 @@ def _normalize_json_value(value: Any, *, field: str) -> Any:
     if isinstance(value, float):
         return float(value)
     if isinstance(value, str):
-        return str(value)
+        return _validated_unicode_string(value, field=field)
     if isinstance(value, list):
         return [
             _normalize_json_value(item, field=f"{field}[]")
@@ -148,6 +158,7 @@ def _normalize_json_value(value: Any, *, field: str) -> Any:
         for key, item in value.items():
             if not isinstance(key, str):
                 raise ValueError(f"{field} object keys must be strings")
+            key = _validated_unicode_string(key, field=f"{field} object key")
             normalized[key] = _normalize_json_value(
                 item,
                 field=f"{field}.{key}",
@@ -185,6 +196,7 @@ def _normalized_comparison(case: Mapping[str, Any]) -> dict[str, Any]:
     kind = comparison.get("kind", "exact")
     if not isinstance(kind, str) or not kind.strip() or kind != kind.strip():
         raise ValueError("comparison kind must be a nonempty canonical string")
+    kind = _validated_unicode_string(kind, field="comparison kind")
     allowed = {"kind", "absolute_tolerance"} if kind == "numeric-tolerance" else {"kind"}
     extra = set(comparison) - allowed
     if extra:
@@ -611,7 +623,7 @@ def _loads_evidence_json(payload: str, *, document: str) -> dict[str, Any]:
     )
     if not isinstance(value, dict):
         raise ValueError(f"{document} document must be a JSON object")
-    return value
+    return _normalize_json_value(value, field=document)
 
 
 def load_validation_plan(path: str | Path) -> dict[str, Any]:

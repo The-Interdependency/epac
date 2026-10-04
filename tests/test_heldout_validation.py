@@ -58,6 +58,18 @@ from epac_heldout_validation import (
 #   mutates: filesystem
 #   cleanup: tempdir_teardown
 #
+# id: check_unpaired_surrogates_are_rejected_before_hashing_or_loading
+#   proves: heldout_commitment_persistence_and_identity, heldout_oracle_loading_is_unambiguous
+#   call: self::test_unpaired_surrogates_are_rejected_before_hashing_or_loading
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
+# id: check_valid_unicode_preserves_persisted_evidence_identity
+#   proves: heldout_commitment_persistence_and_identity, heldout_oracle_loading_is_unambiguous, heldout_persisted_receipts_preserve_evidence
+#   call: self::test_valid_unicode_preserves_persisted_evidence_identity
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
 # id: check_prediction_commitment_rejects_non_json_values_before_hashing
 #   proves: heldout_commitment_persistence_and_identity
 #   call: self::test_prediction_commitment_rejects_non_json_values_before_hashing
@@ -1027,6 +1039,70 @@ def test_hmmm_evidence_is_unresolved_for_every_comparator():
         for value in ("hmmmm", "known hmmm value", None, False, 1, [1], {"known": 1}):
             assert heldout_validation._compare(value, value, {"kind": "exact"}) == "SURVIVED"
         assert heldout_validation._compare("known", 1, {"kind": "exact"}) == "FALSIFIED"
+
+
+def test_unpaired_surrogates_are_rejected_before_hashing_or_loading():
+    plan = freeze_validation_plan([{"id": "x"}])
+    commitment = freeze_predictions({"x": 1}, source_identity="epac@test", validation_plan=plan)
+    heldout = {"schema": "epac.heldout-chemistry-oracle", "version": "v1", "cases": [
+        {"id": "x", "expected": 1, "provenance": {"authority": "fixture", "locator": "x"}}
+    ]}
+    receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "evidence.json"
+        for bad in ("\ud800", "\udfff", "a\ud800b"):
+            for case in ({"id": bad}, {"id": "x", "domain": bad}, {"id": "x", "comparison": {"kind": bad}}):
+                with pytest.raises(ValueError, match="Unicode scalar"):
+                    freeze_validation_plan([case])
+            with pytest.raises(ValueError, match="Unicode scalar"):
+                freeze_predictions({"x": 1}, source_identity=bad, validation_plan=plan)
+            for prediction in (bad, [bad], {bad: 1}, {"nested": [bad]}):
+                with pytest.raises(ValueError, match="Unicode scalar"):
+                    freeze_predictions({"x": prediction}, source_identity="epac@test", validation_plan=plan)
+            for field in ("expected", "provenance"):
+                malformed = deepcopy(heldout)
+                malformed["cases"][0][field] = bad if field == "expected" else {"authority": "fixture", "locator": bad}
+                with pytest.raises(ValueError, match="Unicode scalar"):
+                    compare_after_freeze(commitment, malformed, validation_plan=plan)
+            with pytest.raises(ValueError, match="Unicode scalar"):
+                heldout_validation._digest({"value": bad})
+            for envelope, loader in (
+                (plan, load_validation_plan),
+                (commitment, lambda path: load_prediction_commitment(path, validation_plan=plan)),
+                (heldout, load_oracle),
+                (receipt, load_validation_receipt),
+            ):
+                payload = json.dumps(envelope).replace('"x"', json.dumps(bad))
+                path.write_text(payload, encoding="utf-8")
+                with pytest.raises(ValueError, match="Unicode scalar"):
+                    loader(path)
+            path.write_text(json.dumps({bad: 1}), encoding="utf-8")
+            with pytest.raises(ValueError, match="Unicode scalar"):
+                load_oracle(path)
+
+
+def test_valid_unicode_preserves_persisted_evidence_identity():
+    case_id = "element:氢:😀"
+    plan = freeze_validation_plan([{"id": case_id, "domain": "质量"}])
+    prediction = {"λ": ["😀", "氢"]}
+    commitment = freeze_predictions({case_id: prediction}, source_identity="epac@😀", validation_plan=plan)
+    heldout = {"schema": "epac.heldout-chemistry-oracle", "version": "v1", "cases": [
+        {"id": case_id, "domain": "质量", "expected": prediction,
+         "provenance": {"authority": "来源", "locator": "😀"}}
+    ]}
+    receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+    assert receipt["counts"] == {"SURVIVED": 1, "FALSIFIED": 0, "UNRESOLVED": 0}
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "evidence.json"
+        for envelope, loader in (
+            (plan, load_validation_plan),
+            (commitment, lambda path: load_prediction_commitment(path, validation_plan=plan)),
+            (heldout, load_oracle),
+            (receipt, load_validation_receipt),
+        ):
+            for escaped in (True, False):
+                path.write_text(json.dumps(envelope, ensure_ascii=escaped), encoding="utf-8")
+                assert loader(path) == envelope
 
 
 def test_case_and_domain_identities_reject_reserved_sentinel():
