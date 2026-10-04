@@ -98,9 +98,17 @@ from typing import Any
 
 # === DEPENDENCIES ===
 # id: heldout_validation_dependency_edges
-#   summary: uses standard-library parsing, exact arithmetic, hashing, and file/package-resource reads; imports no EPAC construction or chemistry reference module
+#   summary: uses standard-library parsing, exact arithmetic, hashing, and file/package-resource reads without importing EPAC construction
 #   imports: collections.abc, copy, decimal, fractions, hashlib, importlib.resources, json, math, pathlib, typing
 #   calls: importlib.resources.files, pathlib.Path.read_text
+#   class: runtime
+#   direction: outbound
+#   owner: The Interdependency
+#
+# id: heldout_packaged_oracle_dependency
+#   summary: the comparison-side packaged loader resolves the epac_data package and reads heldout_chemistry_oracle.json only when checkout data is absent
+#   imports: epac_data
+#   calls: importlib.resources.files
 #   class: runtime
 #   direction: outbound
 #   owner: The Interdependency
