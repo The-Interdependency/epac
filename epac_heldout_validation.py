@@ -33,7 +33,7 @@ from typing import Any
 #   summary: comparison-only held-out validation boundary that preregisters case identities and comparator rules before EPAC predictions are frozen and oracle values are revealed
 #   owner: The Interdependency
 #   public_surface: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_validation_plan, load_prediction_commitment, load_validation_receipt, load_oracle, load_packaged_oracle
-#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _verify_validation_receipt, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _parse_roundtrip_float, _loads_evidence_json
+#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _verify_validation_receipt, _has_unresolved_evidence, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _parse_roundtrip_float, _loads_evidence_json
 #   auth_boundary: none
 #   storage_boundary: read
 #   network_boundary: none
@@ -61,7 +61,7 @@ from typing import Any
 #
 # id: heldout_comparison_tri_state_semantics
 #   given: frozen predictions and held-out expected values are compared under a preregistered comparator
-#   then: comparable agreement is SURVIVED, comparable disagreement is FALSIFIED, and missing or incomparable evidence is UNRESOLVED without bool/number aliasing or large-integer loss
+#   then: comparable agreement is SURVIVED, comparable disagreement is FALSIFIED, and missing or incomparable evidence is UNRESOLVED without bool/number aliasing or large-integer loss; non-finite numbers and reserved hmmm values anywhere in either evidence operand take precedence over all comparisons
 #   class: correctness
 #   since: 2026-09-29
 #
@@ -338,6 +338,22 @@ def _verify_prediction_plan_binding(
         )
 
 
+def _has_unresolved_evidence(value: Any) -> bool:
+    """Unknown evidence remains unresolved, including within JSON containers."""
+    if isinstance(value, str):
+        return value.strip().casefold() == "hmmm"
+    if isinstance(value, float):
+        return not math.isfinite(value)
+    if isinstance(value, list):
+        return any(_has_unresolved_evidence(item) for item in value)
+    if isinstance(value, Mapping):
+        return any(
+            _has_unresolved_evidence(key) or _has_unresolved_evidence(item)
+            for key, item in value.items()
+        )
+    return False
+
+
 def _json_exact_equal(left: Any, right: Any) -> bool | None:
     """JSON-type-aware equality; None means the values are not comparable JSON."""
     if left is None or right is None:
@@ -423,6 +439,8 @@ def _numeric_within_tolerance(
 
 
 def _compare(expected: Any, predicted: Any, rule: Mapping[str, Any]) -> str:
+    if _has_unresolved_evidence(expected) or _has_unresolved_evidence(predicted):
+        return "UNRESOLVED"
     kind = rule.get("kind", "exact")
     if kind == "exact":
         equal = _json_exact_equal(predicted, expected)

@@ -136,6 +136,18 @@ from epac_heldout_validation import (
 #   mutates: none
 #   cleanup: none
 #
+# id: check_nonfinite_exact_type_mismatches_are_unresolved
+#   proves: heldout_comparison_tri_state_semantics, heldout_persisted_receipts_preserve_evidence
+#   call: self::test_nonfinite_exact_type_mismatches_are_unresolved
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
+# id: check_hmmm_evidence_is_unresolved_for_every_comparator
+#   proves: heldout_comparison_tri_state_semantics, heldout_persisted_receipts_preserve_evidence
+#   call: self::test_hmmm_evidence_is_unresolved_for_every_comparator
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
 # id: check_blank_provenance_identity_is_unresolved
 #   proves: heldout_oracle_evidence_integrity
 #   call: self::test_blank_provenance_identity_is_unresolved
@@ -954,6 +966,55 @@ def test_receipt_loader_rejects_ambiguous_or_tampered_evidence():
         forged = deepcopy(receipt)
         forged["results"][1]["reason"] = "invented reason"
         rejected(forged, rehash=True)
+
+
+def test_nonfinite_exact_type_mismatches_are_unresolved():
+    plan = freeze_validation_plan([{"id": "x"}])
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "receipt.json"
+        for nonfinite in (math.inf, -math.inf, math.nan):
+            for unknown in (nonfinite, [nonfinite], {"x": nonfinite}, [{"x": [nonfinite]}]):
+                for known in (None, True, 1, "unknown", [], {}, [0, 1], {"other": 1}):
+                    for predicted, expected in ((unknown, known), (known, unknown)):
+                        commitment = freeze_predictions({"x": predicted}, source_identity="epac@test", validation_plan=plan)
+                        heldout = {"schema": "epac.heldout-chemistry-oracle", "version": "v1", "cases": [
+                            {"id": "x", "expected": expected, "provenance": {"authority": "fixture", "locator": "x"}}
+                        ]}
+                        receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+                        assert receipt["counts"] == {"SURVIVED": 0, "FALSIFIED": 0, "UNRESOLVED": 1}
+                        path.write_text(json.dumps(receipt), encoding="utf-8")
+                        assert load_validation_receipt(path)["counts"] == receipt["counts"]
+
+
+def test_hmmm_evidence_is_unresolved_for_every_comparator():
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "receipt.json"
+        for rule in ({"kind": "exact"}, {"kind": "set-equality"},
+                     {"kind": "numeric-tolerance", "absolute_tolerance": 0}, {"kind": "unsupported"}):
+            plan = freeze_validation_plan([{"id": "x", "comparison": rule}])
+            for sentinel in ("hmmm", " HMMM ", "\thMmM\n"):
+                for unknown in (sentinel, [sentinel], {"x": sentinel}, [{"x": [sentinel]}], {sentinel: 1}):
+                    for known in (unknown, None, True, 1, "known", [], {}, [0], {"other": 1}):
+                        for predicted, expected in ((unknown, known), (known, unknown)):
+                            commitment = freeze_predictions({"x": predicted}, source_identity="epac@test", validation_plan=plan)
+                            heldout = {"schema": "epac.heldout-chemistry-oracle", "version": "v1", "cases": [
+                                {"id": "x", "expected": expected, "comparison": rule,
+                                 "provenance": {"authority": "fixture", "locator": "x"}}
+                            ]}
+                            receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+                            assert receipt["counts"] == {"SURVIVED": 0, "FALSIFIED": 0, "UNRESOLVED": 1}
+                            path.write_text(json.dumps(receipt), encoding="utf-8")
+                            assert load_validation_receipt(path)["counts"] == receipt["counts"]
+            forged = deepcopy(receipt)
+            forged["results"][0]["status"] = "SURVIVED"
+            forged["counts"] = {"SURVIVED": 1, "FALSIFIED": 0, "UNRESOLVED": 0}
+            forged["receipt_sha256"] = heldout_validation._digest({key: value for key, value in forged.items() if key != "receipt_sha256"})
+            path.write_text(json.dumps(forged), encoding="utf-8")
+            with pytest.raises(ValueError, match="status disagrees"):
+                load_validation_receipt(path)
+        for value in ("hmmmm", "known hmmm value", None, False, 1, [1], {"known": 1}):
+            assert heldout_validation._compare(value, value, {"kind": "exact"}) == "SURVIVED"
+        assert heldout_validation._compare("known", 1, {"kind": "exact"}) == "FALSIFIED"
 
 
 def test_evidence_loaders_reject_decimal_value_loss():
