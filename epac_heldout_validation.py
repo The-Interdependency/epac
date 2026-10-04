@@ -33,7 +33,7 @@ from typing import Any
 #   summary: comparison-only held-out validation boundary that preregisters case identities and comparator rules before EPAC predictions are frozen and oracle values are revealed
 #   owner: The Interdependency
 #   public_surface: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_validation_plan, load_prediction_commitment, load_validation_receipt, load_oracle, load_packaged_oracle
-#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _verify_validation_receipt, _has_unresolved_evidence, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _parse_roundtrip_float, _loads_evidence_json
+#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _verify_validation_receipt, _has_unresolved_evidence, _json_number_fraction, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _parse_roundtrip_float, _loads_evidence_json
 #   auth_boundary: none
 #   storage_boundary: read
 #   network_boundary: none
@@ -97,7 +97,7 @@ from typing import Any
 #
 # id: heldout_json_numbers_preserve_decimal_value
 #   given: a JSON number with a decimal point or exponent is loaded as held-out evidence
-#   then: its exact decimal value must survive parsing and canonical float serialization; rounding, underflow, and overflow are rejected before commitment or scoring
+#   then: its exact decimal value must survive parsing and canonical float serialization; rounding, underflow, and overflow are rejected before commitment or scoring, and every numeric comparator uses the decimal value committed by that serialization
 #   class: evidence
 #   since: 2026-10-04
 # === END CONTRACTS ===
@@ -354,6 +354,11 @@ def _has_unresolved_evidence(value: Any) -> bool:
     return False
 
 
+def _json_number_fraction(value: int | float) -> Fraction:
+    """Interpret finite numbers by the decimal JSON value bound into the digest."""
+    return Fraction(str(value)) if isinstance(value, float) else Fraction(value)
+
+
 def _json_exact_equal(left: Any, right: Any) -> bool | None:
     """JSON-type-aware equality; None means the values are not comparable JSON."""
     if left is None or right is None:
@@ -371,7 +376,7 @@ def _json_exact_equal(left: Any, right: Any) -> bool | None:
             return None
         if isinstance(right, float) and not math.isfinite(right):
             return None
-        return left == right
+        return _json_number_fraction(left) == _json_number_fraction(right)
     if isinstance(left, str) or isinstance(right, str):
         return left == right if isinstance(left, str) and isinstance(right, str) else False
     if isinstance(left, list) or isinstance(right, list):
@@ -411,7 +416,7 @@ def _json_token(value: Any) -> tuple[Any, ...] | None:
         return ("boolean", value)
     if isinstance(value, (int, float)):
         finite = _finite_number(value)
-        return None if finite is None else ("number", value)
+        return None if finite is None else ("number", _json_number_fraction(finite))
     if isinstance(value, str):
         return ("string", value)
     if isinstance(value, list):
@@ -435,7 +440,7 @@ def _numeric_within_tolerance(
     right = _finite_number(expected)
     if tolerance is None or tolerance < 0 or left is None or right is None:
         return None
-    return abs(Fraction(left) - Fraction(right)) <= Fraction(tolerance)
+    return abs(_json_number_fraction(left) - _json_number_fraction(right)) <= _json_number_fraction(tolerance)
 
 
 def _compare(expected: Any, predicted: Any, rule: Mapping[str, Any]) -> str:

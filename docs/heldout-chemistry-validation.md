@@ -50,6 +50,8 @@ Within prediction or expected evidence, a reserved `hmmm` string (ignoring case 
 
 Every loader also requires decimal/exponent JSON numbers to preserve their exact decimal value when parsed and serialized back to JSON. Ordinary round-trip values such as `0.1` and `1.007825` remain supported; precision-losing literals such as `9007199254740993.0`, finite-number overflow, and underflow are rejected before hashing or scoring. Integer tokens retain Python's exact integer handling. This is a decimal-value round-trip check, not a claim that decimal fractions have exact binary encodings. Explicit non-finite Python JSON extensions retain the existing `UNRESOLVED` comparison policy.
 
+All numeric comparison uses exact rational interpretations of the committed JSON decimal values, including nested exact/set equality and tolerance arithmetic. For example, `1e23` means exactly `100000000000000000000000`, not the nearby integer represented by its in-memory binary float. Programmatic floats use their canonical JSON decimal representation, so direct and persisted scoring agree.
+
 Reload preserved receipts with `load_validation_receipt(path)`. It rejects duplicate keys, invalid envelopes and digest fields, repeated case IDs, inconsistent result statuses or counts, and a mismatched `receipt_sha256`. It also checks scored statuses against the evidence carried in each result. These checks establish internal integrity; an unkeyed checksum does not authenticate a custodian or prevent replacement of the entire evidence chain. Preserve externally trusted digests or independently controlled custody when that stronger claim matters.
 
 ## Runnable end-to-end example

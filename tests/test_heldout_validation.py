@@ -196,6 +196,12 @@ from epac_heldout_validation import (
 #   mutates: filesystem
 #   cleanup: tempdir_teardown
 #
+# id: check_comparators_use_committed_decimal_number_values
+#   proves: heldout_json_numbers_preserve_decimal_value, heldout_comparison_tri_state_semantics, heldout_persisted_receipts_preserve_evidence
+#   call: self::test_comparators_use_committed_decimal_number_values
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
 # id: check_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout
 #   proves: heldout_oracle_loading_is_unambiguous
 #   call: self::test_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout
@@ -1015,6 +1021,42 @@ def test_hmmm_evidence_is_unresolved_for_every_comparator():
         for value in ("hmmmm", "known hmmm value", None, False, 1, [1], {"known": 1}):
             assert heldout_validation._compare(value, value, {"kind": "exact"}) == "SURVIVED"
         assert heldout_validation._compare("known", 1, {"kind": "exact"}) == "FALSIFIED"
+
+
+def test_comparators_use_committed_decimal_number_values():
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "evidence.json"
+        for sign in (1, -1):
+            decimal_integer = sign * 10**23
+            binary_integer = int(sign * 1e23)
+            assert decimal_integer != binary_integer
+            for rule in ({"kind": "exact"}, {"kind": "set-equality"},
+                         {"kind": "numeric-tolerance", "absolute_tolerance": 0}):
+                plan = freeze_validation_plan([{"id": "x", "comparison": rule}])
+                for number, status in ((decimal_integer, "SURVIVED"), (binary_integer, "FALSIFIED")):
+                    expected, predicted = sign * 1e23, number
+                    if rule["kind"] == "set-equality":
+                        expected, predicted = [{"nested": [expected]}], [{"nested": [predicted]}]
+                    for expected, predicted in ((expected, predicted), (predicted, expected)):
+                        commitment = freeze_predictions({"x": predicted}, source_identity="epac@test", validation_plan=plan)
+                        heldout = {"schema": "epac.heldout-chemistry-oracle", "version": "v1", "cases": [
+                            {"id": "x", "expected": expected, "comparison": rule,
+                             "provenance": {"authority": "fixture", "locator": "x"}}
+                        ]}
+                        direct = compare_after_freeze(commitment, heldout, validation_plan=plan)
+                        assert direct["results"][0]["status"] == status
+                        path.write_text(json.dumps(heldout), encoding="utf-8")
+                        loaded_oracle = load_oracle(path)
+                        path.write_text(json.dumps(commitment), encoding="utf-8")
+                        loaded_commitment = load_prediction_commitment(path, validation_plan=plan)
+                        restored = compare_after_freeze(loaded_commitment, loaded_oracle, validation_plan=plan)
+                        assert restored == direct
+                        path.write_text(json.dumps(restored), encoding="utf-8")
+                        assert load_validation_receipt(path) == direct
+        assert heldout_validation._compare(0.1, 0.4, {"kind": "numeric-tolerance", "absolute_tolerance": 0.3}) == "SURVIVED"
+        assert heldout_validation._compare(0, 10**23, {"kind": "numeric-tolerance", "absolute_tolerance": 1e23}) == "SURVIVED"
+        assert heldout_validation._compare(0, 10**23 + 1, {"kind": "numeric-tolerance", "absolute_tolerance": 1e23}) == "FALSIFIED"
+        assert heldout_validation._compare({"x": [1e23]}, {"x": [int(1e23)]}, {"kind": "exact"}) == "FALSIFIED"
 
 
 def test_evidence_loaders_reject_decimal_value_loss():
