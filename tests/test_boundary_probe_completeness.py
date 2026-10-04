@@ -152,6 +152,8 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
                 "compare_after_freeze",
                 "load_oracle",
                 "load_packaged_oracle",
+                "load_validation_plan",
+                "load_prediction_commitment",
             },
         )
         for name in heldout_exports:
@@ -165,9 +167,9 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
 
     def test_declared_operations_preserve_unresolved_semantics(self) -> None:
         inventory = self.report["operation_inventory"]
-        self.assertEqual(inventory["operation_count"], 159)
+        self.assertEqual(inventory["operation_count"], 172)
         self.assertEqual(inventory["boundary_relevant_count"], 58)
-        self.assertEqual(inventory["ambiguous_count"], 56)
+        self.assertEqual(inventory["ambiguous_count"], 67)
         self.assertEqual(inventory["omitted_boundary_relevant_count"], 14)
         for row in self.report["operation_ledger"]:
             if row["name"] in self.report["unmapped_operation_probes"]:
@@ -188,6 +190,22 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
         self.assertIn(
             "epac_b_derivation.ligand_field_spin_from_energies",
             {row["operation"] for row in ambiguous},
+        )
+        self.assertEqual(
+            {row["name"] for row in ambiguous if row["module"] == "epac_join_term"},
+            {
+                "EPACJoinTree",
+                "ExactRatio",
+                "JoinSlot",
+                "AuthoredJoin",
+                "LegacyBag",
+                "ScaleOrigin",
+                "construct_epac_join_tree",
+                "join_isomorphic",
+                "legacy_bag_projection",
+                "recover_epac_join_tree",
+                "trace_origin_lineage",
+            },
         )
         for operation in ("epac_boundary_minimal_refinement.boundary_minimal_refinement_report",
                           "epac_boundary_probe_completeness.boundary_probe_completeness_report",

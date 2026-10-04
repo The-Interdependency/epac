@@ -30,7 +30,7 @@ Validation-plan fields are deliberately narrow so oracle-shaped data cannot cros
 
 - `domain` is either `null` or one nonempty canonical string; objects, arrays, numbers, blank strings, and padded strings are rejected;
 - `exact` and `set-equality` comparators accept only `kind`;
-- `numeric-tolerance` accepts only `kind` and `absolute_tolerance`;
+- `numeric-tolerance` accepts only `kind` and `absolute_tolerance`; a supplied tolerance must be a number or `null`, so nested oracle fields, strings, and booleans cannot cross through that slot;
 - an unknown comparator kind may be preregistered with `kind` only and will score `UNRESOLVED`;
 - any additional comparator field is rejected before the plan is committed or verified.
 
@@ -38,7 +38,9 @@ Prediction and programmatic oracle values must use the JSON container/type model
 
 Numeric-tolerance comparison keeps integers as integers and uses exact rational arithmetic over accepted finite Python numeric values, so large integer distinctions are not collapsed by an intermediate float conversion. Non-finite operands or tolerances remain `UNRESOLVED`.
 
-Provenance `authority` and `locator` must both be nonempty strings after trimming; blank or null identities are `UNRESOLVED`. File-based oracle loading rejects duplicate JSON object keys at any nesting level rather than accepting parser-dependent evidence. In a source checkout, `load_packaged_oracle()` prefers the sibling `data/heldout_chemistry_oracle.json`; in an installed distribution it reads the `epac_data` package resource.
+Provenance `authority` and `locator` must both be nonempty strings after trimming; blank or null identities are `UNRESOLVED`. All evidence loaders reject duplicate JSON object keys at every nesting level, including identical duplicates and escaped spellings of the same key. Reload plans with `load_validation_plan(path)` and commitments with `load_prediction_commitment(path, validation_plan=plan)`: these verify envelopes and digests, and the latter also verifies the plan binding and prediction-ID membership before returning. Missing predictions remain admissible and score `UNRESOLVED`; extra predictions are rejected. `verify_commitment()` alone checks only the envelope, not plan membership. Raw `json.loads` discards duplicate-key evidence and must not be used to reload externally supplied plans or commitments.
+
+In a source checkout, `load_packaged_oracle()` prefers the sibling `data/heldout_chemistry_oracle.json`; in an installed distribution it reads the `epac_data` package resource. Loading a plan or commitment never loads oracle data.
 
 ## Runnable end-to-end example
 
@@ -56,6 +58,8 @@ from epac_heldout_validation import (
     freeze_validation_plan,
     load_oracle,
     load_packaged_oracle,
+    load_prediction_commitment,
+    load_validation_plan,
 )
 
 with TemporaryDirectory() as tmp:
@@ -69,7 +73,7 @@ with TemporaryDirectory() as tmp:
         }
     ])
     (root / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
-    plan = json.loads((root / "plan.json").read_text(encoding="utf-8"))
+    plan = load_validation_plan(root / "plan.json")
 
     # Replace this literal with an EPAC-derived prediction in a real run.
     predictions = {"example:scalar": 7}
@@ -81,8 +85,8 @@ with TemporaryDirectory() as tmp:
     (root / "prediction.json").write_text(
         json.dumps(commitment), encoding="utf-8"
     )
-    commitment = json.loads(
-        (root / "prediction.json").read_text(encoding="utf-8")
+    commitment = load_prediction_commitment(
+        root / "prediction.json", validation_plan=plan
     )
 
     # The package ships an empty comparison-side resource; loading it works

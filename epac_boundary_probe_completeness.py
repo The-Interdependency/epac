@@ -127,6 +127,7 @@ OPERATION_SOURCE_FILES = (
     "viz/__main__.py",
     "epac_public_gonol.py",
     "epac_dimensional_arity.py",
+    "epac_join_term.py",
     "epac_periodic.py",
     "epac_molecular.py",
     "epac_cross_scale_closure.py",
@@ -358,6 +359,11 @@ def _declared_operations() -> tuple[dict[str, str], ...]:
 def _classify_operation(module: str, name: str) -> str:
     if module == "epac_heldout_validation":
         return INTERNAL_NON_BOUNDARY
+    if module == "epac_join_term":
+        # The join-tree candidate is not part of the frozen 27-state boundary
+        # quotient surface. Its possible boundary relevance remains unresolved
+        # until a separately preregistered measurement selects an operation.
+        return AMBIGUOUS
     if module in {
         "epac_atomic",
         "epac_atomic_derivation",

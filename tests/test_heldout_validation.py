@@ -1,3 +1,7 @@
+"""Usage: python -m pytest -q tests/test_heldout_validation.py.
+
+Synthetic evidence exercises validation integrity without assigning chemistry standing.
+"""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -16,6 +20,8 @@ from epac_heldout_validation import (
     freeze_validation_plan,
     load_oracle,
     load_packaged_oracle,
+    load_prediction_commitment,
+    load_validation_plan,
     verify_commitment,
 )
 
@@ -144,8 +150,20 @@ from epac_heldout_validation import (
 # id: check_load_oracle_rejects_duplicate_json_object_keys
 #   proves: heldout_oracle_loading_is_unambiguous, heldout_oracle_evidence_integrity
 #   call: self::test_load_oracle_rejects_duplicate_json_object_keys
-#   mutates: none
-#   cleanup: none
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
+# id: check_persisted_commitment_loaders_reject_duplicate_keys_at_every_depth
+#   proves: heldout_persisted_commitments_are_unambiguous
+#   call: self::test_persisted_commitment_loaders_reject_duplicate_keys_at_every_depth
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
+# id: check_persisted_commitment_loaders_verify_envelopes_and_plan_binding
+#   proves: heldout_persisted_commitments_are_unambiguous, heldout_commitment_persistence_and_identity, heldout_selection_boundary_frozen_before_predictions
+#   call: self::test_persisted_commitment_loaders_verify_envelopes_and_plan_binding
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
 #
 # id: check_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout
 #   proves: heldout_oracle_loading_is_unambiguous
@@ -223,21 +241,38 @@ def test_plan_rejects_duplicate_ids_and_oracle_fields():
 
 
 def test_plan_rejects_oracle_fields_hidden_in_comparator_rules():
-    for comparison in (
+    invalid_rules = [
         {"kind": "exact", "expected": 7},
         {"kind": "set-equality", "expected": [7]},
         {"kind": "numeric-tolerance", "absolute_tolerance": 0, "expected": 7},
-    ):
-        with pytest.raises(ValueError, match="unexpected comparator fields"):
+        {"kind": "future-comparator", "provenance": {"authority": "oracle"}},
+        {"kind": "exact", "absolute_tolerance": 7},
+    ]
+    invalid_rules.extend(
+        {"kind": "numeric-tolerance", "absolute_tolerance": value}
+        for value in ({"expected": 7}, [{"provenance": "oracle"}], "expected=7", True)
+    )
+    for comparison in invalid_rules:
+        error = "unexpected comparator fields|absolute_tolerance must be"
+        with pytest.raises(ValueError, match=error):
             freeze_validation_plan([{"id": "x", "comparison": comparison}])
 
-    plan = freeze_validation_plan([{"id": "x", "comparison": {"kind": "exact"}}])
-    forged = deepcopy(plan)
-    forged["cases"][0]["comparison"]["expected"] = 7
-    unsigned = {k: forged[k] for k in ("schema", "version", "cases")}
-    forged["plan_sha256"] = _digest_envelope(unsigned)
-    with pytest.raises(ValueError, match="unexpected comparator fields"):
-        freeze_predictions({"x": 1}, source_identity="epac@test", validation_plan=forged)
+        plan = freeze_validation_plan([{"id": "x"}])
+        forged = deepcopy(plan)
+        forged["cases"][0]["comparison"] = comparison
+        unsigned = {k: forged[k] for k in ("schema", "version", "cases")}
+        forged["plan_sha256"] = _digest_envelope(unsigned)
+        with pytest.raises(ValueError, match=error):
+            freeze_predictions({"x": 1}, source_identity="epac@test", validation_plan=forged)
+
+        commitment = freeze_predictions({"x": 1}, source_identity="epac@test", validation_plan=plan)
+        heldout = {
+            "schema": "epac.heldout-chemistry-oracle", "version": "v1",
+            "cases": [{"id": "x", "comparison": comparison, "expected": 1,
+                       "provenance": {"authority": "fixture", "locator": "x"}}],
+        }
+        with pytest.raises(ValueError, match=error):
+            compare_after_freeze(commitment, heldout, validation_plan=plan)
 
 
 def test_prediction_cannot_escape_frozen_case_inventory():
@@ -683,6 +718,101 @@ def test_load_oracle_rejects_duplicate_json_object_keys():
             load_oracle(path)
 
 
+def test_persisted_commitment_loaders_reject_duplicate_keys_at_every_depth():
+    plan = freeze_validation_plan([{"id": "x"}])
+    commitment = freeze_predictions(
+        {"x": {"nested": [1]}}, source_identity="epac@test", validation_plan=plan
+    )
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "evidence.json"
+        for envelope, loader in (
+            (plan, load_validation_plan),
+            (commitment, lambda path: load_prediction_commitment(path, validation_plan=plan)),
+        ):
+            encoded = json.dumps(envelope)
+            # Every root field, including cases/predictions and their digests:
+            # last-key-wins would restore the valid envelope in each attack.
+            attacks = [
+                "{" + json.dumps(key) + ":null," + encoded[1:]
+                for key in envelope
+            ]
+            if envelope is plan:
+                attacks += [
+                    encoded.replace('"id": "x"', '"id":"other","id": "x"'),
+                    encoded.replace('"kind": "exact"', '"kind":"other","kind": "exact"'),
+                    encoded.replace('"kind": "exact"', '"k\\u0069nd":"other","kind": "exact"'),
+                ]
+            else:
+                attacks += [
+                    encoded.replace('"x": {', '"x":null,"x": {'),
+                    encoded.replace('"nested": [1]', '"nested":[99],"nested": [1]'),
+                ]
+            for payload in attacks:
+                assert json.loads(payload) == envelope
+                path.write_text(payload, encoding="utf-8")
+                with pytest.raises(ValueError, match="duplicate JSON key"):
+                    loader(path)
+
+
+def test_persisted_commitment_loaders_verify_envelopes_and_plan_binding():
+    plan, commitment = frozen({"element:H:valence": 1})
+    with TemporaryDirectory() as tmp:
+        plan_path = Path(tmp) / "plan.json"
+        prediction_path = Path(tmp) / "predictions.json"
+        plan_path.write_text(json.dumps(plan), encoding="utf-8")
+        prediction_path.write_text(json.dumps(commitment), encoding="utf-8")
+        reloaded_plan = load_validation_plan(plan_path)
+        reloaded_commitment = load_prediction_commitment(
+            prediction_path, validation_plan=reloaded_plan
+        )
+        assert reloaded_plan == plan
+        assert reloaded_commitment == commitment
+        before = compare_after_freeze(commitment, oracle(), validation_plan=plan)
+        after = compare_after_freeze(reloaded_commitment, oracle(), validation_plan=reloaded_plan)
+        assert before == after
+        assert after["counts"] == {"SURVIVED": 1, "FALSIFIED": 0, "UNRESOLVED": 2}
+
+        for envelope, loader in (
+            (plan, load_validation_plan),
+            (commitment, lambda path: load_prediction_commitment(path, validation_plan=plan)),
+        ):
+            path = Path(tmp) / "invalid.json"
+            for value in (None, [], 7, "not an object", {}):
+                path.write_text(json.dumps(value), encoding="utf-8")
+                with pytest.raises(ValueError):
+                    loader(path)
+            for key in envelope:
+                forged = deepcopy(envelope)
+                forged[key] = "tampered"
+                path.write_text(json.dumps(forged), encoding="utf-8")
+                with pytest.raises(ValueError):
+                    loader(path)
+
+        other_plan = freeze_validation_plan([{"id": "other"}])
+        with pytest.raises(ValueError, match="different validation plan"):
+            load_prediction_commitment(prediction_path, validation_plan=other_plan)
+
+        forged = deepcopy(commitment)
+        forged["predictions"]["outside"] = 99
+        forged["commitment_sha256"] = _digest_envelope({
+            key: value for key, value in forged.items() if key != "commitment_sha256"
+        })
+        prediction_path.write_text(json.dumps(forged), encoding="utf-8")
+        with pytest.raises(ValueError, match="absent from frozen validation plan"):
+            load_prediction_commitment(prediction_path, validation_plan=plan)
+
+        forged_plan = deepcopy(plan)
+        forged_plan["cases"][0]["comparison"]["expected"] = 7
+        forged_plan["plan_sha256"] = _digest_envelope({
+            key: value for key, value in forged_plan.items() if key != "plan_sha256"
+        })
+        plan_path.write_text(json.dumps(forged_plan), encoding="utf-8")
+        with pytest.raises(ValueError, match="unexpected comparator fields"):
+            load_validation_plan(plan_path)
+        with pytest.raises(ValueError, match="unexpected comparator fields"):
+            load_prediction_commitment(prediction_path, validation_plan=forged_plan)
+
+
 def test_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout():
     source_oracle = (
         Path(heldout_validation.__file__).resolve().parent
@@ -724,4 +854,3 @@ def test_set_equality_does_not_alias_boolean_and_numeric_values():
     }
     receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
     assert receipt["counts"] == {"SURVIVED": 0, "FALSIFIED": 1, "UNRESOLVED": 0}
-

@@ -7,8 +7,10 @@ comparator selection after predictions are revealed.
 
 Usage: freeze and persist freeze_validation_plan first; derive EPAC predictions
 externally; call and persist freeze_predictions; only then load the held-out
-oracle and call compare_after_freeze. A complete runnable source/install example
-lives in docs/heldout-chemistry-validation.md.
+oracle and call compare_after_freeze. Reload persisted inputs with
+load_validation_plan(path) and load_prediction_commitment(path, validation_plan=plan)
+to reject ambiguous JSON before verification. A complete runnable source/install
+example lives in docs/heldout-chemistry-validation.md.
 """
 from __future__ import annotations
 
@@ -28,8 +30,8 @@ from typing import Any
 #   module_kind: experiment
 #   summary: comparison-only held-out validation boundary that preregisters case identities and comparator rules before EPAC predictions are frozen and oracle values are revealed
 #   owner: The Interdependency
-#   public_surface: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_oracle, load_packaged_oracle
-#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _loads_oracle_json
+#   public_surface: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_validation_plan, load_prediction_commitment, load_oracle, load_packaged_oracle
+#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _loads_evidence_json
 #   auth_boundary: none
 #   storage_boundary: read
 #   network_boundary: none
@@ -78,6 +80,12 @@ from typing import Any
 #   then: duplicate JSON keys are rejected and source checkout data is preferred over an unrelated installed package
 #   class: correctness
 #   since: 2026-09-29
+#
+# id: heldout_persisted_commitments_are_unambiguous
+#   given: a persisted validation plan or prediction commitment is loaded from a file
+#   then: duplicate JSON keys at every depth and invalid envelopes or digests are rejected; prediction commitments are verified against the supplied frozen plan before being returned
+#   class: evidence
+#   since: 2026-10-04
 # === END CONTRACTS ===
 
 STATUSES = ("SURVIVED", "FALSIFIED", "UNRESOLVED")
@@ -166,8 +174,13 @@ def _normalized_comparison(case: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError(f"unexpected comparator fields for {kind}: {fields}")
     normalized: dict[str, Any] = {"kind": kind}
     if "absolute_tolerance" in comparison:
+        tolerance = comparison["absolute_tolerance"]
+        if tolerance is not None and (
+            isinstance(tolerance, bool) or not isinstance(tolerance, (int, float))
+        ):
+            raise ValueError("absolute_tolerance must be a number or null")
         normalized["absolute_tolerance"] = _normalize_json_value(
-            comparison["absolute_tolerance"],
+            tolerance,
             field="absolute_tolerance",
         )
     return normalized
@@ -263,6 +276,7 @@ def freeze_predictions(
 
 
 def verify_commitment(commitment: Mapping[str, Any]) -> None:
+    """Verify this envelope; plan membership is checked at load/comparison time."""
     required = {
         "schema",
         "version",
@@ -288,6 +302,22 @@ def verify_commitment(commitment: Mapping[str, Any]) -> None:
     }
     if _digest(unsigned) != commitment["commitment_sha256"]:
         raise ValueError("prediction commitment digest mismatch")
+
+
+def _verify_prediction_plan_binding(
+    commitment: Mapping[str, Any], validation_plan: Mapping[str, Any]
+) -> None:
+    _verify_validation_plan(validation_plan)
+    verify_commitment(commitment)
+    if commitment["validation_plan_sha256"] != validation_plan["plan_sha256"]:
+        raise ValueError("prediction commitment is bound to a different validation plan")
+    allowed_ids = {case["id"] for case in validation_plan["cases"]}
+    unexpected_ids = sorted(set(commitment["predictions"]) - allowed_ids)
+    if unexpected_ids:
+        raise ValueError(
+            "prediction commitment includes cases absent from frozen validation plan: "
+            + ", ".join(unexpected_ids)
+        )
 
 
 def _json_exact_equal(left: Any, right: Any) -> bool | None:
@@ -427,10 +457,7 @@ def compare_after_freeze(
     if not isinstance(oracle_snapshot, dict):
         raise ValueError("oracle must be a JSON object")
 
-    _verify_validation_plan(plan_snapshot)
-    verify_commitment(commitment_snapshot)
-    if commitment_snapshot["validation_plan_sha256"] != plan_snapshot["plan_sha256"]:
-        raise ValueError("prediction commitment is bound to a different validation plan")
+    _verify_prediction_plan_binding(commitment_snapshot, plan_snapshot)
     if oracle_snapshot.get("schema") != _ORACLE_SCHEMA or oracle_snapshot.get("version") != _VERSION:
         raise ValueError("unsupported held-out oracle")
     cases = oracle_snapshot.get("cases")
@@ -451,12 +478,6 @@ def compare_after_freeze(
         raise ValueError("oracle case inventory does not match frozen validation plan")
 
     predictions = commitment_snapshot["predictions"]
-    unexpected_prediction_ids = sorted(set(predictions) - set(plan_by_id))
-    if unexpected_prediction_ids:
-        raise ValueError(
-            "prediction commitment includes cases absent from frozen validation plan: "
-            + ", ".join(unexpected_prediction_ids)
-        )
     results: list[dict[str, Any]] = []
     for case_id in sorted(plan_by_id):
         case = oracle_by_id[case_id]
@@ -525,21 +546,41 @@ def _reject_duplicate_object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, An
     value: dict[str, Any] = {}
     for key, item in pairs:
         if key in value:
-            raise ValueError(f"duplicate JSON key in oracle evidence: {key}")
+            raise ValueError(f"duplicate JSON key in held-out evidence: {key}")
         value[key] = item
     return value
 
 
-def _loads_oracle_json(payload: str) -> dict[str, Any]:
+def _loads_evidence_json(payload: str, *, document: str) -> dict[str, Any]:
     value = json.loads(payload, object_pairs_hook=_reject_duplicate_object_pairs)
     if not isinstance(value, dict):
-        raise ValueError("oracle document must be a JSON object")
+        raise ValueError(f"{document} document must be a JSON object")
     return value
+
+
+def load_validation_plan(path: str | Path) -> dict[str, Any]:
+    """Reload an unambiguous, verified plan before deriving predictions."""
+    plan = _loads_evidence_json(
+        Path(path).read_text(encoding="utf-8"), document="validation plan"
+    )
+    _verify_validation_plan(plan)
+    return plan
+
+
+def load_prediction_commitment(
+    path: str | Path, *, validation_plan: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Reload unambiguous predictions bound to a verified plan, without an oracle."""
+    commitment = _loads_evidence_json(
+        Path(path).read_text(encoding="utf-8"), document="prediction commitment"
+    )
+    _verify_prediction_plan_binding(commitment, validation_plan)
+    return commitment
 
 
 def load_oracle(path: str | Path) -> dict[str, Any]:
     """Comparison-side helper. Construction modules must not call this."""
-    return _loads_oracle_json(Path(path).read_text(encoding="utf-8"))
+    return _loads_evidence_json(Path(path).read_text(encoding="utf-8"), document="oracle")
 
 
 def load_packaged_oracle() -> dict[str, Any]:
@@ -548,4 +589,4 @@ def load_packaged_oracle() -> dict[str, Any]:
     if source_oracle.is_file():
         return load_oracle(source_oracle)
     resource = files("epac_data").joinpath("heldout_chemistry_oracle.json")
-    return _loads_oracle_json(resource.read_text(encoding="utf-8"))
+    return _loads_evidence_json(resource.read_text(encoding="utf-8"), document="oracle")
