@@ -10,7 +10,8 @@ externally; call and persist freeze_predictions; only then load the held-out
 oracle and call compare_after_freeze. Reload persisted inputs with
 load_validation_plan(path) and load_prediction_commitment(path, validation_plan=plan)
 to reject ambiguous JSON before verification. A complete runnable source/install
-example lives in docs/heldout-chemistry-validation.md.
+example lives in docs/heldout-chemistry-validation.md. Preserve and reload receipts
+with load_validation_receipt(path) to verify their evidence and digest.
 """
 from __future__ import annotations
 
@@ -30,8 +31,8 @@ from typing import Any
 #   module_kind: experiment
 #   summary: comparison-only held-out validation boundary that preregisters case identities and comparator rules before EPAC predictions are frozen and oracle values are revealed
 #   owner: The Interdependency
-#   public_surface: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_validation_plan, load_prediction_commitment, load_oracle, load_packaged_oracle
-#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _loads_evidence_json
+#   public_surface: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_validation_plan, load_prediction_commitment, load_validation_receipt, load_oracle, load_packaged_oracle
+#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _verify_validation_receipt, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _loads_evidence_json
 #   auth_boundary: none
 #   storage_boundary: read
 #   network_boundary: none
@@ -65,7 +66,7 @@ from typing import Any
 #
 # id: heldout_oracle_evidence_integrity
 #   given: held-out oracle cases and provenance are revealed after prediction commitment
-#   then: oracle ids are unique, values are persistence-stable, provenance identities are nonblank, and malformed evidence cannot be scored as success
+#   then: oracle ids are unique, values are persistence-stable, provenance identities are nonblank and not hmmm, and malformed evidence cannot be scored as success
 #   class: evidence
 #   since: 2026-09-29
 #
@@ -84,6 +85,12 @@ from typing import Any
 # id: heldout_persisted_commitments_are_unambiguous
 #   given: a persisted validation plan or prediction commitment is loaded from a file
 #   then: duplicate JSON keys at every depth and invalid envelopes or digests are rejected; prediction commitments are verified against the supplied frozen plan before being returned
+#   class: evidence
+#   since: 2026-10-04
+#
+# id: heldout_persisted_receipts_preserve_evidence
+#   given: a persisted validation receipt is reloaded
+#   then: duplicate keys, invalid envelopes or bindings, inconsistent results or counts, and digest mismatches are rejected; valid evidence is preserved without granting custody authentication
 #   class: evidence
 #   since: 2026-10-04
 # === END CONTRACTS ===
@@ -155,7 +162,9 @@ def _has_nonempty_provenance_identity(provenance: Any) -> bool:
     if not isinstance(provenance, Mapping):
         return False
     return all(
-        isinstance(provenance.get(field), str) and bool(provenance[field].strip())
+        isinstance(provenance.get(field), str)
+        and bool(provenance[field].strip())
+        and provenance[field].strip().casefold() != "hmmm"
         for field in ("authority", "locator")
     )
 
@@ -576,6 +585,77 @@ def load_prediction_commitment(
     )
     _verify_prediction_plan_binding(commitment, validation_plan)
     return commitment
+
+
+def _verify_validation_receipt(receipt: Mapping[str, Any]) -> None:
+    required = {
+        "schema", "version", "validation_plan_sha256", "prediction_commitment_sha256",
+        "oracle_sha256", "results", "counts", "receipt_sha256",
+    }
+    if set(receipt) != required:
+        raise ValueError("invalid validation receipt envelope")
+    if receipt["schema"] != _RECEIPT_SCHEMA or receipt["version"] != _VERSION:
+        raise ValueError("unsupported validation receipt")
+    for field in ("validation_plan_sha256", "prediction_commitment_sha256", "oracle_sha256", "receipt_sha256"):
+        value = receipt[field]
+        if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
+            raise ValueError(f"{field} must be a canonical SHA-256 digest")
+    if not isinstance(receipt["results"], list):
+        raise ValueError("receipt results must be a list")
+    counts = receipt["counts"]
+    if not isinstance(counts, Mapping) or set(counts) != set(STATUSES):
+        raise ValueError("invalid receipt counts")
+    if any(type(value) is not int or value < 0 for value in counts.values()):
+        raise ValueError("receipt counts must be nonnegative integers")
+    observed = dict.fromkeys(STATUSES, 0)
+    seen: set[str] = set()
+    base_fields = {"id", "domain", "status"}
+    reason_fields = {
+        "missing provenance identity": base_fields | {"reason"},
+        "missing expected value": base_fields | {"reason", "provenance"},
+        "no frozen prediction": base_fields | {"reason", "expected", "provenance"},
+    }
+    for result in receipt["results"]:
+        if not isinstance(result, Mapping) or not base_fields <= result.keys():
+            raise ValueError("invalid receipt result")
+        case_id = _required_nonempty_string(result["id"], "receipt case id")
+        if case_id in seen:
+            raise ValueError(f"duplicate receipt case id: {case_id}")
+        seen.add(case_id)
+        _normalized_domain(result["domain"])
+        status = result["status"]
+        if not isinstance(status, str) or status not in STATUSES:
+            raise ValueError("invalid receipt result status")
+        if "reason" in result:
+            reason = result["reason"]
+            if not isinstance(reason, str) or reason not in reason_fields:
+                raise ValueError("invalid receipt unresolved reason")
+            if status != "UNRESOLVED" or set(result) != reason_fields[reason]:
+                raise ValueError("receipt result contradicts its unresolved reason")
+        else:
+            if set(result) != base_fields | {"predicted", "expected", "comparison", "provenance"}:
+                raise ValueError("invalid scored receipt result")
+            rule = _normalized_comparison(result)
+            if _canonical(rule) != _canonical(result["comparison"]):
+                raise ValueError("receipt comparison must be canonical")
+            if _compare(result["expected"], result["predicted"], rule) != status:
+                raise ValueError("receipt result status disagrees with preserved evidence")
+        if "provenance" in result and not _has_nonempty_provenance_identity(result["provenance"]):
+            raise ValueError("receipt result has unresolved provenance identity")
+        observed[status] += 1
+    if counts != observed:
+        raise ValueError("receipt counts do not match results")
+    if _digest({key: receipt[key] for key in required - {"receipt_sha256"}}) != receipt["receipt_sha256"]:
+        raise ValueError("validation receipt digest mismatch")
+
+
+def load_validation_receipt(path: str | Path) -> dict[str, Any]:
+    """Reload duplicate-safe, internally verified evidence; this is not authentication."""
+    receipt = _loads_evidence_json(
+        Path(path).read_text(encoding="utf-8"), document="validation receipt"
+    )
+    _verify_validation_receipt(receipt)
+    return receipt
 
 
 def load_oracle(path: str | Path) -> dict[str, Any]:

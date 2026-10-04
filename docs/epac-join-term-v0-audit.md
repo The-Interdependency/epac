@@ -7,7 +7,7 @@ The public receipt recovers one complete typed S0-through-S6 join tree and its e
 ## Exact authority
 
 - EPAC base: `1e5c999286f12221eff9870d1372203ac7935f2a` (tree `ce7781938ff684d826bd91f475b5423bd56b146a`)
-- EPAC feature source manifest: `aaa855bba19979641bedf562dfe90cf18884fcec17ab92fd052f3e11691447c5`
+- EPAC feature source manifest: `bf8574518bf2be7d2b6e72fc8590f90b9ec2104415f88a55ba06420128d12834`
 - METAPAT producer: `1cdfb09dd00a451cee30eec2e78624df8c682662` (tree `d946a5a18b0c53fd561dcd9d68fdf36d5dd11638`)
 - METAPAT application: `metapat.application.epac_join_terms@epac-join-terms-application-v4`
 - METAPAT application digest: `461ef7e059aa65b514017683ba9b57058ee9f582bc63748fabd021cdeb660b4b`
@@ -20,7 +20,7 @@ The containing feature commit cannot be embedded in a file inside itself. The ev
 
 - Candidate digest: `11504eb61c4952fc3da04a51d3779484194292db2c8a5c3174b3c3ea540e6442`
 - Candidate JSON SHA-256: `821d35a1e42c8d22423f78fdce8449066af40392d47f3e79e5b30b8f993fcbfd`
-- Evidence digest: `e3a5160c642050cc2d4f4bae126b34328b91fe17425fec5431182a7486adab95`
+- Evidence digest: `0e7188233a25dd675d58a1cf91350d6f7b0674bdcd1c922f131bb04fbf61870f`
 - Origins: `7`
 - Authored joins (no Transformation or Time claim): `6`
 - Slots: `18` (`6` members, `6` holes, `6` leftovers)
@@ -59,7 +59,7 @@ This is information loss. It is not a secrecy, computational-hardness, or confid
 - `epac_boundary_probe_completeness.py`: `1bc8a3e990e99d52b9636eb1f656f3da0d6178c42de9dd86d811d9211e87f014`
 - `epac_join_term.py`: `4697da5c76d5dfc77aedc5c84c71b7175180550824b6a1a2c1bf23a8548839af`
 - `pyproject.toml`: `44936ff75383ab25d3e295c6574b1759709fef7a072773d4c5774dd00243bcdd`
-- `tests/test_boundary_probe_completeness.py`: `c0d0196718e14126a82d669359ae58b207d46b1a20ff5158828c9ca1c7422c8f`
+- `tests/test_boundary_probe_completeness.py`: `8c096277431fc59163b362a7e88c5c3dd515f66bab62deed81eff1be2dc4a641`
 - `tests/test_epac_join_term.py`: `ed060a6ef7903f178e3da6b94890f088de8b37dc7b94e6e41b4ccc15a3b7f5c8`
 - `tools/generate_join_term_v0.py`: `1836734e0ba692f23f604838ed3146c811528266a341979366eff6b19447e331`
 

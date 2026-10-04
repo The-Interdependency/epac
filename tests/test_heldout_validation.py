@@ -21,6 +21,7 @@ from epac_heldout_validation import (
     load_oracle,
     load_packaged_oracle,
     load_prediction_commitment,
+    load_validation_receipt,
     load_validation_plan,
     verify_commitment,
 )
@@ -162,6 +163,18 @@ from epac_heldout_validation import (
 # id: check_persisted_commitment_loaders_verify_envelopes_and_plan_binding
 #   proves: heldout_persisted_commitments_are_unambiguous, heldout_commitment_persistence_and_identity, heldout_selection_boundary_frozen_before_predictions
 #   call: self::test_persisted_commitment_loaders_verify_envelopes_and_plan_binding
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
+# id: check_receipt_loader_preserves_verified_evidence_and_unresolved_results
+#   proves: heldout_persisted_receipts_preserve_evidence, heldout_comparison_tri_state_semantics
+#   call: self::test_receipt_loader_preserves_verified_evidence_and_unresolved_results
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
+# id: check_receipt_loader_rejects_ambiguous_or_tampered_evidence
+#   proves: heldout_persisted_receipts_preserve_evidence
+#   call: self::test_receipt_loader_rejects_ambiguous_or_tampered_evidence
 #   mutates: filesystem
 #   cleanup: tempdir_teardown
 #
@@ -682,6 +695,13 @@ def test_blank_provenance_identity_is_unresolved():
     receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
     assert receipt["counts"] == {"SURVIVED": 0, "FALSIFIED": 0, "UNRESOLVED": 1}
     assert receipt["results"][0]["reason"] == "missing provenance identity"
+    for field in ("authority", "locator"):
+        for unknown in ("hmmm", " HMMM ", "\thmmm\n"):
+            heldout["cases"][0]["provenance"] = {"authority": "fixture", "locator": "x"}
+            heldout["cases"][0]["provenance"][field] = unknown
+            receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+            assert receipt["counts"] == {"SURVIVED": 0, "FALSIFIED": 0, "UNRESOLVED": 1}
+            assert receipt["results"][0]["reason"] == "missing provenance identity"
 
 
 def test_receipt_and_commitment_detach_mutable_evidence_inputs():
@@ -811,6 +831,108 @@ def test_persisted_commitment_loaders_verify_envelopes_and_plan_binding():
             load_validation_plan(plan_path)
         with pytest.raises(ValueError, match="unexpected comparator fields"):
             load_prediction_commitment(prediction_path, validation_plan=forged_plan)
+
+
+def test_receipt_loader_preserves_verified_evidence_and_unresolved_results():
+    cases = [
+        {"id": name, "comparison": {"kind": "exact"}}
+        for name in ("same", "different", "nonfinite", "missing_expected", "missing_prediction", "missing_provenance")
+    ] + [{"id": "unsupported", "comparison": {"kind": "future"}}]
+    plan = freeze_validation_plan(cases)
+    commitment = freeze_predictions(
+        {"same": 1, "different": 2, "nonfinite": math.inf, "missing_expected": None,
+         "missing_provenance": 1, "unsupported": 1},
+        source_identity="epac@test", validation_plan=plan,
+    )
+    heldout = {
+        "schema": "epac.heldout-chemistry-oracle", "version": "v1",
+        "cases": [dict(case, expected=1, provenance={"authority": "fixture", "locator": case["id"]}) for case in cases],
+    }
+    del heldout["cases"][3]["expected"]
+    heldout["cases"][5]["provenance"] = {"authority": "hmmm", "locator": "x"}
+    receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+    assert receipt["counts"] == {"SURVIVED": 1, "FALSIFIED": 1, "UNRESOLVED": 5}
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "receipt.json"
+        path.write_text(json.dumps(receipt), encoding="utf-8")
+        preserved = load_validation_receipt(path)
+        assert json.dumps(preserved, sort_keys=True) == json.dumps(receipt, sort_keys=True)
+        empty_plan = freeze_validation_plan([])
+        empty_commitment = freeze_predictions({}, source_identity="epac@test", validation_plan=empty_plan)
+        empty = compare_after_freeze(empty_commitment, dict(heldout, cases=[]), validation_plan=empty_plan)
+        path.write_text(json.dumps(empty), encoding="utf-8")
+        assert load_validation_receipt(path) == empty
+
+
+def test_receipt_loader_rejects_ambiguous_or_tampered_evidence():
+    plan, commitment = frozen({"element:H:valence": 1})
+    receipt = compare_after_freeze(commitment, oracle(), validation_plan=plan)
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "receipt.json"
+        encoded = json.dumps(receipt)
+        attacks = ["{" + json.dumps(key) + ":null," + encoded[1:] for key in receipt]
+        attacks += [
+            encoded.replace('"status": "SURVIVED"', '"status":"FALSIFIED","status": "SURVIVED"'),
+            encoded.replace('"SURVIVED": 1', '"SURVIVED":0,"SURVIVED": 1'),
+            encoded.replace('"SURVIVED": 1', '"SURVIVED":1,"SURVIVED": 1'),
+        ]
+        for payload in attacks:
+            assert json.loads(payload) == receipt
+            path.write_text(payload, encoding="utf-8")
+            with pytest.raises(ValueError, match="duplicate JSON key"):
+                load_validation_receipt(path)
+
+        for key in receipt:
+            forged = deepcopy(receipt)
+            del forged[key]
+            path.write_text(json.dumps(forged), encoding="utf-8")
+            with pytest.raises(ValueError):
+                load_validation_receipt(path)
+
+        def rejected(forged, *, rehash=False):
+            if rehash:
+                forged["receipt_sha256"] = _digest_envelope({
+                    key: value for key, value in forged.items() if key != "receipt_sha256"
+                })
+            path.write_text(json.dumps(forged), encoding="utf-8")
+            with pytest.raises(ValueError):
+                load_validation_receipt(path)
+
+        for value in (None, [], 7, "not an object"):
+            rejected(value)
+        # Keep every shape otherwise valid to witness digest verification itself.
+        forged = deepcopy(receipt)
+        forged["results"][0]["provenance"]["locator"] = "altered"
+        rejected(forged)
+        for field, value in (
+            ("schema", "other"), ("version", "v2"), ("oracle_sha256", "g" * 64),
+            ("results", {}), ("counts", {"SURVIVED": True, "FALSIFIED": 0, "UNRESOLVED": 2}),
+            ("counts", {"SURVIVED": 0, "FALSIFIED": 0, "UNRESOLVED": 2}),
+        ):
+            forged = deepcopy(receipt)
+            forged[field] = value
+            rejected(forged, rehash=True)
+        for field, value in (
+            ("status", "UNREVIEWED"), ("domain", {"expected": 1}),
+            ("provenance", {"authority": "hmmm", "locator": "x"}),
+            ("comparison", {"kind": "exact", "expected": 1}),
+            ("expected", 99), ("unexpected", "oracle"),
+        ):
+            forged = deepcopy(receipt)
+            forged["results"][0][field] = value
+            rejected(forged, rehash=True)
+        forged = deepcopy(receipt)
+        forged["results"].append(deepcopy(forged["results"][0]))
+        forged["counts"]["SURVIVED"] += 1
+        rejected(forged, rehash=True)
+        # Even consistent counts plus a new digest cannot legitimize a flipped status.
+        forged = deepcopy(receipt)
+        forged["results"][0]["status"] = "FALSIFIED"
+        forged["counts"].update(SURVIVED=0, FALSIFIED=1)
+        rejected(forged, rehash=True)
+        forged = deepcopy(receipt)
+        forged["results"][1]["reason"] = "invented reason"
+        rejected(forged, rehash=True)
 
 
 def test_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout():

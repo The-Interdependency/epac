@@ -154,6 +154,7 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
                 "load_packaged_oracle",
                 "load_validation_plan",
                 "load_prediction_commitment",
+                "load_validation_receipt",
             },
         )
         for name in heldout_exports:
@@ -167,7 +168,7 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
 
     def test_declared_operations_preserve_unresolved_semantics(self) -> None:
         inventory = self.report["operation_inventory"]
-        self.assertEqual(inventory["operation_count"], 172)
+        self.assertEqual(inventory["operation_count"], 173)
         self.assertEqual(inventory["boundary_relevant_count"], 58)
         self.assertEqual(inventory["ambiguous_count"], 67)
         self.assertEqual(inventory["omitted_boundary_relevant_count"], 14)
