@@ -49,7 +49,7 @@ from typing import Any
 # === CONTRACTS ===
 # id: heldout_selection_boundary_frozen_before_predictions
 #   given: a validation plan and prediction commitment are supplied for held-out comparison
-#   then: case ids, canonical domains, and comparator rules are bound before predictions; prediction ids outside that verified plan are rejected
+#   then: resolved case ids, canonical resolved domains, and comparator rules are bound before predictions; reserved hmmm identities and prediction ids outside that verified plan are rejected
 #   class: evidence
 #   since: 2026-09-29
 #
@@ -121,8 +121,8 @@ def _digest(value: Any) -> str:
 def _required_nonempty_string(value: Any, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be a nonempty string")
-    if field == "source_identity" and value.strip().casefold() == "hmmm":
-        raise ValueError("source_identity must be resolved, not the hmmm sentinel")
+    if value.strip().casefold() == "hmmm":
+        raise ValueError(f"{field} must be resolved, not the hmmm sentinel")
     return value
 
 
@@ -164,7 +164,7 @@ def _normalized_domain(value: Any) -> str | None:
         return None
     if not isinstance(value, str) or not value.strip() or value != value.strip():
         raise ValueError("domain must be null or a nonempty canonical string")
-    return value
+    return _required_nonempty_string(value, "domain")
 
 
 def _has_nonempty_provenance_identity(provenance: Any) -> bool:

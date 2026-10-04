@@ -46,6 +46,8 @@ The reserved `hmmm` provenance identity (ignoring surrounding whitespace and cas
 
 The same reserved sentinel is rejected as a prediction `source_identity` during freezing, commitment verification, reloading, and comparison, including envelopes with a recomputed matching digest. Supply a resolved EPAC head or receipt identity before freezing predictions.
 
+Case identifiers and non-null domains must also be resolved identities: the reserved `hmmm` sentinel is rejected in plans, predictions, oracle comparisons, and preserved receipts, including externally reconstructed envelopes with matching digests. An omitted domain remains `null`; it is not replaced by an unknown identity string.
+
 Within prediction or expected evidence, a reserved `hmmm` string (ignoring case and surrounding whitespace) or a non-finite number makes the case `UNRESOLVED` before any comparator runs. This applies recursively to arrays and object keys/values, even when the other operand has a different type, length, or keys. Explicitly unknown evidence cannot establish agreement or disagreement, and the receipt loader enforces the same classification.
 
 Every loader also requires decimal/exponent JSON numbers to preserve their exact decimal value when parsed and serialized back to JSON. Ordinary round-trip values such as `0.1` and `1.007825` remain supported; precision-losing literals such as `9007199254740993.0`, finite-number overflow, and underflow are rejected before hashing or scoring. Integer tokens retain Python's exact integer handling. This is a decimal-value round-trip check, not a claim that decimal fractions have exact binary encodings. Explicit non-finite Python JSON extensions retain the existing `UNRESOLVED` comparison policy.

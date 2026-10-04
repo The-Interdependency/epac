@@ -52,6 +52,12 @@ from epac_heldout_validation import (
 #   mutates: none
 #   cleanup: none
 #
+# id: check_case_and_domain_identities_reject_reserved_sentinel
+#   proves: heldout_selection_boundary_frozen_before_predictions, heldout_commitment_persistence_and_identity, heldout_oracle_evidence_integrity, heldout_persisted_receipts_preserve_evidence
+#   call: self::test_case_and_domain_identities_reject_reserved_sentinel
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
 # id: check_prediction_commitment_rejects_non_json_values_before_hashing
 #   proves: heldout_commitment_persistence_and_identity
 #   call: self::test_prediction_commitment_rejects_non_json_values_before_hashing
@@ -1021,6 +1027,54 @@ def test_hmmm_evidence_is_unresolved_for_every_comparator():
         for value in ("hmmmm", "known hmmm value", None, False, 1, [1], {"known": 1}):
             assert heldout_validation._compare(value, value, {"kind": "exact"}) == "SURVIVED"
         assert heldout_validation._compare("known", 1, {"kind": "exact"}) == "FALSIFIED"
+
+
+def test_case_and_domain_identities_reject_reserved_sentinel():
+    plan = freeze_validation_plan([{"id": "x"}])
+    commitment = freeze_predictions({"x": 1}, source_identity="epac@test", validation_plan=plan)
+    heldout = {"schema": "epac.heldout-chemistry-oracle", "version": "v1", "cases": [
+        {"id": "x", "expected": 1, "provenance": {"authority": "fixture", "locator": "x"}}
+    ]}
+    receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "evidence.json"
+        for sentinel in ("hmmm", "HMMM", " HmMm ", "\thmmm\n"):
+            for field in ("id", "domain"):
+                case = {"id": "x", field: sentinel}
+                with pytest.raises(ValueError, match="domain|hmmm"):
+                    freeze_validation_plan([case])
+                forged_plan = deepcopy(plan)
+                forged_plan["cases"][0][field] = sentinel
+                forged_plan["plan_sha256"] = heldout_validation._digest({k: v for k, v in forged_plan.items() if k != "plan_sha256"})
+                with pytest.raises(ValueError, match="domain|hmmm"):
+                    freeze_predictions({}, source_identity="epac@test", validation_plan=forged_plan)
+                path.write_text(json.dumps(forged_plan), encoding="utf-8")
+                with pytest.raises(ValueError, match="domain|hmmm"):
+                    load_validation_plan(path)
+                forged_oracle = deepcopy(heldout)
+                forged_oracle["cases"][0][field] = sentinel
+                with pytest.raises(ValueError, match="domain|hmmm"):
+                    compare_after_freeze(commitment, forged_oracle, validation_plan=plan)
+                forged_receipt = deepcopy(receipt)
+                forged_receipt["results"][0][field] = sentinel
+                forged_receipt["receipt_sha256"] = heldout_validation._digest({k: v for k, v in forged_receipt.items() if k != "receipt_sha256"})
+                path.write_text(json.dumps(forged_receipt), encoding="utf-8")
+                with pytest.raises(ValueError, match="domain|hmmm"):
+                    load_validation_receipt(path)
+            with pytest.raises(ValueError, match="hmmm"):
+                freeze_predictions({sentinel: 1}, source_identity="epac@test", validation_plan=plan)
+            forged_commitment = deepcopy(commitment)
+            forged_commitment["predictions"] = {sentinel: 1}
+            forged_commitment["commitment_sha256"] = heldout_validation._digest({k: v for k, v in forged_commitment.items() if k != "commitment_sha256"})
+            with pytest.raises(ValueError, match="hmmm"):
+                verify_commitment(forged_commitment)
+            with pytest.raises(ValueError, match="hmmm"):
+                compare_after_freeze(forged_commitment, heldout, validation_plan=plan)
+            path.write_text(json.dumps(forged_commitment), encoding="utf-8")
+            with pytest.raises(ValueError, match="hmmm"):
+                load_prediction_commitment(path, validation_plan=plan)
+        assert freeze_validation_plan([{"id": "hmmmm", "domain": "known"}])["cases"][0]["id"] == "hmmmm"
+        assert plan["cases"][0]["domain"] is None
 
 
 def test_comparators_use_committed_decimal_number_values():
