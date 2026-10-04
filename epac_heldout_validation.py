@@ -37,7 +37,7 @@ from typing import Any
 #   auth_boundary: none
 #   storage_boundary: read
 #   network_boundary: none
-#   user_data_boundary: none
+#   user_data_boundary: read
 #   admin_only: false
 #   tests: tests.test_heldout_validation
 #   rollout: opt-in research validation surface; callers persist the validation-plan commitment before prediction commitment and reveal independently sourced oracle values only during comparison
@@ -45,6 +45,72 @@ from typing import Any
 #   since: 2026-09-29
 #   unresolved: external oracle authority selection and custody remain outside EPAC; this module binds supplied evidence but does not establish independent custody by itself
 # === END MODULE_BUILD ===
+
+# === BOUNDARIES ===
+# id: heldout_validation_runtime_boundary
+#   summary: reads caller-supplied validation evidence and the packaged oracle; returns detached in-memory evidence without persisting or transmitting it
+#   auth_boundary: none
+#   storage_boundary: read
+#   network_boundary: none
+#   user_data_boundary: read
+#   admin_only: false
+#   pii: possible
+#   owner: The Interdependency
+#   since: 2026-10-04
+# === END BOUNDARIES ===
+
+# === DOCS ===
+# id: heldout_validation_public_guide
+#   summary: explains preregistration, prediction commitments, strict evidence reloads, comparison semantics, receipt preservation, and external custody limits
+#   audience: developer
+#   source: docs/heldout-chemistry-validation.md
+#   covers: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_validation_plan, load_prediction_commitment, load_validation_receipt, load_oracle, load_packaged_oracle
+#   examples: docs/heldout-chemistry-validation.md#runnable-end-to-end-example
+#   status: current
+#   owner: The Interdependency
+# === END DOCS ===
+
+# === CAPABILITIES ===
+# id: heldout_preregister_selection
+#   summary: freezes and reloads oracle-free case identities and comparator rules before predictions
+#   exposes: freeze_validation_plan, load_validation_plan
+#   inputs: case identities, domains, comparator rules, persisted plan path
+#   outputs: verified validation plan
+#   boundaries: auth:none, storage:read, network:none, user_data:read
+#   owner: The Interdependency
+#
+# id: heldout_commit_predictions
+#   summary: freezes and verifies prediction envelopes bound to a preregistered plan without loading oracle data
+#   exposes: freeze_predictions, verify_commitment, load_prediction_commitment
+#   inputs: predictions, source identity, validation plan, persisted commitment path
+#   outputs: prediction commitment, envelope validation
+#   boundaries: auth:none, storage:read, network:none, user_data:read
+#   owner: The Interdependency
+#
+# id: heldout_preserve_comparison_evidence
+#   summary: reveals comparison-side oracle evidence after freezing and preserves internally verifiable tri-state receipts
+#   exposes: compare_after_freeze, load_validation_receipt, load_oracle, load_packaged_oracle
+#   inputs: verified plan, prediction commitment, oracle, evidence paths
+#   outputs: oracle data, detached comparison receipt, internally verified receipt
+#   boundaries: auth:none, storage:read, network:none, user_data:read
+#   owner: The Interdependency
+# === END CAPABILITIES ===
+
+# === DEPENDENCIES ===
+# id: heldout_validation_dependency_edges
+#   summary: uses standard-library parsing, exact arithmetic, hashing, and file/package-resource reads; imports no EPAC construction or chemistry reference module
+#   imports: collections.abc, copy, decimal, fractions, hashlib, importlib.resources, json, math, pathlib, typing
+#   calls: importlib.resources.files, pathlib.Path.read_text
+#   class: runtime
+#   direction: outbound
+#   owner: The Interdependency
+# === END DEPENDENCIES ===
+
+# === OWNERS ===
+# id: heldout_validation_owner
+#   owner: The Interdependency
+#   since: 2026-10-04
+# === END OWNERS ===
 
 # === CONTRACTS ===
 # id: heldout_selection_boundary_frozen_before_predictions

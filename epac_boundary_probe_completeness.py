@@ -356,9 +356,22 @@ def _declared_operations() -> tuple[dict[str, str], ...]:
     return tuple(sorted(operations, key=lambda item: item["operation"]))
 
 
+_HELDOUT_OPERATION_RELEVANCE = {
+    "freeze_validation_plan": (AMBIGUOUS, "hmmm: case selection and comparator rules have no measured mapping to the frozen 27-state construction"),
+    "freeze_predictions": (AMBIGUOUS, "hmmm: externally derived predictions have no measured mapping to the frozen 27-state construction"),
+    "verify_commitment": (AMBIGUOUS, "hmmm: envelope integrity does not measure the prediction mapping to the frozen 27-state construction"),
+    "compare_after_freeze": (AMBIGUOUS, "hmmm: comparison results have no measured same-B discrimination on the frozen 27-state construction"),
+    "load_validation_plan": (AMBIGUOUS, "hmmm: persisted selection rules have no measured mapping to the frozen 27-state construction"),
+    "load_prediction_commitment": (AMBIGUOUS, "hmmm: reloaded prediction evidence has no measured mapping to the frozen 27-state construction"),
+    "load_validation_receipt": (AMBIGUOUS, "hmmm: reloaded comparison evidence has no measured mapping to the frozen 27-state construction"),
+    "load_oracle": (AMBIGUOUS, "hmmm: external reference cases have no measured mapping to the frozen 27-state construction"),
+    "load_packaged_oracle": (AMBIGUOUS, "hmmm: packaged reference cases have no measured mapping to the frozen 27-state construction"),
+}
+
+
 def _classify_operation(module: str, name: str) -> str:
     if module == "epac_heldout_validation":
-        return INTERNAL_NON_BOUNDARY
+        return _HELDOUT_OPERATION_RELEVANCE.get(name, (AMBIGUOUS, "hmmm: unclassified held-out operation"))[0]
     if module == "epac_join_term":
         # The join-tree candidate is not part of the frozen 27-state boundary
         # quotient surface. Its possible boundary relevance remains unresolved
@@ -683,6 +696,10 @@ def declared_operation_ledger() -> tuple[OperationRecord, ...]:
                 ),
             }
         )
+        if raw["module"] == "epac_heldout_validation":
+            records[-1]["boundary_relevance_reason"] = _HELDOUT_OPERATION_RELEVANCE.get(
+                raw["name"], (AMBIGUOUS, "hmmm: unclassified held-out operation")
+            )[1]
     return tuple(records)
 
 

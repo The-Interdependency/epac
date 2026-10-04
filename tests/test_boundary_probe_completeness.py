@@ -13,6 +13,12 @@
 #   mutates: none
 #   cleanup: none
 #
+# id: check_boundary_probe_inventory_covers_packaged_execution_modules
+#   proves: boundary_probe_audit_inventory_covers_declared_operations
+#   call: self::test_inventory_covers_packaged_execution_modules
+#   mutates: none
+#   cleanup: none
+#
 # id: check_boundary_probe_audit_uses_no_new_probe_or_descriptor
 #   proves: boundary_probe_audit_uses_no_new_probe_or_descriptor
 #   call: self::test_audit_adds_only_existing_observables_and_does_not_extend_B
@@ -63,7 +69,6 @@ EPAC_ROOT = Path(_installed_audit.__file__).resolve().parent
 from epac_boundary_probe_completeness import (
     AMBIGUOUS,
     BOUNDARY_OBSERVING,
-    INTERNAL_NON_BOUNDARY,
     FALSIFIED,
     SURVIVED,
     UNRESOLVED,
@@ -160,8 +165,15 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
         for name in heldout_exports:
             self.assertEqual(
                 _installed_audit._classify_operation("epac_heldout_validation", name),
-                INTERNAL_NON_BOUNDARY,
+                AMBIGUOUS,
             )
+            row = self._row_by_operation(self.report, "epac_heldout_validation." + name)
+            self.assertIn("hmmm", row["boundary_relevance_reason"])
+            self.assertIn("frozen 27-state construction", row["boundary_relevance_reason"])
+            self.assertIsNone(row["currently_probed"])
+            self.assertIsNone(row["can_distinguish_same_B_states"])
+        self.assertEqual(set(_installed_audit._HELDOUT_OPERATION_RELEVANCE), heldout_exports)
+        self.assertEqual(_installed_audit._classify_operation("epac_heldout_validation", "future_operation"), AMBIGUOUS)
         for name in ("AtomicRecord", "ElectronState", "atomic_record", "iter_table"):
             row = operations["epac_atomic." + name]
             self.assertEqual(_installed_audit._classify_operation(row["module"], row["name"]), AMBIGUOUS)
@@ -170,7 +182,7 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
         inventory = self.report["operation_inventory"]
         self.assertEqual(inventory["operation_count"], 173)
         self.assertEqual(inventory["boundary_relevant_count"], 58)
-        self.assertEqual(inventory["ambiguous_count"], 67)
+        self.assertEqual(inventory["ambiguous_count"], 76)
         self.assertEqual(inventory["omitted_boundary_relevant_count"], 14)
         for row in self.report["operation_ledger"]:
             if row["name"] in self.report["unmapped_operation_probes"]:

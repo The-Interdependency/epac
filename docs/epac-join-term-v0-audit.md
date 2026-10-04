@@ -7,7 +7,7 @@ The public receipt recovers one complete typed S0-through-S6 join tree and its e
 ## Exact authority
 
 - EPAC base: `1e5c999286f12221eff9870d1372203ac7935f2a` (tree `ce7781938ff684d826bd91f475b5423bd56b146a`)
-- EPAC feature source manifest: `bf8574518bf2be7d2b6e72fc8590f90b9ec2104415f88a55ba06420128d12834`
+- EPAC feature source manifest: `ad606b04310d1d04db2bb6b773b3e2d045bb0b10debc90e7bd568b3c2be54e22`
 - METAPAT producer: `1cdfb09dd00a451cee30eec2e78624df8c682662` (tree `d946a5a18b0c53fd561dcd9d68fdf36d5dd11638`)
 - METAPAT application: `metapat.application.epac_join_terms@epac-join-terms-application-v4`
 - METAPAT application digest: `461ef7e059aa65b514017683ba9b57058ee9f582bc63748fabd021cdeb660b4b`
@@ -20,7 +20,7 @@ The containing feature commit cannot be embedded in a file inside itself. The ev
 
 - Candidate digest: `11504eb61c4952fc3da04a51d3779484194292db2c8a5c3174b3c3ea540e6442`
 - Candidate JSON SHA-256: `821d35a1e42c8d22423f78fdce8449066af40392d47f3e79e5b30b8f993fcbfd`
-- Evidence digest: `0e7188233a25dd675d58a1cf91350d6f7b0674bdcd1c922f131bb04fbf61870f`
+- Evidence digest: `0a11bd666927926ab57fd0f5f7625034cbfa8670f4f1f3dc4c4c6f3905c2d638`
 - Origins: `7`
 - Authored joins (no Transformation or Time claim): `6`
 - Slots: `18` (`6` members, `6` holes, `6` leftovers)
@@ -56,10 +56,10 @@ This is information loss. It is not a secrecy, computational-hardness, or confid
 - `docs/research-status.md`: `1f5194f0dc44521b6dc81d9a9494c72ff385fd879b8eb2b2849824640c5c2d07`
 - `docs/work-graph.json`: `4edb37ace798511ff4b5f667afd1f0a3852ce78b7335349aaa9662171de0b9e9`
 - `docs/work-graphs/epac-join-term-v0.json`: `7487441ec7e3ff3203635e245fccba5d293192cef5201c657946a15788166f16`
-- `epac_boundary_probe_completeness.py`: `1bc8a3e990e99d52b9636eb1f656f3da0d6178c42de9dd86d811d9211e87f014`
+- `epac_boundary_probe_completeness.py`: `96e37f87e62c6346f8bd4f888e6151487636853d8c9309f199574b5c60da9600`
 - `epac_join_term.py`: `4697da5c76d5dfc77aedc5c84c71b7175180550824b6a1a2c1bf23a8548839af`
 - `pyproject.toml`: `44936ff75383ab25d3e295c6574b1759709fef7a072773d4c5774dd00243bcdd`
-- `tests/test_boundary_probe_completeness.py`: `8c096277431fc59163b362a7e88c5c3dd515f66bab62deed81eff1be2dc4a641`
+- `tests/test_boundary_probe_completeness.py`: `8cd71e6f708949ce03a6750ac690a563c7cb236e9145d33e583539f0af46f93d`
 - `tests/test_epac_join_term.py`: `ed060a6ef7903f178e3da6b94890f088de8b37dc7b94e6e41b4ccc15a3b7f5c8`
 - `tools/generate_join_term_v0.py`: `1836734e0ba692f23f604838ed3146c811528266a341979366eff6b19447e331`
 

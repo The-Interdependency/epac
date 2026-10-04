@@ -2,6 +2,10 @@
 
 Purpose: test EPAC against chemistry facts without feeding those facts into EPAC construction.
 
+Runtime effects are limited to reading caller-supplied evidence and the packaged oracle and returning in-memory results. The module writes no files or network messages; callers control persistence as shown below. The source declares its runtime boundary, documentation, capabilities, dependency edges, and existing owner.
+
+The operation inventory retains all nine public held-out functions as `AMBIGUOUS`, with a separate mapping reason for each operation. Their relation to the frozen 27-state construction and ability to distinguish same-B states have not been measured. Validation integrity does not establish boundary non-relevance or transfer chemistry standing.
+
 ## Boundary
 
 The selection boundary is committed before EPAC predictions are produced or revealed:
@@ -36,7 +40,7 @@ Validation-plan fields are deliberately narrow so oracle-shaped data cannot cros
 
 Prediction and programmatic oracle values must use the JSON container/type model: `null`, booleans, numbers, strings, arrays/lists, and string-keyed objects/mappings. Python-only coercible values such as tuples are rejected before commitment or evidence hashing, including when nested. This keeps an in-memory commitment semantically identical to the same commitment after documented JSON persistence/reload. Non-finite Python floats remain admissible only so the comparator can classify them `UNRESOLVED`; they never produce a numeric success.
 
-Numeric-tolerance comparison keeps integers as integers and uses exact rational arithmetic over accepted finite Python numeric values, so large integer distinctions are not collapsed by an intermediate float conversion. Non-finite operands or tolerances remain `UNRESOLVED`.
+Numeric-tolerance comparison keeps integers as integers and uses exact rational arithmetic over accepted finite JSON decimal values, so large integer distinctions are not collapsed by an intermediate float conversion. Non-finite operands or tolerances remain `UNRESOLVED`.
 
 Provenance `authority` and `locator` must both be nonempty strings after trimming; blank or null identities are `UNRESOLVED`. All evidence loaders reject duplicate JSON object keys at every nesting level, including identical duplicates and escaped spellings of the same key. Reload plans with `load_validation_plan(path)` and commitments with `load_prediction_commitment(path, validation_plan=plan)`: these verify envelopes and digests, and the latter also verifies the plan binding and prediction-ID membership before returning. Missing predictions remain admissible and score `UNRESOLVED`; extra predictions are rejected. `verify_commitment()` alone checks only the envelope, not plan membership. Raw `json.loads` discards duplicate-key evidence and must not be used to reload externally supplied plans or commitments.
 
