@@ -35,13 +35,13 @@ construction, evidence, provenance and visualization modules. The inventory cove
 
 | item | count |
 |---|---:|
-| declared operations classified | 136 |
+| declared operations classified | 173 |
 | boundary-relevant operations | 58 |
 | omitted boundary-relevant operations | 14 |
 | omitted operations that distinguish same-B frozen states | 3 |
-| ambiguous operations | 39 |
+| ambiguous operations | 76 |
 
-Thirty-nine public callable addresses, including the representation, probe-relativity, minimal-refinement and probe-completeness audits, have unresolved boundary relevance. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
+Seventy-six public callable addresses, including the representation, probe-relativity, minimal-refinement, probe-completeness, join-term, and held-out validation surfaces, have unresolved boundary relevance. Each of the nine held-out operations has an explicit unresolved mapping reason: selection rules, prediction envelopes, oracle data, and comparison receipts have not been measured against the frozen 27-state construction or same-B discrimination. Integrity verification does not establish that mapping. Unknown names are not classified by substrings or treated as internal/non-boundary. The ledger records these uncertainties explicitly. Existing counterexamples still falsify completeness; unresolved operations do not erase that evidence.
 
 ## Partition Result
 

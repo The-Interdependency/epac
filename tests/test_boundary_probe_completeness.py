@@ -13,6 +13,12 @@
 #   mutates: none
 #   cleanup: none
 #
+# id: check_boundary_probe_inventory_covers_packaged_execution_modules
+#   proves: boundary_probe_audit_inventory_covers_declared_operations
+#   call: self::test_inventory_covers_packaged_execution_modules
+#   mutates: none
+#   cleanup: none
+#
 # id: check_boundary_probe_audit_uses_no_new_probe_or_descriptor
 #   proves: boundary_probe_audit_uses_no_new_probe_or_descriptor
 #   call: self::test_audit_adds_only_existing_observables_and_does_not_extend_B
@@ -137,15 +143,46 @@ class BoundaryProbeCompletenessTest(unittest.TestCase):
             self.assertIn("epac_viz." + name, operations)
             self.assertIn("epac_viz.spiral_viz." + name, operations)
             self.assertEqual(_installed_audit._classify_operation("epac_viz", name), AMBIGUOUS)
+        heldout_exports = {
+            row["name"]
+            for row in operations.values()
+            if row["module"] == "epac_heldout_validation"
+        }
+        self.assertEqual(
+            heldout_exports,
+            {
+                "freeze_validation_plan",
+                "freeze_predictions",
+                "verify_commitment",
+                "compare_after_freeze",
+                "load_oracle",
+                "load_packaged_oracle",
+                "load_validation_plan",
+                "load_prediction_commitment",
+                "load_validation_receipt",
+            },
+        )
+        for name in heldout_exports:
+            self.assertEqual(
+                _installed_audit._classify_operation("epac_heldout_validation", name),
+                AMBIGUOUS,
+            )
+            row = self._row_by_operation(self.report, "epac_heldout_validation." + name)
+            self.assertIn("hmmm", row["boundary_relevance_reason"])
+            self.assertIn("frozen 27-state construction", row["boundary_relevance_reason"])
+            self.assertIsNone(row["currently_probed"])
+            self.assertIsNone(row["can_distinguish_same_B_states"])
+        self.assertEqual(set(_installed_audit._HELDOUT_OPERATION_RELEVANCE), heldout_exports)
+        self.assertEqual(_installed_audit._classify_operation("epac_heldout_validation", "future_operation"), AMBIGUOUS)
         for name in ("AtomicRecord", "ElectronState", "atomic_record", "iter_table"):
             row = operations["epac_atomic." + name]
             self.assertEqual(_installed_audit._classify_operation(row["module"], row["name"]), AMBIGUOUS)
 
     def test_declared_operations_preserve_unresolved_semantics(self) -> None:
         inventory = self.report["operation_inventory"]
-        self.assertEqual(inventory["operation_count"], 164)
+        self.assertEqual(inventory["operation_count"], 173)
         self.assertEqual(inventory["boundary_relevant_count"], 58)
-        self.assertEqual(inventory["ambiguous_count"], 67)
+        self.assertEqual(inventory["ambiguous_count"], 76)
         self.assertEqual(inventory["omitted_boundary_relevant_count"], 14)
         for row in self.report["operation_ledger"]:
             if row["name"] in self.report["unmapped_operation_probes"]:
