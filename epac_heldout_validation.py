@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from copy import deepcopy
+from decimal import Decimal
 from fractions import Fraction
 import hashlib
 from importlib.resources import files
@@ -32,7 +33,7 @@ from typing import Any
 #   summary: comparison-only held-out validation boundary that preregisters case identities and comparator rules before EPAC predictions are frozen and oracle values are revealed
 #   owner: The Interdependency
 #   public_surface: freeze_validation_plan, freeze_predictions, verify_commitment, compare_after_freeze, load_validation_plan, load_prediction_commitment, load_validation_receipt, load_oracle, load_packaged_oracle
-#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _verify_validation_receipt, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _loads_evidence_json
+#   internal_surface: _canonical, _digest, _required_nonempty_string, _normalize_json_value, _normalized_domain, _has_nonempty_provenance_identity, _normalized_comparison, _verify_validation_plan, _verify_prediction_plan_binding, _verify_validation_receipt, _json_exact_equal, _finite_number, _json_token, _numeric_within_tolerance, _compare, _reject_duplicate_object_pairs, _parse_roundtrip_float, _loads_evidence_json
 #   auth_boundary: none
 #   storage_boundary: read
 #   network_boundary: none
@@ -91,6 +92,12 @@ from typing import Any
 # id: heldout_persisted_receipts_preserve_evidence
 #   given: a persisted validation receipt is reloaded
 #   then: duplicate keys, invalid envelopes or bindings, inconsistent results or counts, and digest mismatches are rejected; valid evidence is preserved without granting custody authentication
+#   class: evidence
+#   since: 2026-10-04
+#
+# id: heldout_json_numbers_preserve_decimal_value
+#   given: a JSON number with a decimal point or exponent is loaded as held-out evidence
+#   then: its exact decimal value must survive parsing and canonical float serialization; rounding, underflow, and overflow are rejected before commitment or scoring
 #   class: evidence
 #   since: 2026-10-04
 # === END CONTRACTS ===
@@ -562,8 +569,23 @@ def _reject_duplicate_object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, An
     return value
 
 
+def _parse_roundtrip_float(token: str) -> float:
+    """Accept only decimal values preserved by our JSON float representation.
+
+This protects decimal-value identity across JSON round trips; it does not claim
+that ordinary decimals such as 0.1 have exact binary floating-point encodings.
+"""
+    value = float(token)
+    if not math.isfinite(value) or Decimal(str(value)) != Decimal(token):
+        raise ValueError("JSON number cannot round-trip without rounding")
+    return value
+
+
 def _loads_evidence_json(payload: str, *, document: str) -> dict[str, Any]:
-    value = json.loads(payload, object_pairs_hook=_reject_duplicate_object_pairs)
+    value = json.loads(
+        payload, object_pairs_hook=_reject_duplicate_object_pairs,
+        parse_float=_parse_roundtrip_float,
+    )
     if not isinstance(value, dict):
         raise ValueError(f"{document} document must be a JSON object")
     return value

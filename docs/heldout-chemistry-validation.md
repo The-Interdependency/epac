@@ -46,6 +46,8 @@ The reserved `hmmm` provenance identity (ignoring surrounding whitespace and cas
 
 The same reserved sentinel is rejected as a prediction `source_identity` during freezing, commitment verification, reloading, and comparison, including envelopes with a recomputed matching digest. Supply a resolved EPAC head or receipt identity before freezing predictions.
 
+Every loader also requires decimal/exponent JSON numbers to preserve their exact decimal value when parsed and serialized back to JSON. Ordinary round-trip values such as `0.1` and `1.007825` remain supported; precision-losing literals such as `9007199254740993.0`, finite-number overflow, and underflow are rejected before hashing or scoring. Integer tokens retain Python's exact integer handling. This is a decimal-value round-trip check, not a claim that decimal fractions have exact binary encodings. Explicit non-finite Python JSON extensions retain the existing `UNRESOLVED` comparison policy.
+
 Reload preserved receipts with `load_validation_receipt(path)`. It rejects duplicate keys, invalid envelopes and digest fields, repeated case IDs, inconsistent result statuses or counts, and a mismatched `receipt_sha256`. It also checks scored statuses against the evidence carried in each result. These checks establish internal integrity; an unkeyed checksum does not authenticate a custodian or prevent replacement of the entire evidence chain. Preserve externally trusted digests or independently controlled custody when that stronger claim matters.
 
 ## Runnable end-to-end example

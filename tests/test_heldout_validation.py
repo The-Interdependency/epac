@@ -178,6 +178,12 @@ from epac_heldout_validation import (
 #   mutates: filesystem
 #   cleanup: tempdir_teardown
 #
+# id: check_evidence_loaders_reject_decimal_value_loss
+#   proves: heldout_json_numbers_preserve_decimal_value
+#   call: self::test_evidence_loaders_reject_decimal_value_loss
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+#
 # id: check_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout
 #   proves: heldout_oracle_loading_is_unambiguous
 #   call: self::test_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout
@@ -948,6 +954,57 @@ def test_receipt_loader_rejects_ambiguous_or_tampered_evidence():
         forged = deepcopy(receipt)
         forged["results"][1]["reason"] = "invented reason"
         rejected(forged, rehash=True)
+
+
+def test_evidence_loaders_reject_decimal_value_loss():
+    plan = freeze_validation_plan([
+        {"id": "x", "comparison": {"kind": "numeric-tolerance", "absolute_tolerance": 0.5}}
+    ])
+    commitment = freeze_predictions({"x": 0.5}, source_identity="epac@test", validation_plan=plan)
+    heldout = {
+        "schema": "epac.heldout-chemistry-oracle", "version": "v1",
+        "cases": [{"id": "x", "comparison": plan["cases"][0]["comparison"], "expected": 0.5,
+                   "provenance": {"authority": "fixture", "locator": "x"}}],
+    }
+    receipt = compare_after_freeze(commitment, heldout, validation_plan=plan)
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "evidence.json"
+        for envelope, loader in (
+            (plan, load_validation_plan),
+            (commitment, lambda path: load_prediction_commitment(path, validation_plan=plan)),
+            (heldout, load_oracle),
+            (receipt, load_validation_receipt),
+        ):
+            encoded = json.dumps(envelope)
+            path.write_text(encoded, encoding="utf-8")
+            assert loader(path) == envelope
+            for number in ("9007199254740993.0", "0.50000000000000001", "1e-4000", "1e4000"):
+                payload = encoded.replace("0.5", number)
+                assert payload != encoded
+                if number == "0.50000000000000001":
+                    # Default parsing would silently accept the original digests.
+                    assert json.loads(payload) == envelope
+                path.write_text(payload, encoding="utf-8")
+                with pytest.raises(ValueError, match="without rounding"):
+                    loader(path)
+
+        exact_plan = freeze_validation_plan([{"id": "x"}])
+        exact_commitment = freeze_predictions({"x": 9007199254740992}, source_identity="epac@test", validation_plan=exact_plan)
+        for literal in ("9007199254740992.0", "9007199254740993.0"):
+            payload = ('{"schema":"epac.heldout-chemistry-oracle","version":"v1",'
+                       '"cases":[{"id":"x","expected":' + literal + ','
+                       '"provenance":{"authority":"fixture","locator":"x"}}]}')
+            path.write_text(payload, encoding="utf-8")
+            if literal == "9007199254740993.0":
+                with pytest.raises(ValueError, match="without rounding"):
+                    load_oracle(path)
+            else:
+                loaded = load_oracle(path)
+                assert compare_after_freeze(exact_commitment, loaded, validation_plan=exact_plan)["counts"]["SURVIVED"] == 1
+
+        for literal in ("0.1", "1.007825", "1e-6", "1.2300", "-0.0"):
+            path.write_text('{"expected":' + literal + '}', encoding="utf-8")
+            assert load_oracle(path)["expected"] == float(literal)
 
 
 def test_packaged_oracle_loader_works_from_checkout_or_install_and_prefers_checkout():
