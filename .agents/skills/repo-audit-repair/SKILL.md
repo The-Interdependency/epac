@@ -148,11 +148,43 @@ repository defects. Reclassify only when new evidence supports the change.
 - Let authoritative CI test the branch where local infrastructure cannot.
 - If CI exposes a real incompatibility, repair the same branch and repeat rather
   than reporting a merely open pull request as completion.
-- If merge is authorized, confirm mergeability and required checks before
-  merging. If deployment or release follows and is in scope, verify the public
-  artifact, version, route, or service identity afterward.
-- State `merged`, `released`, and `deployed` separately. Never infer one from
-  another.
+- If merge is authorized, treat merge admission as a conjunctive exact-revision
+  gate, not an impression from green CI. Before invoking merge, record the
+  current PR head SHA and base SHA, or an immutable validated merge-candidate
+  identity that binds both, and verify all of the following against that same
+  revision pair: scope is unambiguous; the required checks are complete and
+  successful; every applicable drift/contract gate passes; no unresolved
+  merge-blocking finding (including P0/P1/P2 under that severity scheme) and no
+  unresolved review thread remains; governing authority is present; and the PR
+  is mergeable. A terminal review required by repository or task policy must be
+  anchored to the current head and current base rather than an earlier revision
+  pair. When policy requires approval, require the complete effective,
+  non-dismissed `APPROVED` review set required by that policy, including every
+  mandated approval count, reviewer role, and eligibility constraint; a
+  `COMMENTED` or `CHANGES_REQUESTED` submission is not approval. Any head or
+  base movement invalidates the admission receipt and requires
+  re-verification/re-review.
+- Use the provider's strongest guarded merge path. Server-side enforcement
+  must cover every repository policy the provider declares required at merge
+  time, including protected-branch checks, approvals, conversation resolution,
+  merge-queue policy, or equivalent controls when configured. Do not bypass
+  those controls.
+- Treat task-local admission evidence that the provider does not model — scope
+  judgment, audit severity findings, local drift/contract gates, and advisory
+  checks or reviews — as part of the exact-revision receipt rather than
+  pretending the provider can atomically enforce it. Re-read that receipt
+  immediately before merge and abort on any change. Use an expected-head/SHA
+  precondition whenever the provider exposes one. Where no expected-base guard
+  exists, require the current base SHA or validated merge candidate to match the
+  receipt at the final pre-merge read and require provider mergeability to be
+  recomputed against that same base; the provider's merge transaction is then
+  authoritative for the final base integration. Base movement invalidates the
+  receipt and requires re-verification. Never merge first and reconstruct
+  exact-revision evidence afterward.
+- If deployment or release follows and is in scope, verify the public artifact,
+  version, route, or service identity afterward.
+- State `reviewed-at-head`, `merged`, `released`, and `deployed`
+  separately. Never infer one from another.
 
 ## Output shape
 
@@ -179,6 +211,7 @@ For audit-and-repair work, add:
 - owning fault — changed files — regression protection
 
 ## Verification
+- reviewed-at-head — exact head SHA + base SHA/validated merge candidate + review state
 - local checks — CI — merge — release/deployment, each with exact status
 ```
 
@@ -209,7 +242,12 @@ A correct use demonstrates:
 - repair at the owning layer;
 - deprecated paths removed when replacement is proven;
 - clean repeated gates and artifact hygiene;
-- distinct PR, merge, release, and deployment claims; and
+- exact-revision merge admission when merge is authorized, including head/base
+  binding, terminal current-revision review when required, the complete
+  policy-mandated effective `APPROVED` review set when approval is required,
+  provider enforcement of configured repository policy, and immediate
+  revalidation of task-local admission evidence;
+- distinct PR, review-at-head, merge, release, and deployment claims; and
 - visible `hmmm` for every unfinished boundary.
 
 ## Anti-patterns
@@ -224,6 +262,11 @@ A correct use demonstrates:
 - Mixing generated audit artifacts into the repair diff.
 - Opening a pull request and calling the repository repaired before its
   authoritative checks settle.
+- Merging from green CI alone when review is required, accepting review bound
+  to an earlier head/base pair, accepting an incomplete approval set, treating
+  `COMMENTED` as required approval, merging with any merge-blocking finding or
+  unresolved review thread outstanding, bypassing configured repository
+  protection, or treating task-local admission evidence as provider-enforced.
 - Calling a merge a deployment.
 
 ## Canon basis

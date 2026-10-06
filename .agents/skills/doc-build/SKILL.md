@@ -1,25 +1,38 @@
 ---
 name: doc-build
-description: Self-declaring documentation coverage built on msdmd. Each module declares the public, developer, operator, or agent-facing documentation it owns in a `# === DOCS ===` block; a runner verifies linked docs and anchors exist, reports stale or missing documentation, and surfaces visible coverage gaps. Load this when adding or auditing module documentation, when tying code surfaces to docs, or when wiring documentation coverage checks into CI.
+description: Native-first documentation coverage built on msdmd. Consume docstrings, documentation comments and source-linked documents; supplemental DOCS blocks express remaining obligations. A consuming runner verifies references and reports missing information separately from unsupported extraction. Load this when adding or auditing module documentation, tying code surfaces to docs, or wiring documentation coverage checks into CI.
 ---
 
 # doc-build — Documentation contracts on msdmd
 
-`doc-build` is an application of [msdmd](../msdmd/SKILL.md). It turns a
-module's documentation obligations into colocated metadata so docs drift is
-observable instead of discovered by surprise.
+`doc-build` is an application of [msdmd](../msdmd/SKILL.md). It makes
+source-owned documentation obligations and their coverage inspectable.
 
 Implementation status: this skill defines the `DOCS` block and runner contract.
-This repo does not currently ship a DOCS runner script; consuming repos should
-implement the contract below against their own documentation tree.
+The MSDMD schema-2 collector ships structured Python docstrings, JSDoc, Rustdoc/Javadoc/Doxygen extraction
+and nested Markdown-frontmatter readers, but no complete DOCS obligation/link/anchor runner. Consuming repos add
+and test the policies and resolvers their documentation tree requires.
 
-Read `msdmd/SKILL.md` first if you have not. The block syntax, parser
-contract, and visible gap rule are inherited.
+Read `msdmd/SKILL.md` first. Its provenance, information-coverage, parser and
+explicit reader-support contracts apply.
+
+## Native-first coverage
+
+Consume supported docstrings, JSDoc/TSDoc or other language documentation
+comments, and source-linked documents at their actual symbol/document scopes.
+Preserve dialect, attachment, original tags and references. A docstring needs no
+duplicate DOCS block; a manifest-owned documentation link belongs to its package.
+Block fields such as `audience` and `status` are not invented for native sources.
+Policy determines which information each audience/surface actually requires.
+
+Missing descriptions, unresolved readers, broken links and block adoption are
+separate findings. Comments alone do not prove every documentation obligation is
+met; lack of DOCS syntax does not prove documentation is missing. Reader support
+outside the shipped manifest remains implementation work.
 
 ## The block
 
-Every module with user, developer, operator, or agent-facing behavior may
-declare one or more documentation contracts:
+A module may supplement otherwise unexpressed documentation obligations:
 
 ```python
 # === DOCS ===
@@ -34,6 +47,7 @@ declare one or more documentation contracts:
 
 ## Field schema
 
+These fields govern supplemental DOCS entries, not native documentation syntax.
 Required:
 
 | Field | Meaning |
@@ -58,33 +72,42 @@ Optional:
 
 A DOCS runner MUST:
 
-1. Parse every `DOCS` block with the universal msdmd parser.
-2. Verify each non-`hmmm` `source` path exists.
-3. If `source` includes an anchor, verify the target heading or anchor
-   exists when the file format supports anchors.
-4. Report `status: draft` and `source: hmmm` as pending, not passing.
-5. Report modules with no `DOCS` block as documentation coverage gaps.
-6. Exit non-zero for missing files, missing anchors, malformed required
-   fields, or deprecated docs referenced as current. Coverage gaps fail only
-   in strict mode.
+1. Extract supported native documentation and parse supplemental `DOCS` blocks
+   with the universal msdmd parser. Report support per convention and dialect.
+2. Verify each non-`hmmm` declared local `source` path exists; retain native
+   inline documentation spans instead of fabricating a separate document path.
+3. Verify declared anchors when the identified format has a capable resolver.
+4. Report `status: draft`, `source: hmmm`, unknown required coverage and
+   unsupported required syntax as pending, not passing.
+5. Report an information GAP only after capable inspection of eligible sources
+   finds required documentation absent. Track missing blocks only as adoption.
+6. Exit non-zero for missing declared files/anchors, malformed supplemental
+   fields or deprecated docs referenced as current. Strict mode also fails on
+   missing information, required-reader gaps and unresolved required conflicts.
 
 ## Reporting shape
 
-Normal output should group results as:
+- `PASS`: the stated documentation obligation and supported references are satisfied.
+- `PENDING`: draft, `hmmm`, unsupported extraction or unresolved required information.
+- `DRIFT`: a resolvable source path, anchor or covered surface no longer resolves.
+- `GAP`: required documentation is genuinely absent after capable inspection.
 
-- `PASS`: docs target exists and required fields are valid.
-- `PENDING`: `hmmm` or `draft` documentation contracts.
-- `DRIFT`: source path, anchor, or covered surface no longer resolves.
-- `GAP`: source modules with no DOCS block.
+`PASS` here does not prove the documented behavior is correct.
+
+## Validation
+
+A docstring-only fixture with no DOCS blocks must satisfy an applicable
+symbol-description obligation using a tested reader. Pair it with an empty
+public symbol, unsupported dialect, broken anchor and native/block conflict.
 
 ## Anti-patterns
 
-- Putting documentation ownership only in a separate docs index.
+- Demanding a DOCS copy of documentation already owned by a native source.
 - Marking docs `current` when the source is `hmmm`.
-- Treating missing DOCS blocks as invisible because the code has comments.
+- Conflating missing blocks, absent information and unsupported extraction.
 - Letting generated docs replace the source-owned declaration.
 
 hmmm
+- native documentation readers and audience-specific policies remain consuming-repo work
 - whether examples listed in `examples` must execute or only resolve
-- whether public exported surfaces without DOCS should fail strict mode by default
 - how to normalize anchors across Markdown renderers

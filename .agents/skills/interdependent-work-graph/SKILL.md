@@ -78,12 +78,16 @@ The first executable reference shape is:
     "measurement_status_transfer": false,
     "semantic_mapping": "external-provenance|declared mapping|hmmm",
     "agent_scope": "cross-repository-work-graph",
-    "hmmm": []
+    "hmmm": [
+      "No unresolved boundary in this graph; further uncertainty belongs to a later revision."
+    ]
   }
 }
 ```
 
 The digest is SHA-256 over canonical JSON containing exactly `repositories` and `boundaries`, sorted by key with compact separators. In version 1.0.0 the order of the `repositories` array is itself part of the hashed identity: an emitter lists participants in a declared, stable order, and the same participants in a different order produce a different digest. Key sorting does not reorder arrays, so two agents rebuilding the same graph must consume the emitter's declared order rather than re-discovering it. Consuming implementations may add versioned fields only through an explicit schema revision.
+
+Version 1.0.0 also requires `boundaries.hmmm` to remain a visible boundary object: it is a non-empty list of non-empty strings. Record each material unresolved constraint there. When no material unresolved constraint remains, do not collapse the field to `[]`; carry a brief explicit closure note so later readers can distinguish "considered and currently empty" from "boundary silently omitted." The closure note does not invent uncertainty and may be replaced when a real unresolved constraint appears.
 
 The 1.0.0 `boundaries` block is the minimal machine-carried set. Certification-status and empirical-validity non-transfer are binding obligations of this skill (workflow step 5) even where a 1.0.0 manifest carries no explicit fields for them; explicit `certification_status_transfer` and `empirical_status_transfer` fields arrive through the next schema revision, not through ad-hoc emitter extensions. Non-repository participants (corpus, package, schema, workflow, or publication surfaces) are encoded in 1.0.0 as `repositories` entries whose `authority` and `relation` describe the evidence source; typed participant records are likewise deferred to a schema revision.
 
@@ -202,6 +206,7 @@ For the portfolio projection specifically, also require:
 - Letting several agents rebuild incompatible local versions of the same evidence.
 - Using a digest as though it were a signature.
 - Hiding unresolved mappings behind constructor defaults.
+- Emitting `"hmmm": []` and thereby erasing whether the boundary was considered; use a non-empty unresolved item or explicit closure note.
 - Allowing validation workflows to mutate the source they are validating.
 - Copying repo canon into the portfolio plan instead of deriving a report from the owning repository.
 - Treating repository discovery or GitHub visibility as automatic portfolio membership.

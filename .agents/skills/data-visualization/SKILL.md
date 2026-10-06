@@ -399,8 +399,10 @@ The checker verifies declared WCAG contrast and color-independent state redundan
 
 ## Provenance
 
-Imported from `anthropics/knowledge-work-plugins` @ `94e1a08` (`data/skills/data-visualization/`), Apache-2.0.
-Local modifications: trigger phrasing normalized to skill-lib convention; the Workflow/Anti-patterns/Provenance bookend and the clearly marked The Interdependency information-design extension were appended. The imported upstream body remains otherwise unmodified. The extension is evidence-grounded in `references/information-design-evidence.md`. See `ATTRIBUTION.md` at repo root.
+Only this `SKILL.md` is imported, from `anthropics/knowledge-work-plugins` @ `94e1a08` (`data/skills/data-visualization/SKILL.md`), Apache-2.0.
+Local modifications: trigger phrasing normalized to skill-lib convention; the Cowork-only `user-invocable` frontmatter key removed; the Workflow/Anti-patterns/Provenance bookend and the clearly marked The Interdependency information-design extension appended. The imported upstream body remains otherwise unmodified.
+The locally added sections (## Workflow, ## Anti-patterns, ## The Interdependency information-design extension and its subsections, and this ## Provenance section) are original to skill-lib and contributed under Apache-2.0, the same license as the imported body, so this whole file is available under Apache-2.0 (`LICENSES/Apache-2.0.txt`).
+The extension files `examples/information-design-manifest.json`, `references/information-design-evidence.md`, `information_design_audit.py`, and `visual-grammar.json` were added in skill-lib `868de86` and are original to skill-lib under MPL-2.0 (`LICENSE`); upstream supplied none of them. The extension is evidence-grounded in `references/information-design-evidence.md`. See `ATTRIBUTION.md` at repo root.
 
 hmmm
 - Image-level protan/deutan/tritan simulation is intentionally not claimed by the stdlib audit; rendered-artifact perceptual review remains a separate tool/human gate.

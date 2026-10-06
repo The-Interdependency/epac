@@ -1,22 +1,41 @@
 ---
 name: owner-build
-description: Self-declaring module stewardship built on msdmd. Each module declares who owns, reviews, and escalates changes in a `# === OWNERS ===` block; a runner reports unowned modules, unresolved `hmmm` owners, and missing review coverage for sensitive modules. Load this when assigning module ownership, routing reviews, auditing unowned code, or wiring stewardship coverage into CI.
+description: Native-first module stewardship built on msdmd. Consume provider-specific CODEOWNERS, OWNERS and other authoritative responsibility declarations; supplemental OWNERS blocks express missing stewardship or escalation information. Keep review assignment, operational ownership and permissions distinct. Load this when assigning module ownership, routing reviews, auditing unowned code, or wiring stewardship coverage into CI.
 ---
 
 # owner-build — Module stewardship on msdmd
 
 `owner-build` is an application of [msdmd](../msdmd/SKILL.md). It records
-who is responsible for a module in the same file as the implementation, so
-agents do not invent authority or edit sensitive code without a review path.
+who is responsible for a module from the source that owns that responsibility,
+so agents do not invent authority or edit sensitive code without a review path.
 
 Implementation status: this skill defines the `OWNERS` block and runner
-contract. This repo does not currently ship an OWNERS runner script; consuming
-repos should implement the contract below against their review policy.
+contract. The MSDMD schema-2 collector ships ordered GitHub CODEOWNERS rule
+extraction as review assignment only, but no path-applicability or operational-
+ownership policy runner. Consuming repos implement and test those mappings.
 
-Read `msdmd/SKILL.md` first if you have not. The block syntax, parser
-contract, and visible gap rule are inherited.
+Read `msdmd/SKILL.md` first. Its provenance, information-coverage, parser and
+explicit reader-support contracts apply.
+
+## Native-first coverage
+
+Consume provider-specific CODEOWNERS rules, native OWNERS files and other
+explicit responsibility declarations before requesting supplemental blocks.
+Preserve path matching, precedence, authority, source locations and scope.
+CODEOWNERS review assignment does not automatically establish authorship,
+operational ownership, escalation responsibility or effective permissions.
+Whether a declared review team also satisfies an operational-owner obligation
+must be explicit in the consuming policy, not guessed by the reader.
+
+A native declaration needs no duplicate OWNERS block. Unsupported matching,
+unresolved teams and conflicting assignments remain `PENDING` / `hmmm`, not
+proof that a module is unowned. Missing-information findings require completed
+eligible-source inspection with capable readers.
 
 ## The block
+
+Use this supplemental form for information not adequately expressed by the
+owning native source:
 
 ```python
 # === OWNERS ===
@@ -31,7 +50,8 @@ contract, and visible gap rule are inherited.
 
 ## Field schema
 
-Required:
+These fields govern supplemental OWNERS entries, not the syntax of native
+ownership sources. Required:
 
 | Field | Meaning |
 |---|---|
@@ -54,40 +74,51 @@ Optional:
 
 An OWNERS runner MUST:
 
-1. Parse every `OWNERS` block with the universal msdmd parser.
+1. Extract supported native responsibility declarations and parse supplemental
+   `OWNERS` blocks with the universal msdmd parser. Report reader coverage.
 2. Report `owner: hmmm`, `steward: hmmm`, or `escalation: hmmm` as pending.
-3. Report modules without OWNERS blocks as visible stewardship gaps.
-4. Cross-check sensitive modules against `review_required_for` when
-   BOUNDARIES metadata is available.
-5. Exit non-zero for malformed required fields or missing owners in strict
-   mode. Coverage gaps fail only in strict mode.
+3. Evaluate each applicable responsibility obligation across eligible sources;
+   report a stewardship gap only when required information is genuinely absent.
+   Record block adoption separately; block absence alone is not a GAP.
+4. Cross-check sensitive modules against declared review requirements when
+   BOUNDARIES or equivalent native effect metadata is available.
+5. Exit non-zero for malformed required fields, missing required owners,
+   unresolved required-source coverage or conflicting required assignments in
+   strict mode. Keep optional unknowns visible without blocking unrelated work.
 
 ## Agent behavior
 
 When this skill is loaded before edits:
 
-- Read OWNERS before making changes.
-- If the intended edit touches a class named in `review_required_for`, call
-  out the review requirement in the handoff or PR summary.
+- Read the applicable native responsibility rules and supplemental OWNERS.
+- If the edit touches a class named in `review_required_for` or an equivalent
+  native rule, call out the review requirement in the handoff or PR summary.
 - Do not replace `hmmm` with a guessed person, role, or team.
-- If ownership is absent, preserve the gap in output rather than pretending
+- Preserve absent or unresolved responsibility in output rather than pretending
   the committer or agent owns the file.
 
 ## Reporting shape
 
-- `OWNED`: owner is declared.
-- `PENDING`: owner, steward, or escalation is `hmmm`.
+- `OWNED`: the applicable ownership obligation has a source-backed declaration.
+- `PENDING`: responsibility, reader coverage or authority is unresolved.
 - `REVIEW_REQUIRED`: edit class requires explicit review.
-- `GAP`: module has no OWNERS block.
+- `GAP`: required responsibility information is absent after capable inspection.
+
+## Validation
+
+A CODEOWNERS-only fixture must satisfy its supported review-assignment
+obligation without adding OWNERS blocks. It must not satisfy a distinct
+operational-owner obligation without an explicit mapping. Pair it with genuine
+missing-owner, unsupported-rule, conflict and strict-mode fixtures.
 
 ## Anti-patterns
 
 - Treating Git author, last committer, or PR opener as owner.
-- Recording owner only in a central CODEOWNERS-like file while omitting the module-local declaration.
+- Requiring a module-local duplicate of a valid native responsibility source.
 - Using ownership metadata to bypass review; it routes review, not permission.
 - Guessing a team from a filename. Unknown is `hmmm`.
 
 hmmm
-- whether repo-level CODEOWNERS should generate suggested OWNERS blocks
-- whether strict mode should require owners for all modules or only public/sensitive ones
+- non-GitHub provider ownership readers remain consuming-repo work
+- whether strict policy requires operational owners for all modules or only public/sensitive ones
 - how to represent temporary stewardship during incidents

@@ -1,6 +1,6 @@
 ---
 name: llms-build
-description: Self-declaring LLM instructions file (llms.txt) built on msdmd. Modules or central files declare LLMS blocks with project overview, key definitions, architecture summary, and agent usage rules. A runner aggregates them into a standardized root llms.txt and surfaces drift/gaps. Load this when creating, updating, or maintaining llms.txt for any repo consumed by LLMs or agents.
+description: Native-first LLM instruction publication built on msdmd. Consume source-owned instruction metadata without requiring a second copy; the shipped stdlib runner generates llms.txt from LLMS blocks, while native-reader integration remains a contract. Load this when creating, updating, or maintaining llms.txt for repositories consumed by LLMs or agents.
 ---
 
 # llms-build — Self-declaring LLM instructions (llms.txt)
@@ -16,9 +16,26 @@ That file locks four things:
 - architecture summary
 - usage rules for agents
 
-The content of `llms.txt` is declared through msdmd `LLMS` blocks. This keeps instructions version-controlled in the same diff as code changes and makes missing or stale instructions visible as drift.
+Read [msdmd](../msdmd/SKILL.md) first. Publication consumes source-owned
+instruction metadata; it does not turn generated text into a second doctrine owner.
 
-The `llms-build` runner walks the tree, parses all `LLMS` blocks, assembles the canonical `llms.txt`, and reports drift between the generated file and the committed file.
+## Native-first coverage
+
+Native instruction files, supported frontmatter and other explicit instruction
+metadata are eligible owning sources. A native-capable publisher needs tested,
+source-preserving mappings, explicit definition authority and visible reader
+coverage; missing LLMS blocks do not establish missing instructions.
+
+**Implementation boundary:** the shipped `llms/build.py` is a block-only
+publisher. It walks the tree, parses `LLMS` blocks and compares generated output
+with committed `llms.txt`. It does not implement native instruction readers.
+Its fallback `hmmm` means no usable block input, not proof that no native source
+exists. Native integration remains a contract; do not demand a second copy of
+native metadata or advertise the existing command as implementing that contract.
+
+Existing LLMS declarations remain supported owning sources. Edit those sources
+before regenerating their output. Use supplemental LLMS entries for information
+not otherwise owned; do not invent definitions from neighboring prose.
 
 ## Block syntax
 
@@ -46,6 +63,9 @@ Multiple `LLMS` blocks or multiple `id:` entries are allowed and concatenated. T
 
 ## Required entries
 
+These fields describe the block input for the shipped publisher. A future
+native reader retains its source schema rather than manufacturing these entries.
+
 | id | Required fields | Meaning |
 |---|---|---|
 | `project_overview` | `content` | One-sentence tagline plus one or two sentences describing the repo. |
@@ -57,16 +77,16 @@ Unknowns in any section are written as `hmmm`, not guessed.
 
 ## The runner protocol
 
-A compliant `llms-build` runner:
+The shipped block-only `llms-build` runner:
 
-1. Uses the shared msdmd parser or an equivalent parser that preserves the same block contract.
-2. Walks the source tree while skipping the same conventional paths as other msdmd runners.
-3. Collects every `LLMS` block entry.
-4. Ignores fenced code examples in Markdown so documentation examples do not become declarations.
-5. Falls back gracefully when no explicit `LLMS` blocks exist, while writing unresolved values as `hmmm`.
+1. Uses an equivalent parser preserving the LLMS block contract.
+2. Walks the source tree with its documented conventional exclusions.
+3. Collects every supported `LLMS` block entry.
+4. Ignores fenced code examples in Markdown so examples do not become declarations.
+5. Falls back with unresolved `hmmm` when no block input exists; this is not native coverage.
 6. Assembles `llms.txt` using the canonical template.
 7. Writes or updates `llms.txt` when `--apply` is passed.
-8. Reports drift between generated and committed `llms.txt`, and exits non-zero in `--check` mode.
+8. Reports generated-file drift and exits non-zero for that drift in `--check` mode.
 
 Reference generator in this repo:
 
@@ -76,9 +96,13 @@ python -m llms.build --root . --out llms.txt --apply
 python -m llms.build --root . --out llms.txt --check
 ```
 
+A future native-capable runner must additionally report unsupported required
+sources, conflicts, exclusions and missing information separately; it must not
+translate a successful block-only drift check into complete instruction coverage.
+
 ## Output template
 
-The runner produces this shape:
+The shipped block runner produces this shape:
 
 ```markdown
 # LLM Instructions for <repo-name>
@@ -97,35 +121,46 @@ The runner produces this shape:
 ## How to Use This Repo with LLMs / Agents
 [content from id: usage_rules]
 
-This file is the single source of truth. If something is not explicitly stated in the files listed above, it does not exist in this repository.
+This file is a generated projection of source LLMS blocks. Owning source declarations remain authoritative. The shipped publisher is block-only; omission here does not establish absence of native information. Unsupported native instruction sources remain hmmm.
 ```
+
+The footer preserves source authority and discloses the publisher's scope;
+regeneration does not establish an exhaustive native-source inventory.
 
 ## Editing doctrine
 
-- Edit declarations in the source `LLMS` blocks first.
+- Edit the owning declaration first. For the shipped command, edit source `LLMS` blocks.
 - Run the generator to update `llms.txt`.
-- Commit both the block and the generated file in the same change.
-- Unknowns in any section are written as `hmmm`, never guessed.
+- Commit both the source and generated file in the same change.
+- Unknowns are `hmmm`, never guessed.
 - Definitions in `key_definitions` are canonical source text. Do not infer expansions from acronyms, repo names, or neighboring prose.
+
+## Validation
+
+Run the shipped generator's drift check after source edits. Native-reader
+acceptance additionally needs a native-only instruction fixture, explicit
+conflict/definition authority and unsupported-source tests; those readers are
+not implemented by this skill revision.
 
 ## Anti-patterns
 
-- Hand-editing `llms.txt` as independent doctrine instead of changing source
-  `LLMS` blocks and regenerating.
-- Letting Markdown examples become declarations; runners must ignore fenced code
-  examples.
-- Expanding acronyms or definitions from model memory when the source block did
-  not define them.
-- Treating missing `LLMS` blocks as proof that no repo instructions exist;
-  report the gap and preserve `hmmm`.
+- Hand-editing `llms.txt` as independent doctrine instead of changing its owning source and regenerating.
+- Letting Markdown examples become declarations.
+- Expanding definitions from model memory when the source did not define them.
+- Treating missing LLMS blocks as proof of absent instructions or requiring duplicate native content.
+- Advertising a block-only drift check as full native instruction coverage.
 
 ## Primary source files for this skill
 
 - `llms-build/SKILL.md` — canonical spec for the skill.
-- `llms/build.py` — stdlib reference runner implementing the command declared above.
-- `msdmd/SKILL.md` — parser contract and metadata-block doctrine.
-- `msdmd/parsers/universal.py` — shared reference parser whose contract this runner follows.
+- `llms/build.py` — stdlib reference block-only runner.
+- `msdmd/SKILL.md` — native-first and supplemental block contracts.
+- `msdmd/parsers/universal.py` — shared block parser contract.
 
 See `AGENTS.md` for loading triggers and `skills.json` for registration.
 
-Last updated: 2026-06-10
+## hmmm
+
+Native instruction readers and a native-capable publication schema remain
+implementation work. Existing LLMS sources and the shipped command remain usable
+within their explicitly narrower scope.
