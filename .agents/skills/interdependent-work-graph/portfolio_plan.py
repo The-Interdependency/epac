@@ -127,6 +127,7 @@ def validate_report(report: dict[str, Any], source_path: Path) -> None:
     _require(isinstance(actions, list), f"{source_path}: next_actions must be an array")
     for index, action in enumerate(actions):
         _require(isinstance(action, dict), f"{source_path}: next_actions[{index}] must be an object")
+        _require(set(action) == {"action", "owner", "dependency"}, f"{source_path}: next_actions[{index}] has missing or unknown fields")
         for field in ("action", "owner", "dependency"):
             _require(isinstance(action.get(field), str), f"{source_path}: next_actions[{index}].{field} must be a string")
         _require(bool(action["action"] and action["owner"]), f"{source_path}: next_actions[{index}] requires action and owner")
@@ -180,9 +181,10 @@ def build_portfolio(reports_with_paths: list[tuple[Path, dict[str, Any]]]) -> di
             "machine_entrypoints": report["machine_entrypoints"],
         })
         for relation in report["cross_repository_relations"]:
-            relations.append({"from": repository, "to": relation["repository"], **{k: v for k, v in relation.items() if k != "repository"}})
+            relation_details = {k: v for k, v in relation.items() if k not in {"repository", "from", "to"}}
+            relations.append({**relation_details, "from": repository, "to": relation["repository"]})
         active_frontier.extend({"repository": repository, "item": item} for item in report["active_frontier"])
-        next_actions.extend({"repository": repository, **action} for action in report["next_actions"])
+        next_actions.extend({**action, "repository": repository} for action in report["next_actions"])
         blocked.extend({"repository": repository, "item": item} for item in report["blocked"])
         hmmm.extend({"repository": repository, "item": item} for item in report["hmmm"])
 

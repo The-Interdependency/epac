@@ -1,22 +1,38 @@
 ---
 name: deps-build
-description: Self-declaring dependency topology built on msdmd. Each module declares dependency edges it owns in a `# === DEPENDENCIES ===` block; a runner builds an import/call/capability graph, detects unresolved edges and cycles, and surfaces visible dependency coverage gaps. Load this when declaring module dependencies, auditing architecture drift, checking graph cycles, or wiring dependency topology checks into CI.
+description: Native-first dependency topology built on msdmd. Consume imports, package manifests, lockfiles and build declarations at their owning scopes; supplemental DEPENDENCIES blocks express remaining architectural intent. Preserve edge kinds, conditions and resolution uncertainty. Load this when declaring dependencies, auditing architecture drift, checking graph cycles, or wiring dependency topology checks into CI.
 ---
 
 # deps-build — Dependency topology on msdmd
 
-`deps-build` is an application of [msdmd](../msdmd/SKILL.md). It makes a
-module's dependency edges visible beside the code that creates them, so
-architecture drift becomes inspectable instead of hidden in imports.
+`deps-build` is an application of [msdmd](../msdmd/SKILL.md). It makes
+source-owned dependency edges and otherwise unexpressed architectural intent
+inspectable without demanding a second declaration of existing imports.
 
 Implementation status: this skill defines the `DEPENDENCIES` block and runner
-contract. This repo does not currently ship a DEPENDENCIES graph runner;
-consuming repos should implement the contract below with local resolvers.
+contract. The MSDMD schema-2 collector ships Python import, `package.json`, and
+`pyproject.toml` dependency extraction, but no complete resolution/cycle runner;
+consuming repos implement and test local resolvers and policies.
 
-Read `msdmd/SKILL.md` first if you have not. The block syntax, parser
-contract, and visible gap rule are inherited.
+Read `msdmd/SKILL.md` first. Its provenance, information-coverage, parser and
+explicit reader-support contracts apply.
+
+## Native-first coverage
+
+Consume imports, package manifests, lockfiles, workspace/build declarations and
+other supported dependency conventions at their owning scopes. Package metadata
+stays package-owned; it is not copied into every source module. Preserve runtime,
+build, development, optional and resolved-dependency distinctions and conditions.
+
+An import is not a call edge or a complete architecture explanation. A lockfile
+records a resolution, not every source-level usage. Collect the native edge as
+expressed; supplement missing intent only where policy actually requires it.
+Unsupported discovery/resolution remains `PENDING` / `hmmm`, not absent metadata.
+Reader support beyond the shipped subsets remains implementation work.
 
 ## The block
+
+Supplement otherwise unexpressed dependency intent:
 
 ```python
 # === DEPENDENCIES ===
@@ -31,6 +47,7 @@ contract, and visible gap rule are inherited.
 
 ## Field schema
 
+These fields govern supplemental DEPENDENCIES entries, not native syntax.
 Required:
 
 | Field | Meaning |
@@ -62,32 +79,43 @@ Optional:
 
 A DEPENDENCIES runner MUST:
 
-1. Parse every `DEPENDENCIES` block with the universal msdmd parser.
-2. Build a graph from `imports`, `calls`, `requires`, `provides`, and
-   `external` fields where resolvers exist.
-3. Report unresolved non-`hmmm` edges as drift.
-4. Report cycles in classes where cycles are disallowed by local policy.
-5. Report modules with imports/calls but no DEPENDENCIES block as visible
-   coverage gaps when the runner can detect them.
-6. Exit non-zero for malformed required fields, unresolved resolvable edges,
-   or forbidden cycles. Coverage gaps fail only in strict mode.
+1. Extract supported native dependencies and parse supplemental `DEPENDENCIES`
+   blocks with the universal msdmd parser; report reader coverage.
+2. Build source-qualified, typed edges from native declarations and `imports`,
+   `calls`, `requires`, `provides` and `external` fields where resolvers exist.
+3. Report failed capable resolution as drift; report unavailable resolvers,
+   conditions or mappings as unresolved coverage, not proven broken dependencies.
+4. Report cycles only in edge classes/configurations where local policy forbids them.
+5. Report information GAPs only after capable inspection finds required edge or
+   intent information absent. Block presence is a separate adoption measure.
+6. Exit non-zero for malformed fields, failed resolvable edges or forbidden
+   cycles; strict mode also fails on missing or unresolved required information.
 
 ## Reporting shape
 
-- `EDGE`: declared edge and source module.
-- `UNRESOLVED`: declared edge no longer resolves.
-- `CYCLE`: graph cycle detected.
-- `PENDING`: edge or direction recorded as `hmmm`.
-- `GAP`: dependency-bearing module without DEPENDENCIES metadata.
+- `EDGE`: declared/observed edge, kind, conditions and source scope.
+- `UNRESOLVED`: an edge cannot be resolved, with a reason distinguishing drift from missing support.
+- `CYCLE`: graph cycle detected under a stated configuration and policy.
+- `PENDING`: edge, direction, mapping or reader recorded as `hmmm`.
+- `GAP`: required dependency information is absent after capable inspection.
+
+The generic block collector is not this graph runner and does not supply its
+qualified-edge identity guarantees; see MSDMD's helper limitations.
+
+## Validation
+
+A native-import plus manifest fixture with zero DEPENDENCIES blocks must retain
+source-level and package-level edges separately. Include optional dependencies,
+unknown build conditions, genuinely missing intent and permitted/forbidden cycles.
 
 ## Anti-patterns
 
-- Treating an import list as architecture without explaining why edges exist.
-- Declaring dependencies only in a central graph file.
+- Treating an import list as a complete architecture explanation or call graph.
+- Requiring module-local duplicates of package-owned dependencies.
 - Hiding unresolved dependencies by omitting them; use `hmmm`.
 - Failing all cycles blindly; some test or plugin graphs may intentionally cycle.
 
 hmmm
 - exact resolver syntax for cross-language call and route edges
 - which dependency classes disallow cycles by default
-- whether package-manager dependencies should be declared here or only source-level edges
+- cross-language resolution and application cycle policy remain consuming-runner work

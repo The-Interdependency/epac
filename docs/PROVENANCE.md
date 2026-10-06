@@ -29,7 +29,7 @@ under `subatomic/receipts/ucns-828c0b8/` are retained; new-pin receipts occupy a
 separate directory. Changing provenance does not repair or promote a domain claim.
 
 The current repo-local operational skill files match canonical
-`c14ee9d500579a4b5d6821f62c9d82ca96e73608` (79 files checked). The extraction
+`38c64332b840b2bbe1c07e53aeee8996644548e9` (96 files checked). The extraction
 doctrine identity above records the earlier origin. Package qualification also
 uses the cross-repository closure's explicit `skill-lib@8de4f12d0f31ff94f41e4a0196c447c0cbe20faf`
 work-graph, test, and ratio discipline without replacing the local snapshot.

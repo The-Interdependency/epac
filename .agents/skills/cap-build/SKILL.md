@@ -1,22 +1,38 @@
 ---
 name: cap-build
-description: Self-declaring capability inventory built on msdmd. Each module declares the capabilities it exposes in a `# === CAPABILITIES ===` block; a runner builds a capability map, verifies referenced surfaces still exist, reports duplicate or missing capability declarations, and surfaces visible gaps. Load this when declaring what a module can do, when building capability registries for agents, or when auditing exposed surfaces against declared capabilities.
+description: Native-first capability inventory built on msdmd. Consume signatures, exports, annotations and API schemas; supplemental CAPABILITIES blocks express otherwise unrecorded behavior and boundaries. Keep declared surfaces separate from verified behavior. Load this when declaring module capabilities, building capability registries for agents, or auditing exposed surfaces against declared capabilities.
 ---
 
 # cap-build — Capability declarations on msdmd
 
 `cap-build` is an application of [msdmd](../msdmd/SKILL.md). It gives
-agents and humans a source-backed inventory of what modules can do, where
-those capabilities are exposed, and which boundaries they cross.
+agents and humans a source-backed inventory of declared capabilities, exposed
+surfaces and the boundaries they are declared to cross.
 
 Implementation status: this skill defines the `CAPABILITIES` block and runner
-contract. This repo does not currently ship a CAPABILITIES runner script;
-consuming repos should implement the contract below against their own surfaces.
+contract. The MSDMD schema-2 collector ships a Python callable/class/export
+reader, but no complete behavioral capability or framework/API-schema runner;
+consuming repos implement and test their remaining mappings.
 
-Read `msdmd/SKILL.md` first if you have not. The block syntax, parser
-contract, and visible gap rule are inherited.
+Read `msdmd/SKILL.md` first. Its provenance, information-coverage, parser and
+explicit reader-support contracts apply.
+
+## Native-first coverage
+
+Consume signatures, exports, annotations, interface declarations and API schemas
+at their owning scopes. A supported native declaration needs no duplicate
+CAPABILITIES block. Preserve overloads, conditions and qualified symbol identity.
+A signature establishes a declared surface, not a full behavioral capability;
+missing behavioral intent may still require a supplemental declaration.
+
+Keep syntactically observed surfaces, documented behavior, derived mappings and
+verified outcomes distinct. Unsupported surface discovery is `PENDING`, not
+proof of either complete coverage or an absent capability. Reader support beyond
+the shipped source/standard subsets remains implementation work.
 
 ## The block
+
+Supplement otherwise unexpressed capability intent:
 
 ```python
 # === CAPABILITIES ===
@@ -32,6 +48,7 @@ contract, and visible gap rule are inherited.
 
 ## Field schema
 
+These fields govern supplemental CAPABILITIES entries, not native syntax.
 Required:
 
 | Field | Meaning |
@@ -57,34 +74,44 @@ Optional:
 
 A CAPABILITIES runner MUST:
 
-1. Parse every `CAPABILITIES` block with the universal msdmd parser.
-2. Build a capability map keyed by `id`.
-3. Report duplicate ids as errors.
-4. Verify each non-`hmmm` `exposes` target still resolves when a resolver
-   exists for the language or framework.
-5. Report unresolved `exposes: hmmm` and `boundaries` containing `hmmm` as
-   pending, not passing.
-6. Report modules with exposed public surfaces but no CAPABILITIES block as
-   visible gaps when the runner can detect public surfaces.
-7. Exit non-zero for duplicate ids, malformed required fields, or broken
-   resolvable exposure targets. Coverage gaps fail only in strict mode.
+1. Extract supported native surface metadata and parse supplemental
+   `CAPABILITIES` blocks with the universal msdmd parser.
+2. Build a source-qualified capability map; retain native and declared IDs.
+3. Diagnose duplicate identities within their declared scope; identical names
+   in different scopes do not establish the same capability.
+4. Verify each non-`hmmm` `exposes` target with a capable language/framework
+   resolver; report unsupported resolution rather than guessing success.
+5. Report unresolved exposure, boundary information and required readers as pending.
+6. Report an information GAP only when capable discovery and inspection find
+   a required declaration absent. Do not equate missing blocks with missing capabilities.
+7. Exit non-zero for malformed declarations, identity conflicts or broken
+   resolvable targets; strict mode also fails on missing or unresolved required scope.
 
 ## Reporting shape
 
-- `CAPABILITY`: id, summary, exposing module, owner, and boundaries.
-- `BROKEN_EXPOSES`: declared surface no longer resolves.
-- `DUPLICATE`: id appears more than once.
-- `PENDING`: unresolved `hmmm` capability fields.
-- `GAP`: public-looking modules or surfaces without capability metadata.
+- `CAPABILITY`: qualified identity, summary, exposing module, owner and boundaries.
+- `BROKEN_EXPOSES`: a declared surface fails a capable resolver.
+- `DUPLICATE`: identity collides within its declared scope.
+- `PENDING`: unresolved fields, mappings or extraction coverage.
+- `GAP`: required capability information is absent after capable inspection.
+
+The shipped generic block collector does not implement this capability runner's
+qualified-identity or duplicate-validation contract; see MSDMD's helper limitations.
+
+## Validation
+
+A native-export/API-schema fixture must yield its declared surface without a
+CAPABILITIES copy. It must not acquire invented behavior or verification.
+Include same-name/different-scope, genuinely missing intent and unsupported-reader cases.
 
 ## Anti-patterns
 
-- Declaring capabilities in a central registry while omitting the module-local block.
+- Requiring a module-local copy of capability metadata already in its native owner.
 - Using implementation-shaped ids (`function_runs`) instead of capability-shaped ids (`agent_supervisor_dynamic_spawn`).
 - Hiding boundary uncertainty; write `hmmm` where the effect is unresolved.
 - Treating a module import as a capability without identifying the exposed behavior.
 
 hmmm
 - exact resolver syntax for framework-specific route and UI surfaces
-- whether capability ids should be globally unique across a repo or only within a block
-- whether private capabilities deserve a separate block or a `class: internal` tag
+- application capability identity and semantic conflict policy remain consuming-runner work
+- whether private capabilities need a distinct class in the consuming policy

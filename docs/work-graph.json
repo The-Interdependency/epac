@@ -20,8 +20,8 @@
     },
     {
       "authority": "organization-wide build and evidence doctrine",
-      "commit": "c14ee9d500579a4b5d6821f62c9d82ca96e73608",
-      "relation": "current repo-local skill snapshot source; all 79 non-manifest files checked byte-for-byte",
+      "commit": "38c64332b840b2bbe1c07e53aeee8996644548e9",
+      "relation": "current repo-local skill snapshot source; all 96 non-manifest files checked byte-for-byte",
       "repository": "The-Interdependency/skill-lib"
     },
     {
@@ -39,5 +39,5 @@
   ],
   "schema": "the-interdependency.stack-manifest",
   "version": "1.0.0",
-  "work_graph_sha256": "3359501225382845edf34312b4acd864a51a8204617016bae8979f449ab4a7b5"
+  "work_graph_sha256": "7fa5a2dbe357ee26ea744633b3f4d59ff72c4a047a44ba8efe9f4a94b3fdc1ef"
 }
