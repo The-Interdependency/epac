@@ -1,32 +1,9 @@
 ---
 name: a0p-instancing
-description: Methodology for instancing agents in a0-betatest (the a0p research instrument), whose model diverges from canonical a0. Load this when adding or changing an AgentInstance / CharacterSheet CRUD path, a per-instance native ZFAE weight bank or its training/distillation loop, a ZFAE inference mode, a sentinel evaluation or pending-override gate, a per-agent safetensors checkpoint, or volatile sub-context memory — anywhere under a0-betatest `backend/`. Use it before writing code that creates, addresses, trains, runs, governs, or persists an a0p agent, so the code follows a0p's per-user CRUD + native-ZFAE + sentinel model instead of a0's spawn/fork/merge model. For canonical a0 and its mirror a0ucns, use `agent-instantiation` instead — a0p does NOT have `sub_agent_spawn`, a spawn executor, or `InstanceMerge`.
+description: Agent instancing in a0-betatest backend (a0p). Load this when creating, addressing, training, running, governing, persisting, or changing AgentInstance/CharacterSheet CRUD, native ZFAE weight banks, teacher distillation, inference modes, sentinel evaluation, pending overrides, per-agent safetensors checkpoints, Mongo metadata, FIQ events, or volatile sub-context memory. Do not load for ordinary LLM-prompt work that creates no instance. For a0, a0ucns, or a0-betatest/_legacy_a0 use agent-instantiation/SKILL.md.
 ---
 
 # a0p-instancing — How a0-betatest brings agents into being
-
-a0-betatest (the **a0p** research instrument) replaced a0's single-persistent
-+ fork model with a **multi-agent, per-user model**: an agent is a persistent
-CRUD entity (`AgentInstance`) bound to an editable `CharacterSheet`, and each
-instance **owns its own trained native ZFAE weight bank**. The LLM is optional
-energy; once an instance's native core is trained, it can run with no LLM at
-all. This skill captures that model so a coding agent extends it instead of
-reaching for a0's spawn/fork/merge machinery, which **does not exist here**.
-
-This skill is the **peer** of `agent-instantiation` (which documents a0 /
-a0ucns). They describe genuinely different architectures; do not mix them.
-
-## Load this when
-
-- Adding/editing an `AgentInstance` or `CharacterSheet` **CRUD** path.
-- Touching the **native ZFAE weight bank**, its **teacher-distillation
-  training**, or the native **inference** engine / modes.
-- Adding/changing a **sentinel** evaluation or a **pending-override** gate.
-- Persisting per-agent state (**safetensors checkpoints**, Mongo metadata,
-  **FIQ** audit events) or volatile **sub-context** memory.
-
-Do not load this for canonical a0 / a0ucns work (use `agent-instantiation`),
-or for ordinary LLM-prompt work that creates no instance.
 
 ## Scope and source boundary
 
@@ -54,7 +31,8 @@ reproduce them from memory. Where a mechanism is unclear or unwired, write
   **fresh per agent** at creation (`backend/agents/store.py`).
 
 There is **one weight bank per agent**, not a shared singleton engine. Never
-share or fork a bank between instances.
+share or fork a bank between instances. A trained native core can run without
+an LLM; the inference mode governs optional LLM energy.
 
 ## Instancing sequence (dependency order — follow it top to bottom)
 
@@ -82,7 +60,7 @@ share or fork a bank between instances.
    or both produce/judge the reply. `zfae_native` refuses LLM fallback.
 6. **Evaluate sentinels and honor the override halt** (`sentinel_eval.py`,
    `sentinels.py`, `overrides.py`). Resolve per-agent sentinel modes/weights,
-   compute the `Verdict13`; on a blocking flag, create a `PendingOverride`
+   compute the `Verdict13` from 13 sentinels (S1–S13); on a blocking flag, create a `PendingOverride`
    and **halt** until approved. Do not bypass the halt.
 7. **Checkpoint to safetensors, not a DB blob.** Persist the bank to
    `storage/agents/{id}/zfae_core.safetensors` (+ `…meta.json`: digest,
