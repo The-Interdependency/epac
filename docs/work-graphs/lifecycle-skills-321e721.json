@@ -1,0 +1,31 @@
+{
+  "schema": "the-interdependency.stack-manifest",
+  "version": "1.0.0",
+  "repositories": [
+    {
+      "repository": "The-Interdependency/skill-lib",
+      "commit": "321e721fb660e0fea5bb8c37d943611963039a57",
+      "authority": "canonical lifecycle skill doctrine",
+      "relation": "producer of exactly agent-instantiation, a0p-instancing, and wdll; dependency closure declared in skills.json"
+    },
+    {
+      "repository": "The-Interdependency/epac",
+      "commit": "4672793b05f45f5fa81a40551bff46f3a5c6b530",
+      "authority": "EPAC repository-local skill consumption",
+      "relation": "target baseline before lifecycle propagation; resulting files are bound by the containing propagation commit; .agents/skills/README.md owns mixed-source installation provenance"
+    }
+  ],
+  "boundaries": {
+    "agent_scope": "cross-repository-work-graph",
+    "authority_transfer": false,
+    "proof_status_transfer": false,
+    "measurement_status_transfer": false,
+    "semantic_mapping": "external-provenance",
+    "hmmm": [
+      "This graph covers only the three lifecycle skills. Other installed skills retain their prior 38c64332b840b2bbe1c07e53aeee8996644548e9 snapshot and unrelated drift is not repaired.",
+      "No runtime deployment, scientific, certification, empirical, release or graduation status is inferred. Existing release locks, historical scientific pins, sealed results, and accepted release-consumption evidence remain unchanged.",
+      "The source-bound docs/work-graph.json and docs/PROVENANCE.md retain their qualification-time snapshot statements; current lifecycle installation provenance is scoped in .agents/skills/README.md and this graph."
+    ]
+  },
+  "work_graph_sha256": "2ebc547cff08041425e6791523fe56a44079723780958d19870d7649eae145e0"
+}
