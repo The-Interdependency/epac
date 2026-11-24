@@ -15,11 +15,7 @@ description: >-
   to the living-spec convention.
 ---
 
-# manifest — living spec from source
 
-`manifest` is the build-as-spec tool for The Interdependency. It treats the
-**factual half** of a `CLAUDE.md` like a lockfile: generated from the code,
-never hand-edited, and CI-enforced so it can't drift.
 
 ## The line it draws
 

@@ -5,12 +5,6 @@ description: Fail-closed SSH automation and shell-script delivery for OpenSSH an
 
 # ssh-automation — prove the endpoint before crossing it
 
-`ssh-automation` is a procedural skill for generating and reviewing SSH-based
-operations that must remain secure, non-interactive, bounded, diagnosable, and
-safe to paste into an existing terminal. It covers the local shell, the SSH
-transport, the remote shell, and the target operation as distinct interpreters
-with distinct failure modes.
-
 The central boundary is:
 
 ```text

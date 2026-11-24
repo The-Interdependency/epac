@@ -1,46 +1,13 @@
 ---
 name: thought-lens
-description: Translate raw, context-heavy, recursive, fragmentary, coined, or private-language thought into audience-legible language without changing the underlying claim. Load this when a user says people do not understand what they mean; asks to make a thought understandable to strangers, the public, a specific audience, or a platform; supplies dense notes rather than finished prose; needs jargon or coined terms introduced only after their ordinary-language meaning lands; or wants multiple audience/surface renderings from one thought. Do not load merely to polish finished prose or to simplify an already-stable canonical document; use ordinary editing for the former and plain-lens for the latter.
+description: Translate raw, context-heavy, recursive, fragmentary, coined, or private-language thought into audience-legible language without changing the underlying claim. Load this when a user says people do not understand what they mean; asks to make a thought understandable to strangers, the public, a specific audience, or a platform; supplies dense notes rather than finished prose; needs jargon or coined terms introduced only after their ordinary-language meaning lands; or wants multiple audience/surface renderings from one thought. Do not load merely to polish finished prose or to simplify an already-stable canonical document; use ordinary editing for the former and plain-lens for the latter. Inputs may include shorthand, partial equations, and compressed references; output may be a conversation answer, post, thread, article, academic framing, or technical note. Do not load for spelling, grammar, tone polishing, or an already-explicit claim.
 ---
 
-# thought-lens — translate thought without flattening it
 
-`thought-lens` sits between a person's internal context and another person's
-available context.
+Recover and freeze the claim before rendering it for an audience; back-translate and compare before delivery.
 
-Its job is not to make the thinker sound simpler. Its job is to recover what is
-actually being asserted, preserve that structure, and supply the minimum missing
-context another person needs to recover the same claim.
-
-```text
-raw thought -> recover structure -> freeze claim kernel -> render for audience
-            -> back-translate -> compare -> deliver or hmmm
-```
-
-Never simplify directly from raw thought. Recover the claim first.
-
-## When to load
-
-Load when the input is one or more of:
-
-- notes, fragments, shorthand, recursive sentences, partial equations, coined
-  terms, compressed references, or private vocabulary;
-- understandable to a context-rich collaborator or model but not to a
-  context-light human reader;
-- a thought that must become a conversation answer, public post, thread,
-  professional explanation, article paragraph, academic framing, or technical
-  note;
-- a request to preserve the thought while reducing how much prerequisite
-  context the reader must already possess.
-
-A useful trigger is: **"I know what I mean, but other people do not have the
-context."**
-
-Do not load for spelling, grammar, tone polishing, or a claim that is already
-explicit. Do not use it for an established dense canon/spec/document; use
-`plain-lens` downstream. Use `domain-claims` when a translated term is proposed
-for canonical semantic authority, and `char-compress` when the target is agent
-context size rather than human legibility.
+Use `domain-claims` when a translated term is proposed for canonical authority.
+Use `char-compress` when the target is agent context size rather than human legibility.
 
 ## Source of truth
 

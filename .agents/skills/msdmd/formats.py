@@ -1,4 +1,4 @@
-# ratios: loc_comments=151:14 imports_exports=9:5 calls_definitions=78:11
+# ratios: loc_comments=152:18 imports_exports=9:6 calls_definitions=79:12
 """Bounded, non-executing parsers shared by the native metadata adapters.
 
 Usage: parse_json(bytes), parse_yaml(bytes), parse_xml(bytes). No includes,
@@ -82,6 +82,14 @@ def parse_json(data: bytes) -> Any:
     return check_tree(json.loads(data, object_pairs_hook=pairs, parse_constant=constant, parse_int=integer, parse_float=number))
 
 
+class YamlMapping(dict):
+    """Internal wrapper for a YAML mapping whose keys JSON cannot carry losslessly.
+
+    Only parse_yaml creates it. Redaction trusts the wrapper's entry structure by
+    this type, never by the ``$type`` text, which any JSON/YAML source can spell.
+    """
+
+
 def parse_yaml(data: bytes) -> Any:
     import yaml  # Optional reader dependency; missing installation is diagnostic.
 
@@ -162,7 +170,7 @@ def parse_yaml(data: bytes) -> Any:
                 if string_keys:
                     return {entry['key']: entry['value'] for entry in entries}
                 # JSON object keys cannot encode typed YAML keys without loss.
-                return {'$type': 'yaml-mapping', 'entries': entries}
+                return YamlMapping({'$type': 'yaml-mapping', 'entries': entries})
             raise ValueError('unknown YAML node')
         finally:
             active.remove(id(item))
@@ -186,4 +194,4 @@ def parse_xml(data: bytes) -> ET.Element:
             raise ValueError('XML exceeds node/depth limit')
         stack.extend((child, depth + 1) for child in node)
     return root
-# ratios: loc_comments=151:14 imports_exports=9:5 calls_definitions=78:11
+# ratios: loc_comments=152:18 imports_exports=9:6 calls_definitions=79:12

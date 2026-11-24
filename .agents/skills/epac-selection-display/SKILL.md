@@ -5,11 +5,6 @@ description: Evidence-bound EPAC target selection and display for WebMCP handoff
 
 # epac-selection-display — choose what to show without promoting what it means
 
-Use this procedural skill to turn an exact EPAC research artifact into a
-human-readable, provenance-bearing display request or result. It governs target
-selection and presentation. It does not define EPAC, select a constructor as
-canon, or give a public MCP server authority to execute repository code.
-
 ## Core boundary
 
 ```text

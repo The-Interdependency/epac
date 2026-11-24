@@ -5,8 +5,6 @@ description: Provenance-bearing publication from distributed source owners. Load
 
 # distributed-publication — gather the reading, not the authority
 
-Use this procedural skill when one publication must present content whose ownership remains distributed. The publication consumer may assemble, order, render, index, search, and expose provenance. It may not silently become the author, licensor, canonical source, theorem authority, or status owner of the material it displays.
-
 Load `interdependent-work-graph/SKILL.md` first or alongside this skill. The work-graph skill identifies participants, exact identities, authority roles, relations, and non-transfer boundaries. This skill specializes the publication edge: how independently owned source units become one bounded reading surface without losing their ownership.
 
 ## Core contract

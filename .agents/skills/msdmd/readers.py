@@ -1,4 +1,4 @@
-# ratios: loc_comments=964:66 imports_exports=22:5 calls_definitions=300:32
+# ratios: loc_comments=1045:80 imports_exports=24:5 calls_definitions=330:35
 # === MODULE_BUILD ===
 # id: msdmd_native_reader_registry
 #   module_name: readers
@@ -53,8 +53,10 @@ from typing import Any, Callable
 from urllib.parse import quote
 
 from msdmd.parsers.universal import marker_for, parse_ratios, ratios_placement
-from msdmd.formats import is_json_schema_uri, parse_json, parse_yaml, parse_xml
+from msdmd.formats import YamlMapping, is_json_schema_uri, parse_json, parse_yaml, parse_xml
 from msdmd.grammar_code import read_grammar
+from msdmd.go_code import read_go
+from msdmd.go_modules import read_go_modules
 from msdmd.native_code import read_python as _read_python, read_typescript as _read_typescript
 from msdmd.standards import read_standards
 
@@ -311,6 +313,29 @@ READER_MANIFESTS += ({
     "unknown_field_policy": "preserve raw documentation and syntax; diagnose macro/conditional context",
     "execution_policy": "parse only; no compiler, macro expansion or annotation processing", "support": "partial",
 },)
+READER_MANIFESTS += ({
+    "reader_id": "go-tree-sitter", "version": "1.0.0",
+    "entry_point": "msdmd.go_code:read_go", "dependencies": ["tree-sitter==0.25.2", "tree-sitter-go==0.25.0"],
+    "convention": "go.source-metadata", "specification": "https://go.dev/doc/comment",
+    "supported_versions": ["Go syntax accepted by tree-sitter-go 0.25.0"],
+    "feature_subset": ["qualified declarations and receiver methods", "struct tag literals", "native comment attachment",
+                       "import literals", "inert compiler/build/generation directives", "SPDX headers"],
+    "known_limitations": ["Go 1.26 new(expression) forms are not fully supported by this grammar",
+                          "no build selection, type checking, import resolution, tag interpretation or target execution"],
+    "detection": [".go"], "scope_attachment": "package, lexical symbol, declaration group or module",
+    "unknown_field_policy": "preserve raw source spans; grammar errors invalidate required coverage",
+    "execution_policy": "installed grammar only; never compile, import or generate target code", "support": "partial",
+}, {
+    "reader_id": "go-module-files", "version": "1.0.0", "entry_point": "msdmd.go_modules:read_go_modules",
+    "dependencies": ["python-stdlib"], "convention": "go.module-file", "specification": "https://go.dev/ref/mod",
+    "supported_versions": ["line-based module/workspace directives; h1 checksum rows"],
+    "feature_subset": ["module identity", "direct/indirect requirements", "replacement and exclusion declarations",
+                       "workspace paths", "quoted tokens", "inert directives", "recorded checksums"],
+    "known_limitations": ["no module path/version validation, resolution, downloads, checksum verification or multiline string tokens"],
+    "detection": ["go.mod", "go.work", "go.sum"], "scope_attachment": "owning package/workspace file",
+    "unknown_field_policy": "retain raw tokens and comments; unknown directives remain unsupported",
+    "execution_policy": "text parse only; never invoke go or network", "support": "partial",
+})
 _MANIFESTS = {item["reader_id"]: item for item in READER_MANIFESTS}
 _PYTHON_SUFFIXES = {".py", ".pyi", ".pyw"}
 _MARKDOWN_SUFFIXES = {".md", ".mdx"}
@@ -353,8 +378,10 @@ def _digest(value: bytes | str) -> str:
 
 def _json_safe(value: Any) -> Any:
     """Preserve non-JSON native scalar types with explicit tagged values."""
-    if value is None or isinstance(value, (str, bool, int)):
+    if value is None or isinstance(value, (str, bool)):
         return value
+    if isinstance(value, int):
+        return value if abs(value) <= 2 ** 53 - 1 else {"$type": "json-number", "lexeme": str(value)}
     if isinstance(value, float):
         return value if math.isfinite(value) else {"$type": "nonfinite-float", "value": repr(value)}
     if isinstance(value, (dt.datetime, dt.date, dt.time)):
@@ -366,18 +393,87 @@ def _json_safe(value: Any) -> Any:
     return {"$type": f"unsupported:{type(value).__name__}", "value": repr(value)}
 
 
+class _WithheldKeys:
+    """Allocate ``#redacted-N`` ordinals for one mapping.
+
+    Ordinals are mapping-wide, start at 1, and skip any string already present as
+    a source key, so withheld keys never collide with each other or with a literal
+    key. Nothing is derived from the secret: a digest would let weak passwords be
+    guessed offline.
+    """
+
+    def __init__(self, source_keys: Any) -> None:
+        self.taken = {key for key in source_keys if isinstance(key, str)}
+        self.count = 0
+
+    def key(self, key: Any) -> tuple[Any, bool]:
+        if not isinstance(key, str):
+            return key, False
+        clean = _sanitize_url_credentials(key)
+        if clean == key:
+            return key, False
+        while True:
+            self.count += 1
+            candidate = f"{clean}#redacted-{self.count}"
+            if candidate not in self.taken:
+                self.taken.add(candidate)
+                return candidate, True
+
+
 def _redact_sensitive(value: Any, pointer: str = "") -> tuple[Any, list[str]]:
     """Redact values owned by plainly secret-bearing field names."""
     redacted: list[str] = []
-    if isinstance(value, dict):
-        result: dict[str, Any] = {}
-        for key, item in value.items():
-            child_pointer = f"{pointer}/{key}"
-            if _is_sensitive_key(key):
-                result[str(key)] = {"$redacted": True, "reason": "sensitive-field-name"}
+    if isinstance(value, YamlMapping):
+        # Only parse_yaml builds this type; a source object that merely spells
+        # "$type": "yaml-mapping" is an ordinary mapping below. Typed entries
+        # carry their owning key beside the value, so redact in that name domain.
+        entries = value["entries"]
+        secret = any(entry["key"] == "kind" and entry["value"] == "Secret" for entry in entries)
+        # Same DSSE rule as the plain-dict branch: a typed mapping (any non-string
+        # key elsewhere) must not publish the raw base64 payload either.
+        dsse = any(entry["key"] == "payloadType" and entry["value"] == "application/vnd.in-toto+json"
+                   for entry in entries)
+        withheld = _WithheldKeys(entry["key"] for entry in entries)
+        result_entries = []
+        for index, entry in enumerate(entries):
+            child_pointer = f"{pointer}/entries/{index}/value"
+            key, key_withheld = withheld.key(entry["key"])
+            if key_withheld:
+                redacted.append(f"{pointer}/entries/{index}/key")
+            # Belt and braces: tags come from the parser, but never publish one unredacted.
+            tag, tag_redactions = _redact_sensitive(entry["tag"], f"{pointer}/entries/{index}/tag")
+            redacted.extend(tag_redactions)
+            if _is_sensitive_key(entry["key"]) or (secret and entry["key"] in ("data", "stringData")):
+                child = {"$redacted": True, "reason": "sensitive-field-name"}
+                redacted.append(child_pointer)
+            elif dsse and entry["key"] == "payload" and isinstance(entry["value"], str):
+                child = {"$withheld": True, "reason": "encoded-dsse-payload"}
                 redacted.append(child_pointer)
             else:
-                result[str(key)], child_redacted = _redact_sensitive(item, child_pointer)
+                child, child_redacted = _redact_sensitive(entry["value"], child_pointer)
+                redacted.extend(child_redacted)
+            result_entries.append({"key": key, "tag": tag, "value": child})
+        return YamlMapping({"$type": "yaml-mapping", "entries": result_entries}), redacted
+    if isinstance(value, dict):
+        result: dict[str, Any] = {}
+        withheld = _WithheldKeys(str(key) for key in value)
+        for key, item in value.items():
+            safe_key, key_withheld = withheld.key(str(key))
+            if key_withheld:
+                redacted.append(f"{pointer}/[redacted-key]")
+            child_pointer = f"{pointer}/{safe_key}"
+            secret_payload = value.get("kind") == "Secret" and key in ("data", "stringData")
+            dsse_payload = value.get("payloadType") == "application/vnd.in-toto+json" and key == "payload" and isinstance(item, str)
+            if _is_sensitive_key(key) or secret_payload:
+                result[safe_key] = {"$redacted": True, "reason": "sensitive-field-name"}
+                redacted.append(child_pointer)
+            elif dsse_payload:
+                # Withhold in the syntax reader too: semantic-reader failure must
+                # never restore a reversible encoding of a secret-bearing tree.
+                result[safe_key] = {"$withheld": True, "reason": "encoded-dsse-payload"}
+                redacted.append(child_pointer)
+            else:
+                result[safe_key], child_redacted = _redact_sensitive(item, child_pointer)
                 redacted.extend(child_redacted)
         return result, redacted
     if isinstance(value, list):
@@ -1000,7 +1096,7 @@ def _read_llms_text(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
 @lru_cache(maxsize=1)
 def implementation_digest() -> str:
     """Identity of all executable reader inputs, independent of inspected files."""
-    names = ("readers.py", "native_code.py", "grammar_code.py", "formats.py", "standards.py", "module_projection.py", "typescript-reader.cjs", "requirements.txt", "package.json", "package-lock.json", "module-projection.schema.json", "python-module-reader.json", "parsers/universal.py")
+    names = ("readers.py", "native_code.py", "grammar_code.py", "go_code.py", "go_modules.py", "formats.py", "standards.py", "module_projection.py", "typescript-reader.cjs", "requirements.txt", "package.json", "package-lock.json", "module-projection.schema.json", "python-module-reader.json", "parsers/universal.py")
     digest = hashlib.sha256()
     for name in names:
         digest.update(name.encode())
@@ -1018,6 +1114,10 @@ def readers_for(path: Path, data: bytes | None = None) -> list[tuple[str, Reader
     selected: list[tuple[str, Reader]] = []
     if path.name == "CODEOWNERS" and relative in {"CODEOWNERS", ".github/CODEOWNERS", "docs/CODEOWNERS"}:
         selected.append(("github-codeowners", _read_codeowners))
+    elif suffix == ".go":
+        selected.append(("go-tree-sitter", read_go))
+    elif path.name in {"go.mod", "go.work", "go.sum"}:
+        selected.append(("go-module-files", read_go_modules))
     elif suffix in _PYTHON_SUFFIXES:
         selected.append(("python-ast", _read_python))
     elif suffix in {".json", ".sarif", ".ipynb"}:
@@ -1073,10 +1173,10 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
         reader_ids.append(reader_id)
         local_context = dict(context)
         try:
-            if reader_id == "msdmd-ratios" and path.suffix.lower() in _TYPESCRIPT_SUFFIXES | {".rs", ".java", ".c", ".cc", ".cpp", ".cxx", ".hpp", ".hxx", ".h"}:
+            if reader_id == "msdmd-ratios" and path.suffix.lower() in _TYPESCRIPT_SUFFIXES | {".go", ".rs", ".java", ".c", ".cc", ".cpp", ".cxx", ".hpp", ".hxx", ".h"}:
                 lines = [""] * len(data.decode("utf-8-sig").split("\n"))
                 for f in facts:
-                    if f["kind"] == "comment" and f["extraction"]["reader_id"] in {"typescript-compiler", "native-grammars"}:
+                    if f["kind"] == "comment" and f["extraction"]["reader_id"] in {"go-tree-sitter", "typescript-compiler", "native-grammars"}:
                         for offset, line in enumerate(f["native"]["value"]["text"].split("\n")):
                             index = f["source"]["location"]["start_line"] - 1 + offset
                             if index < len(lines):
@@ -1110,4 +1210,4 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
         facts = [f for f in facts if not (f["kind"] == "structured-document" and f["extraction"]["reader_id"] != "metadata-standards"
             and (superseding or any(f["native"]["value"] == root["native"]["value"] for root in roots)))]
     return reader_ids, facts, edges, diagnostics
-# ratios: loc_comments=964:66 imports_exports=22:5 calls_definitions=300:32
+# ratios: loc_comments=1045:80 imports_exports=24:5 calls_definitions=330:35

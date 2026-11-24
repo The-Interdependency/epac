@@ -5,10 +5,6 @@ description: Native-first module stewardship built on msdmd. Consume provider-sp
 
 # owner-build — Module stewardship on msdmd
 
-`owner-build` is an application of [msdmd](../msdmd/SKILL.md). It records
-who is responsible for a module from the source that owns that responsibility,
-so agents do not invent authority or edit sensitive code without a review path.
-
 Implementation status: this skill defines the `OWNERS` block and runner
 contract. The MSDMD schema-2 collector ships ordered GitHub CODEOWNERS rule
 extraction as review assignment only, but no path-applicability or operational-

@@ -1,41 +1,10 @@
 ---
 name: plain-lens
-description: Building a plain-language, multi-lens companion view of dense canonical text — an easier on-ramp that does not replace or talk down to the source. Load this when you are asked to make an informationally dense document (canon, spec, articles, legal/normative text) easier to approach for newcomers; when building an "explain it through the lens of X" selector (domain, audience, or role); when designing progressive-disclosure or layered ELI-not-stupid reading UX; when a dynamic, data-driven site must keep its existing static page as a graceful fallback; or when you need an EDCM-style two-speaker tension reading between a body text and its footnotes/caveats. Use this when the risk is either drowning readers in density or insulting them with oversimplification.
+description: Building a plain-language, multi-lens companion view of dense canonical text — an easier on-ramp that does not replace or talk down to the source. Load this when you are asked to make an informationally dense document (canon, spec, articles, legal/normative text) easier to approach for newcomers; when building an "explain it through the lens of X" selector (domain, audience, or role); when designing progressive-disclosure or layered ELI-not-stupid reading UX; when a dynamic, data-driven site must keep its existing static page as a graceful fallback; or when you need an EDCM-style two-speaker tension reading between a body text and its footnotes/caveats. Use this when the risk is either drowning readers in density or insulting them with oversimplification. Do not load to edit canon itself. Lenses may follow a work domain, audience, or role; footnotes, caveats, and dissent may act as the second speaker.
 ---
 
-# plain-lens — easier on-ramps to dense canon, without talking down
 
-Some documents are dense on purpose. The Interdependent Way is one: every
-clause is load-bearing and the footnotes hold deliberate tension against
-the lines they annotate. People bounce off such texts — not because they
-are incapable, but because there is no on-ramp. The usual "fix" is a
-dumbed-down summary that quietly throws away the load-bearing parts and
-makes the reader feel managed.
-
-This skill is the third path: build a **companion view** that re-expresses
-the source in concrete, familiar vocabulary, hands the reader straight
-back to the original, and never pretends to be the canon. The paraphrase
-is scaffolding; the source is the building.
-
-## When to load
-
-Load this skill when any of these are true:
-
-- You are making a dense document approachable for newcomers or
-  outsiders without rewriting the canon.
-- You are building a selector that re-explains the same material through
-  a chosen **lens** — a domain of work (agriculture, medicine,
-  construction, distribution, storage, education, academia, government,
-  first responders), an audience, or a role.
-- You are designing layered / progressive-disclosure reading UX.
-- You are adding a dynamic, data-driven page that must degrade to an
-  existing static page if scripts or fetches fail.
-- You need an EDCM-style tension reading between a primary text and its
-  footnotes, caveats, or dissent treated as a second speaker.
-
-Do not load this skill to edit the canon itself. Companion views never
-become the source of truth. If a paraphrase and the canon disagree, the
-canon wins and the paraphrase is wrong.
+Build a companion view; it never becomes the source of truth. If it disagrees with canon, correct the companion.
 
 ## Workflow: the five rules
 
@@ -106,8 +75,8 @@ on, not something it overwrites.
 When a text carries footnotes, caveats, or dissent, treat the body as one
 speaker and the annotations as a second, and report the tension between
 them. This is an **EDCM-style heuristic** (Energy–Dissonance Circuit
-Model framing), illustrative only — it is not an edcmbone metric runtime,
-and you must not claim edcmbone status for it. Compute it transparently
+Model framing), illustrative only — it is not an EDCM metric runtime,
+and you must not claim EDCM measurement status for it. Compute it transparently
 (ship the math next to the output) over families such as:
 
 - intensity / valence per speaker (caps, terminal punctuation, charged
@@ -141,13 +110,13 @@ A good plain-lens deliverable is:
   in the name of simplicity.
 - Do not adopt a reassuring, hand-holding, or "explained for dummies"
   register; concreteness is the tool, not condescension.
-- Do not present the EDCM-style reading as an edcmbone measurement or
+- Do not present the EDCM-style reading as an EDCM measurement or
   claim unearned theorem/metric status.
 
 ## hmmm
 
 - The EDCM-style reading here is an illustrative heuristic, not an
-  edcmbone runtime; precise cross-speaker metric formulas live in
-  `edcmbone` / `a0`, not in this skill.
+  EDCM runtime; precise cross-speaker metric formulas live in
+  `edcm` (`docs/EDCM_MATHEMATICS.md`) / `a0`, not in this skill.
 - "Without talking down" is a judgement call; this skill gives rules and
   registers, not a measurable condescension score.

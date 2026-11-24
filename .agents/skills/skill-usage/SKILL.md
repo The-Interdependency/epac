@@ -3,11 +3,8 @@ name: skill-usage
 description: Record and report evidence-bearing usage maturity for skills installed from The Interdependency skill-lib. Load this when any other skill-lib skill is invoked, and when asked for skill counts, usage history, maturity, reliability, experimental status, field-test status, operational status, or daily-use status.
 ---
 
-# skill-usage — count exposure without counterfeiting trust
 
-Use this procedural skill alongside every invoked `skill-lib` skill. It records
-local usage in the plugin's writable data directory and derives an effective
-maturity designation from both exposure and available outcome evidence.
+Record local usage in the plugin's writable data directory; derive maturity from exposure and observed outcomes.
 
 ## Workflow
 

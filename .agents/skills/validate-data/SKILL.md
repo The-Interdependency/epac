@@ -27,6 +27,8 @@ The analysis can be:
 
 ### 1. Review Methodology and Assumptions
 
+Restate the analysis claim and the decision it informs.
+
 Examine:
 
 - **Question framing**: Is the analysis answering the right question? Could the question be interpreted differently?
@@ -45,7 +47,8 @@ Systematically review against the detailed pitfall catalog below (join explosion
 
 ### 4. Verify Calculations and Aggregations
 
-Where possible, spot-check:
+Reproduce at least one key number independently before trusting the analysis.
+Where possible, extend spot-checks:
 
 - Recalculate a few key numbers independently
 - Verify that subtotals sum to totals
@@ -67,6 +70,8 @@ If the analysis includes charts:
 
 ### 6. Evaluate Narrative and Conclusions
 
+Seek a disconfirming cut, segment, or period.
+
 Review whether:
 
 - Conclusions are supported by the data shown
@@ -85,6 +90,8 @@ Provide specific, actionable suggestions:
 - Missing context that stakeholders would want
 
 ### 8. Generate Confidence Assessment
+
+Distinguish verified, plausible, and unsupported claims in the verdict.
 
 Rate the analysis on a 3-level scale:
 
@@ -382,14 +389,6 @@ Output:
 - If the validation finds issues, fix them and re-validate
 - Share the validation output alongside your analysis to build stakeholder confidence
 
-## Workflow
-
-1. Restate what the analysis claims and what decision rides on it.
-2. Check methodology: aggregation logic, filters, joins, time windows, denominators.
-3. Reproduce at least one key number independently before trusting any of them.
-4. Attack the conclusion: seek the disconfirming cut, segment, or period.
-5. Deliver a verdict distinguishing verified, plausible, and unsupported claims.
-
 ## Anti-patterns
 
 - Validating only the happy path while the stakeholder decision hinges on edge segments.
@@ -399,9 +398,9 @@ Output:
 ## Provenance
 
 Imported from `anthropics/knowledge-work-plugins` @ `94e1a08` (`data/skills/validate-data/`), Apache-2.0.
-Local modifications: trigger phrasing normalized to skill-lib convention; this
-Workflow/Anti-patterns/Provenance/hmmm bookend appended. Upstream body above is
-otherwise unmodified. See `ATTRIBUTION.md` at repo root.
+Local modifications: trigger phrasing normalized; anti-patterns, provenance and
+hmmm added; duplicate workflow consolidated into the main workflow under the
+narrative compression invariant. See `ATTRIBUTION.md` at repo root.
 
 hmmm
 - Severity taxonomy for findings (blocker vs caveat) is not yet standardized.

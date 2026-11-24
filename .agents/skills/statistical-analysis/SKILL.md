@@ -5,8 +5,6 @@ description: Apply statistical methods including descriptive stats, trend analys
 
 # Statistical Analysis Skill
 
-Descriptive statistics, trend analysis, outlier detection, hypothesis testing, and guidance on when to be cautious about statistical claims.
-
 ## Descriptive Statistics Methodology
 
 ### Central Tendency
@@ -263,7 +261,7 @@ Be wary of false precision:
 Imported from `anthropics/knowledge-work-plugins` @ `94e1a08` (`data/skills/statistical-analysis/`), Apache-2.0.
 Local modifications: trigger phrasing normalized to skill-lib convention; this
 Workflow/Anti-patterns/Provenance/hmmm bookend appended. Upstream body above is
-otherwise unmodified. See `ATTRIBUTION.md` at repo root.
+otherwise unmodified except for removal of the redundant opening summary. See `ATTRIBUTION.md` at repo root.
 
 hmmm
 - No stance yet on Bayesian vs frequentist framing for org analyses.

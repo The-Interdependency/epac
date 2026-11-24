@@ -5,11 +5,6 @@ description: Native-first contract evidence built on msdmd. Source owners declar
 
 # test-build — Contract tests on msdmd
 
-`test-build` is an application of [msdmd](../msdmd/SKILL.md). The
-foundation defines native-first ingestion, supplemental block syntax, reader
-support and information coverage; this skill applies those contracts to
-behavior obligations and accountable executable witnesses.
-
 Read `msdmd/SKILL.md` first. For the ratified source/test ownership split,
 see [`doctrine/msdmd-checks.md`](../doctrine/msdmd-checks.md).
 

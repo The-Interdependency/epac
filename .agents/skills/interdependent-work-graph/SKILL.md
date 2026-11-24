@@ -5,7 +5,7 @@ description: Cross-repository coordination for The Interdependency. Load this wh
 
 # interdependent-work-graph — coordinate the problem, not the folder
 
-Use this procedural skill when the real work graph crosses repository boundaries. Repository boundaries preserve authority, provenance, permissions, and release history. They do not define the limit of one agent's attention.
+Repository boundaries preserve authority, provenance, permissions, and release history.
 
 ## Core contract
 

@@ -5,9 +5,6 @@ description: Domain-first lexical and semantic governance for canonical terms. L
 
 # domain-claims — establish semantic standing before provenance
 
-`domain-claims` prevents an ambiguous word from acquiring structural authority merely
-because a definition or conversation can be cited for it.
-
 The governing rule is:
 
 > Before a word becomes a canonical term, identify which domain has standing to
@@ -342,6 +339,3 @@ hmmm
 - how multilingual surface forms share or fork a term identity without assuming exact
   translation
 - how domain authority is delegated, revoked, or shared across organizations
-
-The word remains common. The claim gives one sense standing. The handle remains stable.
-Conversation then earns the definition that structure is permitted to carry.

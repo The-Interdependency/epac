@@ -5,10 +5,6 @@ description: Native-first dependency topology built on msdmd. Consume imports, p
 
 # deps-build — Dependency topology on msdmd
 
-`deps-build` is an application of [msdmd](../msdmd/SKILL.md). It makes
-source-owned dependency edges and otherwise unexpressed architectural intent
-inspectable without demanding a second declaration of existing imports.
-
 Implementation status: this skill defines the `DEPENDENCIES` block and runner
 contract. The MSDMD schema-2 collector ships Python import, `package.json`, and
 `pyproject.toml` dependency extraction, but no complete resolution/cycle runner;

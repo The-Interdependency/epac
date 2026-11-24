@@ -5,8 +5,6 @@ description: Construction, closure, and replay discipline for active gonol-langu
 
 # gonol-build
 
-Use this skill to keep gonol-language construction on the declared architecture and nothing else.
-
 ## Workflow
 
 1. Resolve the exact UCNS authority and the exact owning Stack research workspace before building.
@@ -109,8 +107,6 @@ Run skill-lib's local authority regression gate after changing this boundary:
 ```bash
 bash tools/check_gonol_authority.sh
 ```
-
-When a gonol closes, use it atomically at an admissible consuming scale. Ignore pronunciation unless an explicit construction says otherwise.
 
 ## Anti-patterns
 
