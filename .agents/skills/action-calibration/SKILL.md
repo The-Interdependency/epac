@@ -5,10 +5,6 @@ description: Action sizing and escalation doctrine. Load this when choosing betw
 
 # action-calibration — spend only enough to change the decision
 
-`action-calibration` selects the right-sized action before implementation, research,
-formalization, or publication consumes the available time, attention, money, compute,
-or coordination capacity.
-
 The governing distinctions are:
 
 ```text

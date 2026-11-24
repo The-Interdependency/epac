@@ -1,4 +1,4 @@
-# ratios: loc_comments=89:60 imports_exports=6:12 calls_definitions=37:14
+# ratios: loc_comments=102:70 imports_exports=11:12 calls_definitions=43:14
 """MCP server for bounded or personal-console access to a private Linux VM.
 
 Usage guidance:
@@ -12,12 +12,35 @@ that profile only for a single-owner private VM behind an authenticated tunnel.
 """
 from __future__ import annotations
 
+# First statement: become non-dumpable before the token is read from fd 0 and
+# before any heavy import, so same-UID shell_exec children cannot ptrace this
+# process, pidfd_getfd its descriptors, or read its /proc/<pid>/mem. (Under the
+# systemd unit the token is never in the environment; Yama ptrace_scope >= 1
+# for shell profiles is enforced by the root ExecStartPre gate.) Fails closed;
+# auth.protect_process repeats it in main().
+import ctypes as _ctypes
+
+if _ctypes.CDLL(None, use_errno=True).prctl(4, 0, 0, 0, 0) != 0:  # PR_SET_DUMPABLE, 0
+    raise SystemExit("vm-mcp: cannot disable process dumpability (prctl PR_SET_DUMPABLE)")
+
 import os
+
+# Still before any heavy import: refuse if traced, then read the token from
+# fd 0 and replace fd 0 with /dev/null. Yama ptrace_scope is checked by the
+# root ExecStartPre gate (yama_gate.py), since ProcSubset=pid hides sysctls
+# here. auth and profiles import only the standard library.
+from auth import BearerAuth, protect_process, startup_token
+from profiles import resolve_profile
+
+_TOKEN = startup_token(resolve_profile())
+
+import uvicorn
 from typing import Any, Callable
 
 from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
 
+from first_use import ClientKeyMiddleware, FirstUseContext, with_notice
 from policy import (
     VmMcpConfig,
     broker_exec,
@@ -49,7 +72,7 @@ from policy import (
 #   rollout: root_installer_plus_systemd_plus_private_mcp_tunnel
 #   rollback: disable vm-mcp services and remove private client registration
 #   feature_flag: VM_MCP_PROFILE
-#   unresolved: client_specific_private_tunnel_registration, application_layer_auth_when_not_using_a_private_tunnel
+#   unresolved: client_specific_private_tunnel_registration, operator_provisioned_bearer_token_and_client_header_support
 # === END MODULE_BUILD ===
 
 # === CONTRACTS ===
@@ -80,6 +103,9 @@ READ_ONLY = ToolAnnotations(readOnlyHint=True, openWorldHint=False)
 WRITE_FS = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 WRITE_SHELL = ToolAnnotations(readOnlyHint=False, destructiveHint=True, idempotentHint=False, openWorldHint=True)
 ADMIN_SHELL = ToolAnnotations(readOnlyHint=False, destructiveHint=True, idempotentHint=False, openWorldHint=True)
+
+
+_FIRST_USE = FirstUseContext()
 
 
 def _config() -> VmMcpConfig:
@@ -166,25 +192,29 @@ def user_exec(
 @mcp.tool(annotations=ADMIN_SHELL)
 def admin_exec(command: str, cwd: str = "/", timeout_seconds: float = 60.0) -> dict[str, Any]:
     """Personal-console only: execute an explicitly privileged command as root."""
-    return _result(
-        lambda: broker_exec(
-            _config(), mode="admin", user=None, command=command, cwd=cwd,
-            timeout_seconds=timeout_seconds,
-        )
+    return with_notice(
+        _result(
+            lambda: broker_exec(
+                _config(), mode="admin", user=None, command=command, cwd=cwd,
+                timeout_seconds=timeout_seconds,
+            )
+        ),
+        _FIRST_USE,
     )
 
 
 def main() -> None:
-    mcp.run(
-        transport="streamable-http",
+    protect_process()
+    token = _TOKEN
+    app = mcp.streamable_http_app(
         host="127.0.0.1",
-        port=int(os.environ.get("VM_MCP_PORT", "8765")),
         streamable_http_path="/mcp",
         stateless_http=True,
         json_response=True,
     )
+    uvicorn.run(BearerAuth(ClientKeyMiddleware(app), token), host="127.0.0.1", port=int(os.environ.get("VM_MCP_PORT", "8765")))
 
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=89:60 imports_exports=6:12 calls_definitions=37:14
+# ratios: loc_comments=102:70 imports_exports=11:12 calls_definitions=43:14

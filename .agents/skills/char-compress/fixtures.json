@@ -64,16 +64,16 @@
     },
     {
       "id": "no_ucns_transfer",
-      "text": "Theorem N does not validate char-compress; edcmbone metric status is not claimed.",
+      "text": "Theorem N does not validate char-compress; EDCM metric status is not claimed.",
       "expect": {
         "frozen_bones": ["not"],
-        "flesh": ["Theorem", "N", "char-compress", "edcmbone", "metric", "status", "claimed"]
+        "flesh": ["Theorem", "N", "char-compress", "EDCM", "metric", "status", "claimed"]
       },
       "forbid_anywhere": [
         "UCNS proves char-compress",
         "Theorem N validates char-compress",
         "char-compress implements UCNS-A",
-        "edcmbone metric status is claimed"
+        "EDCM metric status is claimed"
       ]
     }
   ]

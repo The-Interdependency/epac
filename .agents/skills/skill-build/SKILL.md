@@ -5,12 +5,12 @@ description: Skill authoring and skill compliance workflow for The Interdependen
 
 # skill-build — build skills that can build better skills
 
-Use this skill when authoring or auditing skills in `skill-lib` or repo-local `.agents/skills/` copies. It is itself the worked example: concise trigger frontmatter, bounded workflow, reusable question set, individualized test-suite prompts, explicit output shape, and an honest `hmmm` continuation boundary.
+Apply this contract to canonical skills and repo-local `.agents/skills/` copies.
 
 ## Core contract
 
 - Start from existing examples in this repo before inventing a new shape.
-- Keep `SKILL.md` lean: put only activation rules, doctrine, workflow, output shape, validation, and essential examples in the main file.
+- Keep `SKILL.md` lean: put only activation rules, doctrine, workflow, output shape, validation, and essential examples in the main file. Apply the narrative compression invariant below.
 - Prefer references, examples, templates, or scripts only when they reduce repeated context or make validation more reliable.
 - Make the description load-bearing: say exactly when to load the skill.
 - Every skill must answer: **what task triggers it, what context it needs, what it changes, what it refuses to guess, how output should look, and how success is tested**.
@@ -27,6 +27,20 @@ Choose the closest existing sibling before writing:
 - **Repo-distribution guidance**: `AGENTS.md`, `README.md`, `skills.json`, `ORG_DISTRIBUTION.md`, and `CLAUDE.md`.
 
 Do not copy a sibling mechanically. Extract its structure, then individualize the questions, tests, and boundaries for the new skill.
+
+## Narrative compression invariant
+
+Skill prose is executable context. Compress by semantic ownership, not by deleting necessary meaning.
+
+- Give each concept one authoritative home in the skill.
+- Each clause should do one job: trigger, rule, action, evidence, failure, or boundary.
+- Repeat a concept only when the repetition changes execution at that location.
+- Prefer decision/action structure over conceptual restatement or persuasive explanation.
+- State the operative rule once; use references for rationale, examples, or extended background.
+- Remove prose that merely rephrases the previous sentence, heading, or list item.
+- Preserve distinctions, exceptions, authority, failure conditions, and `hmmm`; compression must not erase load-bearing semantics.
+
+A skill narrative fails this invariant when the agent must read multiple phrasings of the same concept to discover whether anything changed.
 
 ## Required question set
 

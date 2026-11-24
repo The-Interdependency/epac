@@ -5,9 +5,8 @@ description: METAPAT consultation router for The Interdependency. Load this when
 
 # meta — consult current METAPAT
 
-This skill does not contain METAPAT doctrine.
-
-Its purpose is to recognize when METAPAT is required, retrieve the current source, and return the relevant conceptual boundary without creating a competing frozen copy inside `skill-lib`.
+Route conceptual questions to current METAPAT; return the applicable boundary
+without copying its doctrine into skill-lib.
 
 ## Source of truth
 

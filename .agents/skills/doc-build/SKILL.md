@@ -5,9 +5,6 @@ description: Native-first documentation coverage built on msdmd. Consume docstri
 
 # doc-build — Documentation contracts on msdmd
 
-`doc-build` is an application of [msdmd](../msdmd/SKILL.md). It makes
-source-owned documentation obligations and their coverage inspectable.
-
 Implementation status: this skill defines the `DOCS` block and runner contract.
 The MSDMD schema-2 collector ships structured Python docstrings, JSDoc, Rustdoc/Javadoc/Doxygen extraction
 and nested Markdown-frontmatter readers, but no complete DOCS obligation/link/anchor runner. Consuming repos add

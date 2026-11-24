@@ -26,7 +26,8 @@ facts and supplemental blocks in `collection.ts`. The registry in `readers.py`
 declares each shipped extraction subset. Python uses the same syntax-aware
 attachment implementation as `module_projection.py`; TypeScript uses its compiler
 API; Rust, Java, C and C++ use pinned syntax grammars. Structured standards feed
-this same collector, not separate disconnected reports. See the executable
+this same collector, as do the pinned Go grammar and static Go module readers.
+These are integrated readers, not separate disconnected reports. See the executable
 [reader support matrix](references/implemented-readers.md) before asserting coverage.
 
 Install the declared parser runtimes once:
@@ -39,7 +40,18 @@ npm ci --ignore-scripts --prefix msdmd
 A missing runtime is an error diagnostic and marks the reader run
 `runtime-unavailable`; it never yields empty success. The CLI exits 3 without
 writing unless `--allow-missing-reader-runtimes` is given, which still warns.
-Other TypeScript worker failures are `typescript_reader_failed` errors.
+Node always runs with `--jitless` (byte-identical output, slower), so the
+worker starts under systemd `MemoryDenyWriteExecute=yes`. A Node worker killed
+by a signal is `node_runtime_unavailable` and also exits 3. Any other
+TypeScript worker failure also fails closed with exit 3: a nonzero exit, exit
+0 without a complete JSON result, or node rejecting `--jitless` is
+`typescript_reader_failed`, and a worker running past `--typescript-timeout`
+seconds (default 120) is killed, with its whole process group (so a
+version-manager shim's node child goes too), as `typescript_reader_timeout`.
+Valid input nested too deeply for the reader's stack (very long operator
+chains, deeply nested blocks or literals) is not a runtime failure: that file
+gets a `typescript_input_too_deep` error diagnostic and no facts, and the run
+continues (exit 0, or 2 under `--strict`).
 The universal MSDMD block parsers themselves remain dependency-free.
 
 ## Doctrine
@@ -360,7 +372,9 @@ carrying the pinned `commit`, which snapshot identities include.
 `--print-generator-identity` prints a digest of every collector file that can
 change output (TypeScript worker and lock file included), the Python minor,
 reader package, Node and TypeScript versions, and digests of the reader modules
-that actually resolve on `sys.path`; add `--json` for the parts. A schema-2
+that actually resolve on `sys.path`; add `--json` for the parts. Node missing
+from PATH is recorded as `absent`; a Node probe that is killed by a signal,
+exits nonzero or prints unexpected output exits 3 with no identity. A schema-2
 artifact needs a helper exporting `MSDMD_COLLECTION_HELPER_VERSION` at least the
 collector's; an older helper stops the CLI with exit 4 before writing. When
 `--out` is outside the root, the helper is located from the root. Propagate the

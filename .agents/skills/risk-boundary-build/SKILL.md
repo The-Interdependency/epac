@@ -5,10 +5,6 @@ description: Native-first runtime risk and permission boundaries built on msdmd.
 
 # risk-boundary-build — Runtime boundaries on msdmd
 
-`risk-boundary-build` is an application of [msdmd](../msdmd/SKILL.md). It
-makes declared permission, storage, network and user-data effects reviewable
-before an agent edits a sensitive file.
-
 This complements `meta-module-build`: build metadata describes intended
 boundaries before new work starts; runtime metadata declares effects of an
 existing module. Neither declaration alone proves runtime enforcement.

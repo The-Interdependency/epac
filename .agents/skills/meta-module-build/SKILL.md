@@ -7,10 +7,6 @@ description: Native-first module planning built on msdmd. Consume existing manif
 
 GPT generated; context, prompt Erin Spencer
 
-`meta-module-build` is an application of [msdmd](../msdmd/SKILL.md). It
-keeps proposed purpose, surfaces, dependencies, boundaries, tests and rollout
-notes attributable to the sources that own them.
-
 Read `msdmd/SKILL.md` first. This skill inherits its source/provenance, native
 reader support, supplemental block and information-coverage contracts.
 Implementation status: this is a consuming-repo planning/runner contract. The

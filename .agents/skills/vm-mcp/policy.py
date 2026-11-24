@@ -1,4 +1,4 @@
-# ratios: loc_comments=374:57 imports_exports=13:12 calls_definitions=134:24
+# ratios: loc_comments=376:58 imports_exports=14:13 calls_definitions=135:24
 """Policy primitives for the vm-mcp runtime.
 
 Usage guidance:
@@ -23,6 +23,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from profiles import PROFILES, resolve_profile  # noqa: F401  (PROFILES re-exported)
 
 # === CONTRACTS ===
 # id: vm_mcp_read_paths_confined
@@ -77,7 +79,6 @@ DEFAULT_MAX_READ_BYTES = 256 * 1024
 DEFAULT_MAX_OUTPUT_BYTES = 256 * 1024
 DEFAULT_MAX_TIMEOUT_SECONDS = 300.0
 DEFAULT_MAX_DIRECTORY_ENTRIES = 500
-PROFILES = ("read-only", "workspace", "personal-console")
 _READ_CHUNK = 64 * 1024
 
 
@@ -105,12 +106,8 @@ class VmMcpConfig:
 
     @classmethod
     def from_env(cls) -> "VmMcpConfig":
-        profile = os.environ.get("VM_MCP_PROFILE", "").strip().lower()
-        if not profile:
-            # Backward compatibility with the first vm-mcp release.
-            profile = "workspace" if _env_flag("VM_MCP_SHELL_ENABLED", default=False) else "read-only"
-        if profile not in PROFILES:
-            raise ValueError(f"VM_MCP_PROFILE must be one of {PROFILES}: {profile!r}")
+        # One resolver for policy, server, auth and the pre-start gate.
+        profile = resolve_profile()
         return cls(
             root=Path(os.environ.get("VM_MCP_ROOT", str(DEFAULT_ROOT))).expanduser(),
             profile=profile,
@@ -130,13 +127,6 @@ class VmMcpConfig:
                 os.environ.get("VM_MCP_ADMIN_SOCKET", str(DEFAULT_ADMIN_SOCKET))
             ),
         )
-
-
-def _env_flag(name: str, *, default: bool) -> bool:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _positive_int(raw: str | None, default: int) -> int:
@@ -170,6 +160,22 @@ def resolve_under_root(root: Path, requested: str, *, must_exist: bool = True) -
     if must_exist and not candidate.exists():
         raise FileNotFoundError(candidate)
     return candidate
+
+
+def resolve_entry_under_root(root: Path, requested: str, *, must_exist: bool = True) -> Path:
+    """Resolve the parent only; destructive operations own the final entry."""
+    root_resolved = root.expanduser().resolve(strict=False)
+    raw = Path(requested).expanduser()
+    if raw.name in {"", ".", ".."}:
+        raise PermissionError("a non-root directory entry is required")
+    candidate = raw if raw.is_absolute() else root_resolved / raw
+    parent = resolve_under_root(root_resolved, str(candidate.parent))
+    path = parent / candidate.name
+    if path == root_resolved:
+        raise PermissionError("refusing to move or remove VM_MCP_ROOT")
+    if must_exist:
+        path.lstat()  # broken links are entries too
+    return path
 
 
 def _require_workspace_write(config: VmMcpConfig) -> None:
@@ -305,8 +311,8 @@ def make_directory(
 
 def move_path(config: VmMcpConfig, source: str, destination: str) -> dict[str, Any]:
     _require_workspace_write(config)
-    src = resolve_under_root(config.root, source)
-    dst = resolve_under_root(config.root, destination, must_exist=False)
+    src = resolve_entry_under_root(config.root, source)
+    dst = resolve_entry_under_root(config.root, destination, must_exist=False)
     if not dst.parent.is_dir():
         raise FileNotFoundError(dst.parent)
     os.replace(src, dst)
@@ -315,9 +321,7 @@ def move_path(config: VmMcpConfig, source: str, destination: str) -> dict[str, A
 
 def remove_path(config: VmMcpConfig, requested: str, *, recursive: bool = False) -> dict[str, Any]:
     _require_workspace_write(config)
-    path = resolve_under_root(config.root, requested)
-    if path == config.root.expanduser().resolve(strict=False):
-        raise PermissionError("refusing to remove VM_MCP_ROOT")
+    path = resolve_entry_under_root(config.root, requested)
     if path.is_dir() and not path.is_symlink():
         if recursive:
             shutil.rmtree(path)
@@ -478,4 +482,4 @@ def broker_exec(
         timeout_seconds=timeout,
         max_output_bytes=config.max_output_bytes,
     )
-# ratios: loc_comments=374:57 imports_exports=13:12 calls_definitions=134:24
+# ratios: loc_comments=376:58 imports_exports=14:13 calls_definitions=135:24

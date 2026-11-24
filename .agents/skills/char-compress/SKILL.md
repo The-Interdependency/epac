@@ -1,6 +1,6 @@
 ---
 name: char-compress
-description: Character-based context compression for agent handoff and skill writing, owned as a skill-lib procedure rather than current UCNS mathematics. Use this when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when a context window is filling and operative facts must survive; when writing a SKILL.md that should be flesh-dense and bone-sparse; or when checking whether a compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm. Historical bone/flesh and text-stack terminology is local compression notation, not a UCNS theorem/status transfer, active language-construction authority, or edcmbone metric implementation.
+description: Character-based context compression for agent handoff and skill writing, owned as a skill-lib procedure rather than current UCNS mathematics. Use this when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when a context window is filling and operative facts must survive; when writing a SKILL.md that should be flesh-dense and bone-sparse; or when checking whether a compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm. Historical bone/flesh and text-stack terminology is local compression notation, not a UCNS theorem/status transfer, active language-construction authority, or EDCM metric implementation.
 ---
 
 # char-compress — bone/flesh compression for agent context
@@ -70,14 +70,17 @@ char-compress has DEFENDED UCNS theorem status.
 SEQ-PRIME applies to compressed transcript objects.
 ```
 
-### Relation to `edcmbone`
+### Relation to `edcm`
 
-`edcmbone` owns structural fidelity measurement: F-loss, operator preservation,
-semantic fidelity loss, and failure taxonomy for AI transformations. This skill
-is not an edcmbone metric runtime. It is an agent procedure that should be
-measurable by edcmbone.
+`edcm` owns EDCM measurement and evaluation. Its maintained
+structural-measurement implementation is `edcm/measurement/`, consolidated from
+`edcmbone` (archived 2026-07-28; superseded by `edcm`). `edcm` also carries the F1–F6
+failure taxonomy (deletion, mutation, inversion, category collapse, persistence
+failure, decorative preservation) and F-loss labels for text transforms in
+`edcm/falsifiability_bridge.py`. This skill is not an EDCM metric runtime. It
+is an agent procedure that should be measurable by EDCM.
 
-Use edcmbone doctrine as a guardrail:
+Use EDCM doctrine as a guardrail:
 
 - if dropping a unit would cause deletion, mutation, inversion, category
   collapse, persistence failure, or decorative preservation, the unit is not
@@ -86,7 +89,7 @@ Use edcmbone doctrine as a guardrail:
   as frozen bones unless a domain-specific test proves they are safe to
   regenerate;
 - reconstruction should be checked against F-loss and operator preservation
-  when an edcmbone runner is available.
+  when an EDCM runner is available.
 
 ## Optional local text-stack notation
 
@@ -488,7 +491,7 @@ compression.
 - Compressing an unresolved constraint into silence.
 - Treating the fixture runner as the full Unit Circle Number System compression engine.
 - Claiming theorem/status support without an implementation and tests.
-- Claiming edcmbone metric status without an implementation and tests.
+- Claiming EDCM metric status without an implementation and tests.
 
 ## hmmm
 

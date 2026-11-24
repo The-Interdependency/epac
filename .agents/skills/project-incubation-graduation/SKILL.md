@@ -5,8 +5,6 @@ description: Project incubation and graduation doctrine for emergent components 
 
 # project-incubation-graduation — let the forge survive its products
 
-Use this procedural skill when a new thing is born by composing existing things inside a repository that is intentionally allowed to incubate novel integrations.
-
 The skill governs the transition from **candidate inside a forge** to **independent project with its own implementation and public-contract authority**. It does not decide scientific truth, semantic canon, theorem status, proof status, certification, measurement validity, or empirical validity.
 
 ## Core contract

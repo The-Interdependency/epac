@@ -5,11 +5,6 @@ description: Self-declaring module composition ratios on msdmd — one comment l
 
 # ratios — Module composition ratios on msdmd
 
-`ratios` is an application of [msdmd](../msdmd/SKILL.md). The foundational
-skill defines the comment-block convention, the universal parser, and the
-gap-reporting requirement; this skill applies the convention to a module's
-own composition ratios and defines the executor contract.
-
 Read `msdmd/SKILL.md` first if you haven't — the parser contract and the
 visibility rules below are inherited from there and not redefined.
 
@@ -75,12 +70,8 @@ against, no meaningful repo-wide fan-in). Its three ids are single-file
 computable, so the stdlib `ratios_check.py` verifies them with no repo index.
 `loc_comments` is exactly a0's `N:M`; `imports_exports` and `calls_definitions`
 are per-file stand-ins for the surface/graph intent of `C:D` and `I:O`. Repos
-already stamped in this form (skill-lib, aimmh, edcmbone, pcna, pcta, ptca,
+already stamped in this form (skill-lib, aimmh, edcmbone (archived), pcna, pcta, ptca,
 pcea) remain valid and are **not** required to reconvert.
-
-Both forms keep one seal discipline: a single line at the opening and closing
-source boundaries. Nothing may precede the opening seal except one valid
-interpreter shebang on literal line 1.
 
 ### The single line and shebang-safe boundary rule
 
@@ -123,8 +114,6 @@ The form is:
   declared-but-not-yet-resolved.
 - The same line opens and closes the file. Without a shebang the opening seal
   is literal line 1; with a valid shebang it is literal line 2.
-- Scope: executable source files only. `json` and `.md` files are out of
-  scope for RATIOS boundary seals.
 
 There is no fenced `# === RATIOS === … # === END RATIOS ===` block. An earlier
 draft of this skill described one; that was wrong. Tooling reads the single

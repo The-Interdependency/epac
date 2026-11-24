@@ -1,4 +1,4 @@
-# ratios: loc_comments=222:57 imports_exports=16:3 calls_definitions=95:10
+# ratios: loc_comments=234:60 imports_exports=17:3 calls_definitions=102:11
 """Root-side Unix-socket execution broker for vm-mcp personal-console mode.
 
 Usage guidance:
@@ -25,6 +25,8 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any
+
+from first_use import INSTALL_FLAG, claim_install_marker
 
 # === MODULE_BUILD ===
 # id: vm_mcp_personal_console_broker
@@ -59,7 +61,7 @@ from typing import Any
 # === CONTRACTS ===
 # id: vm_mcp_admin_broker_peer_verified
 #   given: a process connects to the root broker Unix socket
-#   then: SO_PEERCRED must identify the configured vmmcp service user or the request is rejected
+#   then: SO_PEERCRED must identify the configured vmmcp user and systemd current service MainPID or the request is rejected
 #   class: security
 #
 # id: vm_mcp_user_exec_non_root
@@ -226,6 +228,8 @@ def execute_request(request: dict[str, Any]) -> dict[str, Any]:
         "stderr_truncated": stderr_truncated,
         "output_limit_bytes_per_stream": limit,
     }
+    if mode == "admin":
+        result[INSTALL_FLAG] = claim_install_marker()
     print(
         json.dumps({
             "event": "vm_mcp_exec",
@@ -243,12 +247,29 @@ def execute_request(request: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def _peer_uid(connection: socket.socket) -> int:
+def _peer_credentials(connection: socket.socket) -> tuple[int, int]:
     if not hasattr(socket, "SO_PEERCRED"):
         raise RuntimeError("SO_PEERCRED is required")
     raw = connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i"))
-    _pid, uid, _gid = struct.unpack("3i", raw)
-    return uid
+    pid, uid, _gid = struct.unpack("3i", raw)
+    return pid, uid
+
+
+def _authorize_peer(connection: socket.socket, caller_uid: int) -> None:
+    """Bind the request to the service main process, never its shell descendants."""
+    peer_pid, peer_uid = _peer_credentials(connection)
+    if peer_uid != caller_uid:
+        raise PermissionError("broker peer is not the configured service user")
+    # systemd owns this identity. A workspace-writable PID file, /proc command
+    # line, or UID alone would let a shell child impersonate the control plane.
+    result = subprocess.run(
+        ["/usr/bin/systemctl", "show", "--property=MainPID", "--value", "vm-mcp.service"],
+        check=True, capture_output=True, text=True, timeout=5.0,
+        env={"PATH": "/usr/bin:/bin", "LANG": "C"},
+    )
+    main_pid = result.stdout.strip()
+    if not main_pid.isdecimal() or int(main_pid) <= 0 or peer_pid != int(main_pid):
+        raise PermissionError("broker peer is not the vm-mcp service main process")
 
 
 def _recv_request(connection: socket.socket) -> dict[str, Any]:
@@ -289,11 +310,8 @@ def serve() -> None:
             connection, _ = server.accept()
             with connection:
                 try:
-                    peer_uid = _peer_uid(connection)
-                    if peer_uid != caller.pw_uid:
-                        raise PermissionError(
-                            f"broker peer uid {peer_uid} is not configured caller uid {caller.pw_uid}"
-                        )
+                    connection.settimeout(5.0)
+                    _authorize_peer(connection, caller.pw_uid)
                     response = execute_request(_recv_request(connection))
                 except Exception as exc:
                     response = {"ok": False, "error_type": type(exc).__name__, "error": str(exc)}
@@ -306,4 +324,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=222:57 imports_exports=16:3 calls_definitions=95:10
+# ratios: loc_comments=234:60 imports_exports=17:3 calls_definitions=102:11

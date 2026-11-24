@@ -5,10 +5,6 @@ description: Native-first capability inventory built on msdmd. Consume signature
 
 # cap-build — Capability declarations on msdmd
 
-`cap-build` is an application of [msdmd](../msdmd/SKILL.md). It gives
-agents and humans a source-backed inventory of declared capabilities, exposed
-surfaces and the boundaries they are declared to cross.
-
 Implementation status: this skill defines the `CAPABILITIES` block and runner
 contract. The MSDMD schema-2 collector ships a Python callable/class/export
 reader, but no complete behavioral capability or framework/API-schema runner;

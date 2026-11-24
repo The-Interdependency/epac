@@ -324,14 +324,6 @@ When exploring an unfamiliar data environment:
 - If exploring a new dataset for the first time, this command gives you the lay of the land before writing specific queries
 - The quality flags are heuristic -- not every flag is a real problem, but each is worth a quick look
 
-## Workflow
-
-1. Establish shape: row count, column count, types, grain (what one row means).
-2. Profile quality: nulls, duplicates, suspicious values, range violations per column.
-3. Profile distributions: cardinality, top values, outliers for key columns.
-4. Note relationships and candidate keys across columns/tables.
-5. Summarize findings and which dimensions/metrics merit analysis, flagging quality risks.
-
 ## Anti-patterns
 
 - Profiling a sample but asserting population-level claims without saying so.
@@ -341,9 +333,9 @@ When exploring an unfamiliar data environment:
 ## Provenance
 
 Imported from `anthropics/knowledge-work-plugins` @ `94e1a08` (`data/skills/explore-data/`), Apache-2.0.
-Local modifications: trigger phrasing normalized to skill-lib convention; this
-Workflow/Anti-patterns/Provenance/hmmm bookend appended. Upstream body above is
-otherwise unmodified. See `ATTRIBUTION.md` at repo root.
+Local modifications: trigger phrasing normalized; anti-patterns, provenance and
+hmmm added; duplicate workflow consolidated into the main workflow under the
+narrative compression invariant. See `ATTRIBUTION.md` at repo root.
 
 hmmm
 - Sample-size thresholds for when profiling may subsample large tables are unstated.

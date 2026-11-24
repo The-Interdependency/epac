@@ -1,10 +1,12 @@
-# ratios: loc_comments=200:16 imports_exports=15:3 calls_definitions=84:3
+# ratios: loc_comments=330:52 imports_exports=17:6 calls_definitions=124:11
 """Syntax-aware code readers for the unified collection.
 
 Usage: registry calls read_python/read_typescript with bounded bytes and context.
 Python delegates symbol/comment attachment to module_projection. The TypeScript
 compiler is a library worker, not the inspected program. Neither reader resolves
 imports, loads target configuration, or establishes runtime behavior.
+Worker records and symbol references are validated before projection; malformed
+results produce a reader failure without partial facts or guessed edges.
 """
 from __future__ import annotations
 
@@ -13,6 +15,7 @@ import hashlib
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -158,31 +161,220 @@ def read_python(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list,
     return facts, edges, diagnostics
 
 
+# V8's JIT needs pages that are writable and then executable, which systemd
+# MemoryDenyWriteExecute=yes forbids: node then dies with a V8 fatal error
+# (SIGTRAP) before running anything. Interpreter-only output is byte-identical,
+# so the trusted worker and the identity probe always run without a JIT.
+NODE_ARGV = ('node', '--jitless')
+
+
+def node_signal(returncode: int) -> str | None:
+    """Name the signal that ended a node process, or None for an ordinary exit.
+
+    Python reports a signal death as ``-N``; a shell or version-manager shim in
+    front of node reports it as ``128 + N``.
+    """
+    if returncode < 0:
+        try:
+            return signal.Signals(-returncode).name
+        except ValueError:
+            return f'signal {-returncode}'
+    if returncode > 128:
+        try:
+            return signal.Signals(returncode - 128).name
+        except ValueError:
+            return None
+    return None
+
+
+# Seconds one trusted TypeScript worker (or the identity probe) may run. A
+# worker that hangs never yields partial success: it is killed and the file is
+# a reader failure. The CLI sets this from --typescript-timeout.
+TYPESCRIPT_TIMEOUT_SECONDS = 120.0
+
+_POSIX = os.name == 'posix'
+
+
+def _kill_process_group(process: subprocess.Popen) -> None:
+    """Kill ``process`` and, on POSIX, every process in its session's group."""
+    if _POSIX:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)  # start_new_session: pgid == pid
+        except (ProcessLookupError, PermissionError):
+            pass
+    try:
+        process.kill()
+    except ProcessLookupError:
+        pass
+
+
+def run_node(argv: list[str], *, input: str | None = None, timeout: float, cwd: Path | str,
+             env: dict[str, str], encoding: str = 'utf-8', errors: str = 'strict') -> subprocess.CompletedProcess:
+    """Run a node command like ``subprocess.run(..., capture_output=True, text=True)``.
+
+    On POSIX the command starts in its own session, and a timeout (or any
+    interruption) kills the whole process group, not just the direct child: a
+    version-manager shim (nvm, volta, asdf) may run the real node as a
+    grandchild that would otherwise keep running and holding the pipes.
+    Raises ``subprocess.TimeoutExpired`` after the group is killed.
+    """
+    with subprocess.Popen(argv, stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env=env,
+                          text=True, encoding=encoding, errors=errors, start_new_session=_POSIX) as process:
+        try:
+            stdout, stderr = process.communicate(input, timeout=timeout)
+        except BaseException:
+            _kill_process_group(process)
+            process.wait()
+            raise
+    return subprocess.CompletedProcess(argv, process.returncode, stdout, stderr)
+
+
+# Per-file worker diagnostic for valid input nested too deeply for the
+# recursive compiler/visitor stack (smaller under --jitless). The file is not
+# extracted (an error diagnostic, so --strict exits 2), but the run continues;
+# it is not a missing runtime and never exits 3.
+TOO_DEEP_CODE = 'typescript_input_too_deep'
+
+# Worker output keys and their types; anything else is not a worker result.
+_WORKER_LISTS = ('declarations', 'docs', 'comments', 'imports', 'exports', 'diagnostics')
+_WORKER_SPAN = {'start_line': int, 'end_line': int}
+_NULLABLE_TEXT = (str, type(None))
+# The trusted worker owns this wire shape. Validate before projecting any facts;
+# extra fields stay preserved, but known fields never acquire guessed types.
+_WORKER_RECORDS = {
+    'declarations': {**_WORKER_SPAN, 'name': _NULLABLE_TEXT, 'qualified_name': str,
+        'identity': str, 'kind': str, 'exported': bool, 'anonymous': bool,
+        'parameters': [{'name': str, 'type': _NULLABLE_TEXT, 'optional': bool,
+                        'rest': bool, 'default': _NULLABLE_TEXT}],
+        'returns': _NULLABLE_TEXT, 'decorators': [str]},
+    'docs': {**_WORKER_SPAN, 'identity': str, 'owner': str, 'text': str,
+        'description': str, 'tags': [{'tag': str, 'text': str, 'name': _NULLABLE_TEXT,
+                                    'type': _NULLABLE_TEXT, 'comment': _NULLABLE_TEXT}]},
+    'comments': {**_WORKER_SPAN, 'text': str, 'identity': _NULLABLE_TEXT,
+        'owner': _NULLABLE_TEXT, 'attachment': str},
+    'imports': {**_WORKER_SPAN, 'module': str, 'kind': str, 'declaration': str, 'owner': str},
+    'exports': {**_WORKER_SPAN, 'kind': str, 'local_name': _NULLABLE_TEXT,
+        'exported_name': str, 'type_only': bool, 'declaration': str, 'owner': str,
+        'declaration_identities': [str]},
+    'diagnostics': {**_WORKER_SPAN, 'code': str, 'status': str},
+}
+_WORKER_OPTIONAL_FIELDS = {
+    'declarations': {'export_names': [str]},
+    'exports': {'expression': str},
+    'diagnostics': {'message': str},
+}
+
+
+def _worker_value(value: Any, schema: Any) -> bool:
+    """Check required record fields, array elements and exact JSON scalar types."""
+    if isinstance(schema, dict):
+        return isinstance(value, dict) and all(key in value and _worker_value(value[key], child)
+                                              for key, child in schema.items())
+    if isinstance(schema, list):
+        return isinstance(value, list) and all(_worker_value(item, schema[0]) for item in value)
+    if isinstance(schema, tuple):
+        return type(value) in schema
+    return type(value) is schema  # bool is not a source-line integer
+
+
+def node_rejected_flag(stderr: str) -> bool:
+    """True when node refused a command-line option (for example an old node without --jitless)."""
+    return 'bad option' in stderr
+
+
+def _worker_result(stdout: str) -> dict[str, Any] | None:
+    """Parse worker stdout, or None when it is not a complete worker result."""
+    try:
+        parsed = json.loads(stdout)
+    except (ValueError, RecursionError):
+        return None
+    if not isinstance(parsed, dict) or not isinstance(parsed.get('version'), str) or not parsed['version']:
+        return None
+    if not all(isinstance(parsed.get(key), list) for key in _WORKER_LISTS):
+        return None
+    for section, schema in _WORKER_RECORDS.items():
+        for item in parsed[section]:
+            if not _worker_value(item, schema) or not 0 < item['start_line'] <= item['end_line']:
+                return None
+            if any(key in item and not _worker_value(item[key], child)
+                   for key, child in _WORKER_OPTIONAL_FIELDS.get(section, {}).items()):
+                return None
+    identities = {item['identity'] for item in parsed['declarations']}
+    if '' in identities or len(identities) != len(parsed['declarations']):
+        return None
+    for section in ('docs', 'comments'):
+        if any(item['identity'] is not None and item['identity'] not in identities for item in parsed[section]):
+            return None
+    if any(identity not in identities for item in parsed['exports'] for identity in item['declaration_identities']):
+        return None
+    if any(item['status'] not in {'invalid', 'dynamic-unresolved'}
+           and (item['status'], item['code']) != ('unsupported', TOO_DEEP_CODE) for item in parsed['diagnostics']):
+        return None
+    return parsed
+
+
 def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list, list, list]:
-    from msdmd.readers import _fact, _diagnostic, _edge, _subject_address
+    from msdmd.readers import _diagnostic
     rid = 'typescript-compiler'
     helper = Path(__file__).with_name('typescript-reader.cjs')
     env = {key: value for key, value in os.environ.items() if key not in {'NODE_OPTIONS', 'NODE_PATH'}}
+
+    def failed(message: str) -> tuple[list, list, list]:
+        # Fail closed: the CLI exits 3 and writes nothing, as for a missing
+        # runtime. Worker stderr is never published because it can quote
+        # inspected source text.
+        return [], [], [_diagnostic(context, reader_id=rid, code='typescript_reader_failed',
+            message=message + '; input not extracted', status='unsupported', severity='error')]
+
+    # Undecodable input is an input error for read_native, not a worker failure.
+    request = json.dumps({'path': str(path), 'text': data.decode('utf-8-sig')})
     # Package resolution is rooted at the trusted helper, never the inspected repo.
-    result = subprocess.run(['node', str(helper)], input=json.dumps({'path': str(path), 'text': data.decode('utf-8-sig')}),
-        capture_output=True, text=True, cwd=helper.parent, env=env, check=False)
+    try:
+        result = run_node([*NODE_ARGV, str(helper)], input=request, cwd=helper.parent, env=env,
+            timeout=TYPESCRIPT_TIMEOUT_SECONDS)
+    except FileNotFoundError:
+        raise  # node absent from PATH: reader_dependency_unavailable
+    except subprocess.TimeoutExpired:
+        return [], [], [_diagnostic(context, reader_id=rid, code='typescript_reader_timeout',
+            message=f'trusted TypeScript worker exceeded {TYPESCRIPT_TIMEOUT_SECONDS:g}s and was killed; input not extracted',
+            status='unsupported', severity='error')]
+    except (OSError, UnicodeDecodeError) as exc:
+        return failed(f'trusted TypeScript worker could not run ({type(exc).__name__})')
+    killed = node_signal(result.returncode)
+    if killed:
+        # A signal death means node cannot run here (for example a sandbox that
+        # V8 refuses), not that this input is malformed: a missing runtime.
+        return [], [], [_diagnostic(context, reader_id=rid, code='node_runtime_unavailable',
+            message=f'trusted Node worker was killed by {killed}; Node cannot run in this environment; input not extracted',
+            status='unsupported')]
     if result.returncode:
         if "Cannot find module 'typescript'" in result.stderr:
             return [], [], [_diagnostic(context, reader_id=rid, code='typescript_reader_unavailable',
                 message='TypeScript compiler package not installed for the trusted worker; run npm ci --prefix <msdmd skill dir>',
                 status='unsupported')]
-        # Any other worker failure is a reader error, not a missing runtime. Worker
-        # stderr is not published because it can quote inspected source text.
-        return [], [], [_diagnostic(context, reader_id=rid, code='typescript_reader_failed',
-            message=f'trusted TypeScript worker exited with status {result.returncode}; input not extracted',
-            status='invalid', severity='error')]
-    parsed = json.loads(result.stdout)
+        if node_rejected_flag(result.stderr):
+            return failed(f'node rejected {" ".join(NODE_ARGV[1:])} (exit status {result.returncode}); Node is too old for the trusted worker')
+        return failed(f'trusted TypeScript worker exited with status {result.returncode}')
+    parsed = _worker_result(result.stdout)
+    if parsed is None:
+        return failed('trusted TypeScript worker exited 0 without a complete JSON result')
+    try:
+        return _typescript_facts(parsed, context)
+    except (KeyError, TypeError, AttributeError, ValueError):
+        return failed('trusted TypeScript worker exited 0 with a malformed result')
+
+
+def _typescript_facts(parsed: dict[str, Any], context: dict[str, Any]) -> tuple[list, list, list]:
+    """Project one validated worker result onto collection facts."""
+    from msdmd.readers import _fact, _diagnostic, _edge, _subject_address
+    rid = 'typescript-compiler'
     context = dict(context, convention_version=parsed['version'], dialect='typescript-compiler-jsdoc')
     facts: list = []
     edges: list = []
     diagnostics = [_diagnostic(context, reader_id=rid, code=d['code'],
         message=d.get('message', 'dynamic module loading is not resolved'), status=d['status'],
-        severity='error' if d['status'] == 'invalid' else 'warning',
+        severity='error' if d['status'] == 'invalid' or d['code'] == TOO_DEEP_CODE else 'warning',
         location={'start_line': d['start_line'], 'end_line': d['end_line']}) for d in parsed['diagnostics']]
     for index, item in enumerate(parsed['declarations']):
         fact = _fact(context, reader_id=rid, kind='exported-declaration' if item['exported'] else 'symbol-declaration',
@@ -214,7 +406,7 @@ def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
             value=item, native_id=str(index), location={'start_line': item['start_line'], 'end_line': item['end_line']})
         facts.append(fact)
         edges.append(_edge(fact['subject']['address'], 'ecma-module:' + item['module'], item['kind']))
-    for index, item in enumerate(parsed.get('exports', [])):
+    for index, item in enumerate(parsed['exports']):
         fact = _fact(context, reader_id=rid, kind='local-export', scope='module', identity=context['file'],
             value=item, native_id=item['exported_name'], location={'start_line': item['start_line'], 'end_line': item['end_line']})
         fact['address'] = fact['subject']['address'] + f'/fact/local-export/{index}'
@@ -224,4 +416,4 @@ def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
         for target in targets or [fallback]:
             edges.append(_edge(fact['subject']['address'], target, 'exports:' + item['exported_name']))
     return facts, edges, diagnostics
-# ratios: loc_comments=200:16 imports_exports=15:3 calls_definitions=84:3
+# ratios: loc_comments=330:52 imports_exports=17:6 calls_definitions=124:11

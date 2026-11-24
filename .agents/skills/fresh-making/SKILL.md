@@ -5,8 +5,6 @@ description: Deterministic restoration of derived-artifact consistency after aut
 
 # fresh-making — restore derivation consistency
 
-`fresh-making` is a procedural skill for turning changed authoritative inputs into the smallest verified set of regenerated outputs needed to restore consistency.
-
 It does not own the source canon, the generator's domain semantics, or the executor. It owns the **freshness decision and restoration discipline** connecting them.
 
 ## Core contract

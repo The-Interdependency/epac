@@ -5,8 +5,6 @@ description: Write correct, performant SQL across all major data warehouse diale
 
 # SQL Queries Skill
 
-Write correct, performant, readable SQL across all major data warehouse dialects.
-
 ## Dialect-Specific Reference
 
 ### PostgreSQL (including Aurora, RDS, Supabase, Neon)
@@ -446,7 +444,7 @@ When a query fails:
 Imported from `anthropics/knowledge-work-plugins` @ `94e1a08` (`data/skills/sql-queries/`), Apache-2.0.
 Local modifications: trigger phrasing normalized to skill-lib convention; this
 Workflow/Anti-patterns/Provenance/hmmm bookend appended. Upstream body above is
-otherwise unmodified. See `ATTRIBUTION.md` at repo root.
+otherwise unmodified except for removal of the redundant opening summary. See `ATTRIBUTION.md` at repo root.
 
 hmmm
 - Dialect coverage drifts as warehouses evolve; no pinned version matrix yet.

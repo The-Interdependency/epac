@@ -1,21 +1,9 @@
 ---
 name: canon
-description: Canonical-source and doctrine maintenance for The Interdependency skill library. Use this when deciding whether a claim, pattern, ratio, workflow, or repo-local practice should become canon; when moving source-backed behavior into a SKILL.md; when reconciling canonical skill-lib with repo-local `.agents/skills/` copies; or when preserving unresolved doctrine as `hmmm` instead of guessing.
+description: Canonical-source and doctrine maintenance for The Interdependency skill library. Use this when deciding whether a claim, pattern, ratio, workflow, or repo-local practice should become canon; when moving source-backed behavior into a SKILL.md; when reconciling canonical skill-lib with repo-local `.agents/skills/` copies; or when preserving unresolved doctrine as `hmmm` instead of guessing. Also load when editing skill activation descriptions.
 ---
 
-# canon — Maintaining source-backed doctrine
 
-`canon` is a procedural skill for turning observed practice into honest,
-source-backed doctrine. It protects the boundary between what the org has
-actually made canonical and what an agent merely inferred.
-
-## Load this when
-
-- A user asks whether something should be canon.
-- You are promoting a repo-local pattern into `skill-lib`.
-- You are reconciling copied `.agents/skills/` directories with this repo.
-- You are editing descriptions that decide when skills load.
-- A claim is useful but not yet source-backed and needs a `hmmm` boundary.
 
 ## Canon test
 
