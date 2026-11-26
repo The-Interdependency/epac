@@ -3,52 +3,59 @@
 This directory contains repo-local copies of canonical skills from
 `The-Interdependency/skill-lib`.
 
-Source commit: `c778d5c2c9bd2370a4e0e2a0120508377f5ad3eb`
+Source commit: `1d47146a23db4491799fb92ecf2df6b02cbdfbdd`
 
 Repo-local copies are not the source of truth. Edit `skill-lib` first,
 then propagate from the canonical source.
 
 Skills refreshed from the source commit above:
 
+- `a0p-instancing/`
+- `action-calibration/`
+- `adaptive-elicitation/`
+- `wdll/`
+- `agent-instantiation/`
+- `loop-eng/`
 - `msdmd/`
-- `doc-build/`
-- `cap-build/`
-- `deps-build/`
 - `meta-module-build/`
 - `risk-boundary-build/`
-- `owner-build/`
-- `test-build/`
-- `ratios/`
+- `agent-ops/`
+- `app-build/`
 - `canon/`
-- `domain-claims/`
-- `manifest/`
-- `llms-build/`
+- `cap-build/`
 - `char-compress/`
-- `visitor-intro/`
-- `wdll/`
-- `a0p-instancing/`
-- `agent-instantiation/`
-- `plain-lens/`
-- `thought-lens/`
-- `meta/`
-- `gonol-build/`
-- `ucns-option-selection/`
-- `epac-selection-display/`
-- `the-interdependency/`
-- `interdependent-work-graph/`
-- `project-incubation-graduation/`
+- `data-visualization/`
+- `deps-build/`
 - `distributed-publication/`
-- `loop-eng/`
+- `doc-build/`
+- `domain-claims/`
+- `epac-selection-display/`
+- `explore-data/`
 - `fresh-making/`
-- `action-calibration/`
 - `repo-audit-repair/`
+- `test-build/`
+- `github-tests/`
+- `gonol-build/`
+- `interdependent-work-graph/`
+- `llms-build/`
+- `manifest/`
+- `meta/`
+- `owner-build/`
+- `plain-lens/`
+- `project-incubation-graduation/`
+- `pstack-orchestration/`
+- `ratios/`
 - `skill-build/`
 - `skill-usage/`
-- `ssh-automation/`
-- `vm-mcp/`
-- `typed-meta-frontend/`
 - `sql-queries/`
+- `ssh-automation/`
+- `stack-update/`
 - `statistical-analysis/`
-- `explore-data/`
+- `the-interdependency/`
+- `thought-lens/`
+- `typed-meta-frontend/`
+- `ucns-option-selection/`
 - `validate-data/`
-- `data-visualization/`
+- `visitor-intro/`
+- `vm-mcp/`
+- `website-builder-journal/`
